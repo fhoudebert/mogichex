@@ -8,6 +8,7 @@
   "repository": { "type": "git", "url": "https://github.com/fhoudebert/mogichex" },
   "scripts": {
     "test": "node --test \"tests/*.mjs\"",
+    "test:php": "php tests/test-signal.php && php tests/test-match.php",
     "catalog": "node tools/build-catalog.mjs --jocly ../jocly2",
     "scan": "node tools/scan-geometry.mjs --jocly ../jocly2",
     "stamp": "node tools/stamp-sw.mjs",

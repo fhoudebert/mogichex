@@ -27,6 +27,11 @@ export const CONFIG = Object.assign(
         // demarrage par setDistBase() ; une valeur donnee ici ou dans
         // window.MOGICHEX_CONFIG court-circuite la recherche.
         distBase: null,
+        // Racines supplementaires ou chercher le dist, pour une disposition
+        // que la liste par defaut ne couvre pas. Chacune est essayee telle
+        // quelle ET suivie de browser/ (voir js/dist-locator.js). Ces racines
+        // passent AVANT celles par defaut.
+        distRoots: [],
         // Fichier produit par tools/build-catalog.mjs.
         catalogUrl: 'app/catalog.json',
         // Relai HTTP : signalisation WebRTC ET transport de repli (etape 5).

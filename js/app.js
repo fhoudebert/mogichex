@@ -2,7 +2,7 @@
 // Mono-fenetre : on ne fait qu'echanger la classe .is-active.
 
 import { CONFIG, gameAssetUrl, setDistBase, distBaseIsForced } from './config.js';
-import { locateDist } from './dist-locator.js';
+import { locateDist, expandCandidates, DIST_ROOTS } from './dist-locator.js';
 import { initLocales, setLocale, applyTranslations, availableLocales, getLocale, t, pickLocalized } from './i18n.js';
 import { detectTier } from './device.js';
 import { CatalogView } from './catalog-view.js';
@@ -233,14 +233,20 @@ async function main() {
     // liste en viennent, pas seulement le moteur.
     if (!distBaseIsForced()) {
         const remembered = pref('distBase', null);
-        const found = await locateDist({ remembered });
+        const roots = (CONFIG.distRoots || []).concat(DIST_ROOTS);
+        const found = await locateDist({ remembered, candidates: expandCandidates(roots) });
         if (found.base) {
             setDistBase(found.base);
             if (found.base !== remembered) setPref('distBase', found.base);
         } else {
             // Sans dist, la liste reste consultable (elle lit catalog.json) :
             // on n'arrete pas l'application, on le dit au moment de jouer.
-            console.warn('dist jocly introuvable ; emplacements essayes :', found.tried);
+            console.warn(
+                'dist jocly introuvable. Emplacements essayes (relatifs a cette page) :\n  ' +
+                    found.tried.join('\n  ') +
+                    "\nAjouter la bonne racine via window.MOGICHEX_CONFIG = { distRoots: ['…'] }," +
+                    ' ou imposer directement { distBase: "…/" }.'
+            );
             state.distMissing = true;
         }
     }

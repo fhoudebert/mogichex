@@ -18,7 +18,8 @@ mono-fenêtre, et de [Tabulon](https://github.com/fhoudebert/tabulon) pour les a
 | 3 | Partie solo contre l'IA, 2D par défaut, règles en panneau | **fait** — plateau rendu, coup non validé (voir ci-dessous) |
 | 3b | Options de partie (`control.html`), dist partageable | **fait** |
 | 4 | PWA : manifeste, service worker, cache par module | **fait, non validé sur appareil** |
-| 5 | Multijoueur : signalisation, WebRTC, repli HTTP | relai livré et testé ; côté client à écrire |
+| 5a | Invitations (format joclymatch) + fichiers de partie | **fait** — codec pur testé, `match.php` testé sous PHP |
+| 5b | Multijoueur côté client : WebRTC, repli HTTP, garde reculer/recommencer | à écrire |
 | 6 | COOP/COEP + fairy-stockfish multi-thread | préparé (`.htaccess`, `serve.mjs --coi`), non activé |
 
 ### Ce qui a été mesuré au navigateur
@@ -65,15 +66,32 @@ un dist incohérent est la première cause de panne — voir *Pièges*). Il n'a 
 mogichex : au démarrage, l'application le cherche successivement dans
 
 ```
-dist/            embarqué dans mogichex (développement, ou copie dédiée)
-../dist/         au même niveau que mogichex
-jocly/dist/      un checkout jocly dans mogichex
-../jocly/dist/   un checkout jocly à côté de mogichex
+racines    dist/            embarqué dans mogichex (développement, ou copie)
+           ../dist/         au même niveau que mogichex
+           jocly/dist/      un checkout jocly dans mogichex
+           ../jocly/dist/   un checkout jocly à côté de mogichex
+suffixes   <rien>  puis  browser/
 ```
 
-ce qui permet de **partager un seul dist avec joclymatch** sur l'hébergement. L'emplacement
+soit huit emplacements, chaque racine étant essayée nue puis suivie de `browser/`.
+
+Ce niveau `browser/` n'est pas un raffinement : `npx gulp build` produit `dist/browser/`
+**et** `dist/node/`, et c'est `browser/` qui contient `jocly.js`. Un checkout jocly déployé tel
+quel a donc son moteur un cran plus bas :
+
+```
+variantes/jocly/dist/browser   ← le moteur est ici
+variantes/joclymatch
+variantes/mogichex             ← donc ../jocly/dist/browser/
+```
+
+Aplatir ce niveau côté serveur obligerait à dupliquer le dist ; c'est à mogichex de savoir
+descendre d'un cran.
+
+Tout cela permet de **partager un seul dist avec joclymatch** sur l'hébergement. L'emplacement
 trouvé est mémorisé et essayé en premier la fois suivante ; s'il a disparu, la recherche
-reprend sans rien casser. `window.MOGICHEX_CONFIG = { distBase: '…' }` court-circuite tout.
+reprend sans rien casser. `window.MOGICHEX_CONFIG = { distBase: '…' }` court-circuite tout, et
+`{ distRoots: ['…'] }` ajoute des racines pour une disposition non prévue.
 
 Le statut HTTP ne suffit pas à valider un emplacement : le `.htaccess` livré renvoie
 `index.html` pour toute URL sans fichier correspondant, donc un candidat absent répondrait
@@ -177,6 +195,21 @@ Le tri alphabétique suit la **langue affichée**, pas l'anglais.
 
 ---
 
+## Invitations
+
+**Le format est celui de joclymatch**, à la lettre :
+
+```
+<racine>/index.html?game=<jeu>&mid=<horodatage>-<14 car.>&player=a|b[&lg=fr]
+```
+
+Conséquence voulue : un lien produit par l'une des deux applications est lisible par l'autre.
+Coller un lien joclymatch dans mogichex donne le bon jeu, la bonne partie et le bon camp — seul
+le fichier de partie diffère.
+
+Un lien tronqué par un copier-coller rend `null` plutôt que de lancer une partie sur des valeurs
+partielles. L'identifiant est validé côté client **avant** l'envoi, avec le même motif que le PHP.
+
 ## Options de la partie
 
 Reprises de `control.html` de Jocly, dans un panneau accessible pendant la partie :
@@ -256,6 +289,20 @@ course ne se produit pas (12/12 conservés même sans verrou) ; avec un top comm
 Non couvert : les limites propres à l'hébergeur (`max_execution_time`, nombre de processus
 concurrents). Si l'attente longue de 20 s pose problème en ligne, la réduire dans `signal.php`.
 
+### `deploy/match.php` — les fichiers de partie
+
+**mogichex a ses propres fichiers de partie**, à côté de `signal.php`. Il ne partage pas le
+stockage de joclymatch : deux applications qui écrivent dans le même répertoire, ce sont deux
+formats qui doivent rester d'accord pour toujours, et une purge de l'une qui efface les parties
+de l'autre.
+
+L'**enveloppe**, elle, reste celle de joclymatch — `{matchDetails, matchdata, time, key}` — pour
+que les deux applications restent lisibles l'une par l'autre le jour où on le voudra.
+
+Écriture **atomique** (fichier temporaire puis `rename()`) : sans elle, un `load()` concurrent lit
+un fichier vide ou tronqué. Mesuré : 4 lectures incomplètes sur ~1100 sans `rename()`, **0 avec**.
+Attente longue optionnelle bornée à 20 s, comme `signal.php`.
+
 ### CORS
 
 Nécessaire seulement si l'application n'est pas servie depuis le même domaine que le relai
@@ -287,6 +334,7 @@ index.html              coquille mono-fenêtre (écrans + panneaux)
 css/mogichex.css        mobile d'abord, cibles tactiles ≥ 44 px
 js/config.js            chemins, relai, surcharge à l'exécution
 js/dist-locator.js      recherche du dist (pur, testé)
+js/remote/invite.js     codec d'invitation joclymatch (pur, testé)
 js/i18n.js              t(), pickLocalized(), chargement des langues
 js/device.js            classe d'appareil par capacité
 js/catalog.js           filtrage, groupement (pur, testé)
@@ -299,7 +347,7 @@ tools/build-catalog.mjs      extraction du catalogue (build)
 tools/scan-geometry.mjs      aide à la maintenance de la liste
 tools/stamp-sw.mjs           estampille SHELL_VERSION
 tools/serve.mjs              serveur de développement (--coi)
-deploy/                      signal.php, .htaccess, signalconf.php.example
+deploy/                      signal.php, match.php, .htaccess, signalconf.php.example
 tests/                       Node pur + PHP réel
 ```
 
@@ -338,7 +386,6 @@ tests/                       Node pur + PHP réel
 
 ```sh
 npm test                      # 18 assertions, Node pur
-php tests/test-signal.php     # 14 assertions, PHP réel
 ```
 
 Ce qui est testable l'est : construction du catalogue, champs localisés, filtrage,

@@ -18,7 +18,24 @@ import { pickLocalized, preferredLocale, configure, t } from '../js/i18n.js';
 import { filterGames, groupByModule, initialCollapsed, normalize, searchableText } from '../js/catalog.js';
 import { classify } from '../js/device.js';
 import { isAbortError } from '../js/game.js';
-import { orderedCandidates, locateDist, looksLikeJocly, normalizeBase } from '../js/dist-locator.js';
+import {
+    makeId,
+    newMatchId,
+    otherSide,
+    buildInviteLink,
+    parseInviteLink,
+    buildEnvelope,
+    isUsableEnvelope,
+    MATCH_ID_RE,
+} from '../js/remote/invite.js';
+import {
+    orderedCandidates,
+    locateDist,
+    looksLikeJocly,
+    normalizeBase,
+    expandCandidates,
+    DIST_CANDIDATES,
+} from '../js/dist-locator.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -244,6 +261,31 @@ test('orderedCandidates : l\'emplacement memorise passe en tete, sans doublon', 
     assert.deepEqual(orderedCandidates('x/y', ['dist']), ['x/y/', 'dist/']);
 });
 
+test('expandCandidates : chaque racine est essayee nue PUIS suivie de browser/', () => {
+    assert.deepEqual(expandCandidates(['dist', '../jocly/dist']), [
+        'dist/',
+        'dist/browser/',
+        '../jocly/dist/',
+        '../jocly/dist/browser/',
+    ]);
+    // Les deux formes d'une meme racine se suivent : si la racine existe,
+    // c'est la qu'est le dist.
+    assert.equal(DIST_CANDIDATES.length, 8);
+    assert.ok(DIST_CANDIDATES.includes('../jocly/dist/browser/'));
+});
+
+test('locateDist : disposition reelle variantes/ — le moteur est sous dist/browser', async () => {
+    // Cas qui a mis le manque en evidence :
+    //   variantes/jocly/dist/browser  <- jocly.js est ICI
+    //   variantes/joclymatch
+    //   variantes/mogichex
+    // La liste sans le niveau « browser » echouait sur les quatre candidats.
+    const r = await locateDist({
+        fetchImpl: fakeFetch({ '../jocly/dist/browser/jocly.js': JOCLY_BODY }),
+    });
+    assert.equal(r.base, '../jocly/dist/browser/');
+});
+
 test('locateDist : trouve un dist frere quand il n\'est pas dans mogichex', async () => {
     const r = await locateDist({
         fetchImpl: fakeFetch({ '../dist/jocly.js': JOCLY_BODY }),
@@ -295,6 +337,97 @@ test('looksLikeJocly distingue le moteur de la page de repli', () => {
     assert.ok(!looksLikeJocly(SPA_FALLBACK));
     assert.ok(!looksLikeJocly(''));
     assert.ok(!looksLikeJocly(undefined));
+});
+
+// ---------------------------------------------------------------- invitations
+
+test('newMatchId : format joclymatch <horodatage>-<14 caracteres>', () => {
+    const id = newMatchId(1754035200000);
+    assert.match(id, /^1754035200000-[A-Za-z0-9]{14}$/);
+    assert.ok(MATCH_ID_RE.test(id));
+});
+
+test('makeId : tirage uniforme, pas de biais de modulo', () => {
+    // 256 n'est pas multiple de 62 : un modulo brut favoriserait les 8
+    // premiers caracteres. On rejette les octets >= 248.
+    const bytes = [];
+    for (let i = 0; i < 256; i++) bytes.push(i);
+    let cursor = 0;
+    const gen = (k) => {
+        const out = new Uint8Array(k);
+        for (let i = 0; i < k; i++) out[i] = bytes[cursor++ % 256];
+        return out;
+    };
+    const id = makeId(200, gen);
+    assert.equal(id.length, 200);
+    // Aucun caractere hors alphabet.
+    assert.match(id, /^[A-Za-z0-9]+$/);
+});
+
+test('buildInviteLink / parseInviteLink : aller-retour', () => {
+    const link = buildInviteLink({
+        game: 'classic-chess',
+        matchId: '1754035200000-AbCdEfGhIjKlMn',
+        side: 'a',
+        locale: 'fr',
+    });
+    const parsed = parseInviteLink(link);
+    assert.equal(parsed.game, 'classic-chess');
+    assert.equal(parsed.matchId, '1754035200000-AbCdEfGhIjKlMn');
+    assert.equal(parsed.side, 'a');
+    assert.equal(parsed.locale, 'fr');
+    assert.equal(parsed.origin, 'mogichex');
+});
+
+test("parseInviteLink : un lien joclymatch est lisible tel quel", () => {
+    // C'est tout l'interet de reprendre le format : coller un lien
+    // joclymatch dans mogichex donne le bon jeu, la bonne partie, le bon camp.
+    const p = parseInviteLink(
+        'https://exemple.fr/joclymatch/index.php?game=classic-chess&mid=1754035200000-AbCdEfGhIjKlMn&player=b'
+    );
+    assert.equal(p.game, 'classic-chess');
+    assert.equal(p.side, 'b');
+    assert.equal(p.origin, 'joclymatch');
+});
+
+test('parseInviteLink : un lien tronque ou invalide rend null', () => {
+    // Un copier-coller incomplet ne doit PAS lancer une partie sur des
+    // valeurs partielles.
+    assert.equal(parseInviteLink('index.html?game=classic-chess'), null);
+    assert.equal(parseInviteLink('index.html?mid=1754035200000-AbCdEfGhIjKlMn'), null);
+    assert.equal(parseInviteLink('index.html?game=chess&mid=court'), null);
+    assert.equal(parseInviteLink('index.html?game=../evil&mid=1754035200000-AbCdEfGhIjKlMn'), null);
+    assert.equal(parseInviteLink(''), null);
+    assert.equal(parseInviteLink(null), null);
+});
+
+test('parseInviteLink : le camp est facultatif', () => {
+    const p = parseInviteLink('index.html?game=classic-chess&mid=1754035200000-AbCdEfGhIjKlMn');
+    assert.equal(p.side, null);
+    assert.equal(p.game, 'classic-chess');
+});
+
+test('otherSide', () => {
+    assert.equal(otherSide('a'), 'b');
+    assert.equal(otherSide('b'), 'a');
+    assert.equal(otherSide('z'), null);
+});
+
+test("buildEnvelope / isUsableEnvelope : format joclymatch, debris rejetes", () => {
+    const env = buildEnvelope({
+        matchDetails: { matchId: 'x', gameName: 'classic-chess' },
+        matchdata: { moves: [] },
+        now: 42,
+        key: 'k',
+    });
+    assert.deepEqual(Object.keys(env).sort(), ['key', 'matchDetails', 'matchdata', 'time']);
+    assert.equal(env.time, 42);
+    assert.ok(isUsableEnvelope(env));
+    // match.php rend {} pour une partie jamais sauvegardee : le client ne
+    // doit pas le prendre pour un etat jouable.
+    assert.ok(!isUsableEnvelope({}));
+    assert.ok(!isUsableEnvelope(null));
+    assert.ok(!isUsableEnvelope({ matchDetails: {} }));
 });
 
 // ---------------------------------------------------------------- coherence
