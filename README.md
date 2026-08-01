@@ -19,7 +19,8 @@ mono-fenêtre, et de [Tabulon](https://github.com/fhoudebert/tabulon) pour les a
 | 3b | Options de partie (`control.html`), dist partageable | **fait** |
 | 4 | PWA : manifeste, service worker, cache par module | **fait, non validé sur appareil** |
 | 5a | Invitations (format joclymatch) + fichiers de partie | **fait** — codec pur testé, `match.php` testé sous PHP |
-| 5b | Multijoueur côté client : WebRTC, repli HTTP, garde reculer/recommencer | à écrire |
+| 5b | Multijoueur côté client : invitation, transport HTTP, garde reculer | **fait** — échange prouvé entre deux navigateurs |
+| 5c | WebRTC par-dessus `signal.php` (latence) | à écrire |
 | 6 | COOP/COEP + fairy-stockfish multi-thread | préparé (`.htaccess`, `serve.mjs --coi`), non activé |
 
 ### Ce qui a été mesuré au navigateur
@@ -37,6 +38,19 @@ Sonde Playwright, viewport 390×844, pointeur grossier, dist jocly2 réel :
   par défaut, réglages persistés (`{skin, notation, viewAs}`) et relus après rechargement ;
 - notation et retournement **changent réellement le rendu** (empreintes de pixels du plateau
   différentes avant/après) ; recommencer ramène le statut à « Your turn » sans erreur.
+
+Jeu à distance, mesuré de bout en bout contre un vrai `match.php` :
+
+- aller-retour entre deux pairs : A publie, B reçoit ; B répond, A reçoit ; **aucun ne se
+  réapplique sa propre enveloppe** ;
+- deux navigateurs : A crée l'invitation et attend, B ouvre le lien et arrive sur le bon jeu,
+  en attente ; reculer est bien masqué ;
+- **un coup traverse réellement** : un état publié dans le relai est chargé par l'autre
+  navigateur, qui passe à son tour.
+
+Ce qui reste non prouvé ici : jouer ce coup **au doigt**. Playwright n'y arrive pas dans
+l'iframe Jocly (voir ci-dessous), donc l'état échangé a été produit en pilotant le moteur, pas
+en touchant le plateau.
 
 Deux bugs réels ont été trouvés par cette sonde, et corrigés : `Jocly.PLAYER_A` lu avant le
 chargement du moteur, et la recherche qui n'indexait que la langue affichée.
@@ -210,6 +224,32 @@ le fichier de partie diffère.
 Un lien tronqué par un copier-coller rend `null` plutôt que de lancer une partie sur des valeurs
 partielles. L'identifiant est validé côté client **avant** l'envoi, avec le même motif que le PHP.
 
+## Jouer à distance
+
+Trois adversaires possibles depuis l'écran de démarrage : **l'ordinateur**, **un autre joueur
+sur le même appareil**, ou **un autre joueur par Internet**.
+
+Le mode Internet ouvre un panneau d'invitation : un lien à envoyer, au format joclymatch. Vous
+gardez cet appareil et le camp A, l'invité reçoit le camp B.
+
+**Transport : les fichiers de partie (`match.php`), pas WebRTC.** Au tour par tour un coup pèse
+quelques centaines d'octets et la latence d'un aller-retour HTTP ne se voit pas ; le relai
+traverse par ailleurs tout ce que WebRTC ne traverse pas. WebRTC viendra se greffer *par-dessus
+la même interface*, pas à sa place.
+
+Les deux camps écrivent l'**état complet** dans le même fichier, chacun après son coup, et
+relisent celui de l'autre. Publier l'état complet plutôt que le dernier coup est ce qui permet
+de rejoindre une partie commencée, de recharger la page sans rien perdre, et de repartir après
+une coupure. La première lecture est immédiate (rattrapage), les suivantes en attente longue.
+
+Trois refus valent d'être notés, tous testés : l'enveloppe vide que rend `match.php` pour une
+partie jamais sauvegardée n'est **pas** un état jouable ; sa propre enveloppe est ignorée (les
+deux camps écrivent dans le même fichier — sans ce test, chacun se rechargerait en boucle et
+interromprait son propre tour) ; une enveloppe sans coup nouveau ne redessine rien.
+
+**Reculer est masqué dès qu'un camp est distant** : reprendre un coup déjà parti chez
+l'adversaire désynchroniserait les deux plateaux.
+
 ## Options de la partie
 
 Reprises de `control.html` de Jocly, dans un panneau accessible pendant la partie :
@@ -235,6 +275,20 @@ et le mode *ordinateur contre ordinateur*, hors sujet sur téléphone pour l'ins
 dans l'API Jocly, et `rollback` redessine sans rien ré-armer.
 
 ---
+
+## Reprendre un coup
+
+Bouton à côté de l'aide, visible seulement quand il a un sens : il y a un coup à reprendre,
+c'est au tour d'un humain, et **aucun camp n'est distant**.
+
+À deux humains on défait le dernier coup ; contre l'ordinateur, sa réponse **et** le sien. Comme
+tous les jeux n'alternent pas strictement les camps et que `getPlayedMoves()` ne rend que des
+coups bruts sans indication de camp, on vérifie ensuite à qui c'est le tour et on recule d'un
+cran de plus si besoin — un seul `rollback` dans le cas normal, deux au pire.
+
+**Le niveau « expert » (fairy-stockfish) n'est pas une exception.** Vérifié dans
+`src/core/jocly.fairy.js` : chaque recherche envoie au worker la **FEN complète** de la position,
+sans aucun historique de coups. Le moteur n'a donc aucun état à défaire.
 
 ## Règles
 
@@ -335,6 +389,8 @@ css/mogichex.css        mobile d'abord, cibles tactiles ≥ 44 px
 js/config.js            chemins, relai, surcharge à l'exécution
 js/dist-locator.js      recherche du dist (pur, testé)
 js/remote/invite.js     codec d'invitation joclymatch (pur, testé)
+js/remote/protocol.js   décisions du jeu à distance (pur, testé)
+js/remote/relay-channel.js  transport sur match.php
 js/i18n.js              t(), pickLocalized(), chargement des langues
 js/device.js            classe d'appareil par capacité
 js/catalog.js           filtrage, groupement (pur, testé)

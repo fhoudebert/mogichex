@@ -51,13 +51,21 @@
                     <button id="btn-rules" class="secondary" data-t>Rules</button>
                 </div>
                 <div class="field">
+                    <label for="sel-mode" data-t>Opponent</label>
+                    <select id="sel-mode">
+                        <option value="ai" data-t>Computer</option>
+                        <option value="human" data-t>Another player, same device</option>
+                        <option value="remote" data-t>Another player, over the internet</option>
+                    </select>
+                </div>
+                <div class="field" id="row-side">
                     <label for="sel-side" data-t>You play</label>
                     <select id="sel-side">
                         <option value="a" data-t>White / Player A</option>
                         <option value="b" data-t>Black / Player B</option>
                     </select>
                 </div>
-                <div class="field">
+                <div class="field" id="row-level">
                     <label for="sel-level" data-t>Level</label>
                     <select id="sel-level"></select>
                 </div>
@@ -65,6 +73,12 @@
                     <label for="sel-skin" data-t>Board style</label>
                     <select id="sel-skin"></select>
                 </div>
+                <label class="switch row" id="row-start-sounds" hidden>
+                    <input id="start-sounds" type="checkbox"><span data-t>Sounds</span>
+                </label>
+                <label class="switch row" id="row-start-notation" hidden>
+                    <input id="start-notation" type="checkbox"><span data-t>Notation</span>
+                </label>
             </div>
         </section>
 
@@ -73,6 +87,7 @@
             <header class="bar">
                 <button class="icon-btn back" data-back data-t-label aria-label="Back to games">‹</button>
                 <h2 id="game-title" class="bar-title"></h2>
+                <button id="btn-take-back" class="icon-btn" data-t-label aria-label="Take back">↶</button>
                 <button id="btn-rules-game" class="icon-btn" data-t-label aria-label="Rules">?</button>
                 <button id="btn-game-options" class="icon-btn" data-t-label aria-label="Game options">⚙</button>
             </header>
@@ -122,6 +137,23 @@
                     <input id="opt-autocomplete" type="checkbox"><span data-t>Auto-complete moves</span>
                 </label>
                 <button id="btn-restart" class="secondary wide" data-t>Restart game</button>
+            </div>
+        </aside>
+
+        <!-- invitation : lien a partager pour une partie a distance -->
+        <aside id="panel-invite" class="panel" aria-hidden="true">
+            <header class="bar">
+                <h2 class="bar-title" data-t>Invite a player</h2>
+                <button class="icon-btn" data-close-panel data-t-label aria-label="Close">✕</button>
+            </header>
+            <div class="settings-body">
+                <p class="hint" data-t>Send this link to your opponent. You keep this device.</p>
+                <input id="invite-link" type="text" readonly>
+                <div class="detail-actions">
+                    <button id="btn-copy-invite" class="secondary" data-t>Copy link</button>
+                    <button id="btn-start-remote" class="primary" data-t>Start</button>
+                </div>
+                <p id="invite-error" class="hint error"></p>
             </div>
         </aside>
 

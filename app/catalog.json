@@ -3,7 +3,7 @@
  "source": {
   "repo": "jocly2",
   "commit": "ffbaf21807452f4fbfe6491358d134d2f67ae7a4",
-  "builtAt": "2026-08-01T08:06:40.183Z"
+  "builtAt": "2026-08-01T10:51:17.689Z"
  },
  "counts": {
   "games": 128,
@@ -61,12 +61,36 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    null,
-    null,
-    null,
-    null,
-    null,
-    null
+    {
+     "label": "Fast",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Beginner",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Hard",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -124,12 +148,36 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    null,
-    null,
-    null,
-    null,
-    null,
-    null
+    {
+     "label": "Fast",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Beginner",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Hard",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -187,12 +235,36 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    null,
-    null,
-    null,
-    null,
-    null,
-    null
+    {
+     "label": "Fast",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Beginner",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Hard",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -250,12 +322,36 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    null,
-    null,
-    null,
-    null,
-    null,
-    null
+    {
+     "label": "Fast",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Beginner",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Hard",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -315,12 +411,36 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    null,
-    null,
-    null,
-    null,
-    null,
-    null
+    {
+     "label": "Fast",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Beginner",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Hard",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -358,12 +478,36 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    null,
-    null,
-    null,
-    null,
-    null,
-    null
+    {
+     "label": "Fast",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Beginner",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Hard",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -402,12 +546,36 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    null,
-    null,
-    null,
-    null,
-    null,
-    null
+    {
+     "label": "Fast",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Beginner",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Hard",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -465,12 +633,36 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    null,
-    null,
-    null,
-    null,
-    null,
-    null
+    {
+     "label": "Fast",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Beginner",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Hard",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -529,12 +721,36 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    null,
-    null,
-    null,
-    null,
-    null,
-    null
+    {
+     "label": "Fast",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Beginner",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Hard",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -592,12 +808,36 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    null,
-    null,
-    null,
-    null,
-    null,
-    null
+    {
+     "label": "Fast",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Beginner",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Hard",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -652,12 +892,36 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    null,
-    null,
-    null,
-    null,
-    null,
-    null
+    {
+     "label": "Fast",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Beginner",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Hard",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -696,11 +960,31 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong",
-    "expert"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -740,10 +1024,26 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "tablet"
@@ -782,11 +1082,31 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong",
-    "expert"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -825,11 +1145,31 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong",
-    "expert"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -869,11 +1209,31 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong",
-    "expert"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
+    }
    ],
    "obsolete": true,
    "tier": "phone"
@@ -913,10 +1273,26 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "tablet"
@@ -955,10 +1331,26 @@
    "ratio": 1.7,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -998,10 +1390,26 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -1040,11 +1448,31 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong",
-    "expert"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -1095,11 +1523,31 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong",
-    "expert"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -1139,11 +1587,31 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong",
-    "expert"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -1182,11 +1650,31 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong",
-    "expert"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -1225,10 +1713,26 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -1267,10 +1771,26 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -1310,11 +1830,31 @@
    "ratio": 1.5,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong",
-    "expert"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [2sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -1354,10 +1894,26 @@
    "ratio": 1.3333333333333,
    "switchable": false,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "tablet"
@@ -1396,10 +1952,26 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -1438,10 +2010,26 @@
    "ratio": 1.154700538,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -1480,11 +2068,31 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong",
-    "expert"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -1523,10 +2131,26 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "tablet"
@@ -1566,10 +2190,26 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -1609,10 +2249,26 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -1651,11 +2307,31 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong",
-    "expert"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -1694,10 +2370,26 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "tablet"
@@ -1737,10 +2429,26 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "tablet"
@@ -1780,10 +2488,26 @@
    "ratio": 0.89,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -1822,11 +2546,31 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong",
-    "expert"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -1866,10 +2610,26 @@
    "ratio": 0.9,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -1909,10 +2669,26 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -1951,11 +2727,31 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong",
-    "expert"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -1995,11 +2791,31 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong",
-    "expert"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -2039,11 +2855,31 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong",
-    "expert"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -2082,10 +2918,26 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -2124,10 +2976,26 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -2166,11 +3034,31 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong",
-    "expert"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
+    }
    ],
    "obsolete": true,
    "tier": "phone"
@@ -2215,10 +3103,26 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -2268,11 +3172,31 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong",
-    "expert"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -2311,10 +3235,26 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -2353,11 +3293,31 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong",
-    "expert"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -2408,11 +3368,31 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong",
-    "expert"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -2452,10 +3432,26 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "tablet"
@@ -2495,11 +3491,31 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong",
-    "expert"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -2538,11 +3554,31 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong",
-    "expert"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -2581,10 +3617,26 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -2623,10 +3675,26 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -2665,11 +3733,31 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong",
-    "expert"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -2708,11 +3796,31 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong",
-    "expert"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -2751,11 +3859,31 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong",
-    "expert"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -2805,11 +3933,31 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong",
-    "expert"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -2849,10 +3997,26 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -2891,10 +4055,26 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -2933,10 +4113,26 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -2976,11 +4172,31 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong",
-    "expert"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -3020,10 +4236,26 @@
    "ratio": 1.1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [2sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "tablet"
@@ -3063,10 +4295,26 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -3099,10 +4347,26 @@
    "ratio": 1.2,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -3135,10 +4399,26 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -3177,10 +4457,26 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -3219,10 +4515,26 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -3261,10 +4573,26 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -3309,10 +4637,26 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -3351,10 +4695,26 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -3395,11 +4755,31 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong",
-    "expert"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -3439,11 +4819,31 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong",
-    "expert"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -3493,11 +4893,31 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong",
-    "expert"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -3537,10 +4957,26 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -3580,10 +5016,26 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "tablet"
@@ -3623,11 +5075,31 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong",
-    "expert"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -3666,10 +5138,26 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -3708,10 +5196,26 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "tablet"
@@ -3750,10 +5254,26 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -3792,10 +5312,26 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "tablet"
@@ -3835,10 +5371,26 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -3877,11 +5429,31 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong",
-    "expert"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -3920,11 +5492,31 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong",
-    "expert"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -3957,10 +5549,26 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -4000,10 +5608,26 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -4042,10 +5666,26 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -4084,11 +5724,31 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong",
-    "expert"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -4148,11 +5808,31 @@
    "ratio": 0.9,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong",
-    "expert"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -4192,10 +5872,26 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -4236,9 +5932,21 @@
    "ratio": 1,
    "switchable": false,
    "levels": [
-    "easy",
-    "fast",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -4279,9 +5987,21 @@
    "ratio": 1,
    "switchable": false,
    "levels": [
-    "easy",
-    "fast",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -4322,9 +6042,21 @@
    "ratio": 1,
    "switchable": false,
    "levels": [
-    "easy",
-    "fast",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -4365,9 +6097,21 @@
    "ratio": 1,
    "switchable": false,
    "levels": [
-    "easy",
-    "fast",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -4408,9 +6152,21 @@
    "ratio": 1,
    "switchable": false,
    "levels": [
-    "easy",
-    "fast",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -4451,9 +6207,21 @@
    "ratio": 1,
    "switchable": false,
    "levels": [
-    null,
-    null,
-    null
+    {
+     "label": "Easy",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -4494,11 +6262,31 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    null,
-    null,
-    null,
-    null,
-    null
+    {
+     "label": "Padawan",
+     "isDefault": true,
+     "ai": null
+    },
+    {
+     "label": "Warrior",
+     "isDefault": false,
+     "ai": null
+    },
+    {
+     "label": "Samurai",
+     "isDefault": false,
+     "ai": null
+    },
+    {
+     "label": "Ronin",
+     "isDefault": false,
+     "ai": null
+    },
+    {
+     "label": "Damyo",
+     "isDefault": false,
+     "ai": null
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -4544,12 +6332,36 @@
    "ratio": 1,
    "switchable": false,
    "levels": [
-    null,
-    null,
-    null,
-    null,
-    null,
-    null
+    {
+     "label": "Fast (1sec)",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Beginner",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Confirmed",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Slow (10sec)",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -4595,12 +6407,36 @@
    "ratio": 1,
    "switchable": false,
    "levels": [
-    null,
-    null,
-    null,
-    null,
-    null,
-    null
+    {
+     "label": "Fast (1sec)",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Beginner",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Confirmed",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Slow (10sec)",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -4646,12 +6482,36 @@
    "ratio": 1,
    "switchable": false,
    "levels": [
-    null,
-    null,
-    null,
-    null,
-    null,
-    null
+    {
+     "label": "Fast (1sec)",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Beginner",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Confirmed",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Slow (10sec)",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -4697,12 +6557,36 @@
    "ratio": 1,
    "switchable": false,
    "levels": [
-    null,
-    null,
-    null,
-    null,
-    null,
-    null
+    {
+     "label": "Fast (1sec)",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Beginner",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Confirmed",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Slow (10sec)",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -4748,12 +6632,36 @@
    "ratio": 1,
    "switchable": false,
    "levels": [
-    null,
-    null,
-    null,
-    null,
-    null,
-    null
+    {
+     "label": "Fast (1sec)",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Beginner",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Confirmed",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Slow (10sec)",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -4799,10 +6707,26 @@
    "ratio": 1,
    "switchable": false,
    "levels": [
-    null,
-    null,
-    null,
-    null
+    {
+     "label": "Beginner",
+     "isDefault": true,
+     "ai": null
+    },
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": null
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": null
+    },
+    {
+     "label": "Confirmed",
+     "isDefault": false,
+     "ai": null
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -4848,10 +6772,26 @@
    "ratio": 1,
    "switchable": false,
    "levels": [
-    null,
-    null,
-    null,
-    null
+    {
+     "label": "Level 1",
+     "isDefault": true,
+     "ai": null
+    },
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": null
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": null
+    },
+    {
+     "label": "Level 4",
+     "isDefault": false,
+     "ai": null
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -4901,9 +6841,21 @@
    "ratio": 1.2857142857143,
    "switchable": true,
    "levels": [
-    null,
-    null,
-    null
+    {
+     "label": "Easy",
+     "isDefault": true,
+     "ai": null
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": null
+    },
+    {
+     "label": "Hard",
+     "isDefault": false,
+     "ai": null
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -4953,9 +6905,21 @@
    "ratio": 1.2857142857143,
    "switchable": true,
    "levels": [
-    null,
-    null,
-    null
+    {
+     "label": "Easy",
+     "isDefault": true,
+     "ai": null
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": null
+    },
+    {
+     "label": "Hard",
+     "isDefault": false,
+     "ai": null
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -5005,9 +6969,21 @@
    "ratio": 1.4,
    "switchable": true,
    "levels": [
-    null,
-    null,
-    null
+    {
+     "label": "Easy",
+     "isDefault": true,
+     "ai": null
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": null
+    },
+    {
+     "label": "Hard",
+     "isDefault": false,
+     "ai": null
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -5057,9 +7033,21 @@
    "ratio": 1.4,
    "switchable": true,
    "levels": [
-    null,
-    null,
-    null
+    {
+     "label": "Easy",
+     "isDefault": true,
+     "ai": null
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": null
+    },
+    {
+     "label": "Hard",
+     "isDefault": false,
+     "ai": null
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -5109,9 +7097,21 @@
    "ratio": 1.2857142857143,
    "switchable": true,
    "levels": [
-    null,
-    null,
-    null
+    {
+     "label": "Easy",
+     "isDefault": true,
+     "ai": null
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": null
+    },
+    {
+     "label": "Hard",
+     "isDefault": false,
+     "ai": null
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -5161,9 +7161,21 @@
    "ratio": 1.2857142857143,
    "switchable": true,
    "levels": [
-    null,
-    null,
-    null
+    {
+     "label": "Easy",
+     "isDefault": true,
+     "ai": null
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": null
+    },
+    {
+     "label": "Hard",
+     "isDefault": false,
+     "ai": null
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -5204,10 +7216,26 @@
    "ratio": 1.1638,
    "switchable": true,
    "levels": [
-    "baby",
-    "fast",
-    "papa",
-    "mama"
+    {
+     "label": "Baby",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Papa",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Mama",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -5245,10 +7273,26 @@
    "ratio": null,
    "switchable": false,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -5286,10 +7330,26 @@
    "ratio": null,
    "switchable": false,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -5327,10 +7387,26 @@
    "ratio": null,
    "switchable": false,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -5368,10 +7444,26 @@
    "ratio": null,
    "switchable": false,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -5409,10 +7501,26 @@
    "ratio": null,
    "switchable": false,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -5450,10 +7558,26 @@
    "ratio": null,
    "switchable": false,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -5491,10 +7615,26 @@
    "ratio": null,
    "switchable": false,
    "levels": [
-    "easy",
-    "fast",
-    "medium",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -5615,12 +7755,36 @@
    "ratio": 0.58,
    "switchable": true,
    "levels": [
-    null,
-    null,
-    null,
-    null,
-    null,
-    null
+    {
+     "label": "Fast",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Beginner",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Hard",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -5661,9 +7825,21 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -5703,9 +7879,21 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -5745,9 +7933,21 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -5787,9 +7987,21 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -5829,9 +8041,21 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -5871,9 +8095,21 @@
    "ratio": 1,
    "switchable": true,
    "levels": [
-    "easy",
-    "fast",
-    "strong"
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
    ],
    "obsolete": false,
    "tier": "phone"
@@ -5918,11 +8154,31 @@
    "ratio": 1.1164274322169,
    "switchable": true,
    "levels": [
-    null,
-    null,
-    null,
-    null,
-    null
+    {
+     "label": "Cabin boy",
+     "isDefault": true,
+     "ai": null
+    },
+    {
+     "label": "Sailor",
+     "isDefault": false,
+     "ai": null
+    },
+    {
+     "label": "Officer",
+     "isDefault": false,
+     "ai": null
+    },
+    {
+     "label": "Captain",
+     "isDefault": false,
+     "ai": null
+    },
+    {
+     "label": "Admiral",
+     "isDefault": false,
+     "ai": null
+    }
    ],
    "obsolete": false,
    "tier": "phone"

@@ -159,6 +159,13 @@ button.wide { width: 100%; margin-top: 1.25rem; }
 .rules table { max-width: 100%; }
 .rules a { color: var(--accent-2); }
 .about { color: var(--fg-dim); font-size: .8rem; margin-top: 2rem; }
+.hint { color: var(--fg-dim); font-size: .85rem; }
+.hint.error { color: #ff8686; }
+.settings-body input[type="text"] {
+    width: 100%; min-height: var(--tap); padding: 0 .6rem; font-size: .9rem;
+    color: var(--fg); background: var(--bg-soft);
+    border: 1px solid var(--line); border-radius: .5rem;
+}
 .fatal { color: #ff8686; padding: 1rem; white-space: pre-wrap; }
 
 @media (prefers-reduced-motion: reduce) {

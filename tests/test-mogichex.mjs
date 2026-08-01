@@ -17,7 +17,15 @@ import { buildCatalog, buildEntry, normalizeLocalized, pick2dSkin } from '../too
 import { pickLocalized, preferredLocale, configure, t } from '../js/i18n.js';
 import { filterGames, groupByModule, initialCollapsed, normalize, searchableText } from '../js/catalog.js';
 import { classify } from '../js/device.js';
-import { isAbortError } from '../js/game.js';
+import { isAbortError, takeBackTarget } from '../js/game.js';
+import {
+    shouldApplyEnvelope,
+    envelopeTurns,
+    nextSince,
+    backoffDelay,
+    sidesFor,
+} from '../js/remote/protocol.js';
+import { RelayChannel } from '../js/remote/relay-channel.js';
 import {
     makeId,
     newMatchId,
@@ -236,6 +244,54 @@ test("isAbortError : l'interruption voulue d'un tour n'est pas une panne", () =>
     assert.ok(!isAbortError({}));
 });
 
+// ---------------------------------------------------------------- reprise
+
+test('takeBackTarget : un coup a deux humains, deux contre l\'ordinateur', () => {
+    // A deux humains, on defait le dernier coup joue.
+    assert.equal(takeBackTarget(5, 2), 4);
+    assert.equal(takeBackTarget(1, 2), 0);
+    // Contre l'ordinateur, on defait sa reponse ET son propre coup.
+    assert.equal(takeBackTarget(4, 1), 2);
+    assert.equal(takeBackTarget(2, 1), 0);
+    // Un seul coup joue : on revient au debut plutot que de refuser.
+    assert.equal(takeBackTarget(1, 1), 0);
+    // Rien a reprendre.
+    assert.equal(takeBackTarget(0, 1), null);
+    assert.equal(takeBackTarget(0, 2), null);
+});
+
+test('buildCatalog : les niveaux sont indexes par position, avec leur libelle', () => {
+    // 28 jeux sur 128 declarent des niveaux SANS champ `name` (seulement
+    // `label`) : indexer par nom donnait des entrees nulles et des lignes
+    // vides dans la liste deroulante.
+    const { catalog } = buildCatalog(
+        [
+            {
+                module: 'm',
+                games: [
+                    raw('a', {
+                        model: {
+                            levels: [
+                                { label: 'Fast', ai: 'uct', isDefault: true },
+                                { label: 'Expert', ai: 'fairy-stockfish' },
+                                { name: 'sansLabel', ai: 'uct' },
+                                { ai: 'uct' },
+                            ],
+                        },
+                    }),
+                ],
+            },
+        ],
+        { ineligible: [] }
+    );
+    const levels = catalog.games[0].levels;
+    assert.deepEqual(levels.map((l) => l.label), ['Fast', 'Expert', 'sansLabel', 'Level 4']);
+    assert.equal(levels[0].isDefault, true);
+    assert.equal(levels[1].ai, 'fairy-stockfish');
+    // Aucun libelle vide, quelle que soit la declaration du jeu.
+    assert.ok(levels.every((l) => typeof l.label === 'string' && l.label.length > 0));
+});
+
 // ---------------------------------------------------------------- dist
 
 const JOCLY_BODY = 'var Jocly=function(){global.BrowserScriptLoader={};}();';
@@ -428,6 +484,154 @@ test("buildEnvelope / isUsableEnvelope : format joclymatch, debris rejetes", () 
     assert.ok(!isUsableEnvelope({}));
     assert.ok(!isUsableEnvelope(null));
     assert.ok(!isUsableEnvelope({ matchDetails: {} }));
+});
+
+// ---------------------------------------------------------------- jeu a distance
+
+const envOf = (turns, key, game = 'classic-chess') => ({
+    matchDetails: { matchId: 'm', gameName: game, nbTurns: turns },
+    matchdata: { playedMoves: [], initialBoard: null, game },
+    time: 1,
+    key,
+});
+
+test("shouldApplyEnvelope : {} de match.php n'est PAS un etat jouable", () => {
+    // match.php rend {} pour une partie jamais sauvegardee. La passer a
+    // match.load() planterait.
+    assert.equal(shouldApplyEnvelope({}, { selfKey: 'moi', lastTurns: 0 }).apply, false);
+    assert.equal(shouldApplyEnvelope(null, { selfKey: 'moi', lastTurns: 0 }).reason, 'empty');
+});
+
+test('shouldApplyEnvelope : on ignore SA PROPRE enveloppe', () => {
+    // Les deux camps ecrivent dans le meme fichier : sans ce test, chacun se
+    // rechargerait lui-meme en boucle et interromprait son propre tour.
+    const v = shouldApplyEnvelope(envOf(3, 'moi'), { selfKey: 'moi', lastTurns: 0 });
+    assert.equal(v.apply, false);
+    assert.equal(v.reason, 'own');
+});
+
+test('shouldApplyEnvelope : rien de neuf = on ne redessine pas', () => {
+    assert.equal(shouldApplyEnvelope(envOf(3, 'lui'), { selfKey: 'moi', lastTurns: 3 }).reason, 'stale');
+    assert.equal(shouldApplyEnvelope(envOf(4, 'lui'), { selfKey: 'moi', lastTurns: 3 }).apply, true);
+});
+
+test("shouldApplyEnvelope : une partie d'un AUTRE jeu est refusee", () => {
+    // match.load() rejette deja un jeu different, mais autant ne pas lui
+    // envoyer : le message d'erreur brut n'apprendrait rien a l'utilisateur.
+    const v = shouldApplyEnvelope(envOf(4, 'lui', 'shogi'), {
+        selfKey: 'moi',
+        lastTurns: 0,
+        gameName: 'classic-chess',
+    });
+    assert.equal(v.reason, 'other-game');
+});
+
+test('envelopeTurns / nextSince : jamais de recul', () => {
+    assert.equal(envelopeTurns(envOf(7, 'x')), 7);
+    assert.equal(envelopeTurns({}), 0);
+    // Un en-tete absent ou aberrant ne doit pas faire repartir l'attente du
+    // debut, ce qui rejouerait tout l'historique.
+    assert.equal(nextSince('1754035200', 0), 1754035200);
+    assert.equal(nextSince(null, 42), 42);
+    assert.equal(nextSince('abc', 42), 42);
+    assert.equal(nextSince('10', 42), 42);
+});
+
+test('backoffDelay : 1 s, 2 s, 4 s… plafonne', () => {
+    assert.equal(backoffDelay(0), 0);
+    assert.equal(backoffDelay(1), 1000);
+    assert.equal(backoffDelay(3), 4000);
+    assert.equal(backoffDelay(99), 30000);
+});
+
+test('sidesFor : le camp local et son oppose', () => {
+    const J = { PLAYER_A: 1, PLAYER_B: -1 };
+    assert.deepEqual(sidesFor('a', J), { local: 1, remote: -1 });
+    assert.deepEqual(sidesFor('b', J), { local: -1, remote: 1 });
+});
+
+test('RelayChannel : publie, puis applique la reponse de l\'adversaire', async () => {
+    const sent = [];
+    let stored = {};
+    let mtime = 0;
+    const fakeFetch = async (url, init) => {
+        const params = new URLSearchParams(init.body);
+        sent.push(params.get('action'));
+        if (params.get('action') === 'save') {
+            stored = JSON.parse(params.get('data'));
+            mtime += 1;
+        }
+        return {
+            ok: true,
+            status: 200,
+            headers: { get: (h) => (h === 'X-Match-Mtime' ? String(mtime) : null) },
+            json: async () => stored,
+        };
+    };
+    const applied = [];
+    const ch = new RelayChannel({
+        relayUrl: 'https://exemple.fr/relai/',
+        matchId: '1754035200000-AbCdEfGhIjKlMn',
+        selfKey: 'moi',
+        gameName: 'classic-chess',
+        onEnvelope: (e) => applied.push(e.matchDetails.nbTurns),
+        fetchImpl: fakeFetch,
+    });
+
+    await ch.publish(envOf(1, 'moi'));
+    // Relire tout de suite ne doit RIEN appliquer : c'est notre enveloppe.
+    assert.equal(await ch.pollOnce(), false);
+    assert.deepEqual(applied, []);
+
+    // L'adversaire ecrit a son tour.
+    stored = envOf(2, 'lui');
+    mtime += 1;
+    assert.equal(await ch.pollOnce(), true);
+    assert.deepEqual(applied, [2]);
+
+    // Relire encore n'applique pas deux fois le meme coup.
+    assert.equal(await ch.pollOnce(), false);
+    assert.deepEqual(applied, [2]);
+    assert.deepEqual(sent, ['save', 'load', 'load', 'load']);
+});
+
+test('RelayChannel : la premiere lecture est IMMEDIATE (rattrapage)', async () => {
+    // Rejoindre une partie deja commencee ne doit pas attendre 20 s : la
+    // premiere lecture se fait sans `since`, donc sans attente longue.
+    const asked = [];
+    const ch = new RelayChannel({
+        relayUrl: 'https://exemple.fr/relai',
+        matchId: '1754035200000-AbCdEfGhIjKlMn',
+        selfKey: 'moi',
+        onEnvelope: () => {},
+        fetchImpl: async (u, init) => {
+            const p = new URLSearchParams(init.body);
+            asked.push(p.has('since'));
+            return {
+                ok: true,
+                status: 200,
+                headers: { get: () => '1' },
+                json: async () => ({}),
+            };
+        },
+    });
+    await ch.pollOnce({ wait: false });
+    await ch.pollOnce();
+    assert.deepEqual(asked, [false, true]);
+});
+
+test('RelayChannel : une panne du relai remonte sans casser la boucle', async () => {
+    const errors = [];
+    const ch = new RelayChannel({
+        relayUrl: 'https://exemple.fr/relai',
+        matchId: '1754035200000-AbCdEfGhIjKlMn',
+        selfKey: 'moi',
+        onEnvelope: () => {},
+        onError: (e) => errors.push(e.message),
+        fetchImpl: async () => ({ ok: false, status: 503, headers: { get: () => null } }),
+    });
+    await assert.rejects(() => ch.pollOnce(), /relai 503/);
+    assert.equal(errors.length, 0); // onError n'est appele que par la boucle
 });
 
 // ---------------------------------------------------------------- coherence

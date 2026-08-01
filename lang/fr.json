@@ -43,5 +43,20 @@
   "Show possible moves": "Montrer les coups possibles",
   "Auto-complete moves": "Compléter les coups",
   "Restart game": "Recommencer la partie",
-  "The game engine could not be found.": "Le moteur de jeu est introuvable."
+  "The game engine could not be found.": "Le moteur de jeu est introuvable.",
+  "Opponent": "Adversaire",
+  "Computer": "Ordinateur",
+  "Another player, same device": "Un autre joueur, même appareil",
+  "Take back": "Reprendre le coup",
+  "Player A to move": "Au joueur A",
+  "Player B to move": "Au joueur B",
+  "Another player, over the internet": "Un autre joueur, par Internet",
+  "Invite a player": "Inviter un joueur",
+  "Send this link to your opponent. You keep this device.": "Envoyez ce lien à votre adversaire. Vous gardez cet appareil.",
+  "Copy link": "Copier le lien",
+  "Start": "Commencer",
+  "Copied": "Copié",
+  "Remote play needs a relay. None is configured.": "Le jeu à distance a besoin d'un relai. Aucun n'est configuré.",
+  "Waiting for the other player…": "En attente de l'autre joueur…",
+  "Connection lost, retrying…": "Connexion perdue, nouvelle tentative…"
 }

@@ -76,6 +76,18 @@ export function isAbortError(err) {
     return !!err && typeof err.message === 'string' && /aborted/i.test(err.message);
 }
 
+/**
+ * Position visee par un « reprendre le coup ».
+ * @param {number} playedCount nombre de coups joues
+ * @param {number} humanCount 1 (contre l'ordinateur) ou 2 (deux humains)
+ * @returns {number|null} null s'il n'y a rien a reprendre
+ */
+export function takeBackTarget(playedCount, humanCount) {
+    if (!(playedCount > 0)) return null;
+    if (humanCount > 1) return playedCount - 1;
+    return Math.max(0, playedCount - 2);
+}
+
 export class GameSession {
     /**
      * @param {HTMLElement} area conteneur du plateau
@@ -87,7 +99,8 @@ export class GameSession {
         this.entry = entry;
         this.hooks = hooks;
         this.match = null;
-        this.humanSide = null;
+        this.humanSides = [];
+        this.mode = 'ai';
         this.loopActive = false;
         this.aborted = false;
     }
@@ -101,8 +114,15 @@ export class GameSession {
         store.set('view.' + this.entry.name, opts);
     }
 
-    levelName() {
-        return store.get('level.' + this.entry.name, null);
+    /**
+     * Index du niveau choisi. On indexe par POSITION et non par nom : 28 jeux
+     * declarent des niveaux sans champ `name` (voir tools/lib/catalog.mjs).
+     */
+    levelIndex() {
+        const stored = store.get('level.' + this.entry.name, null);
+        if (typeof stored === 'number' && stored >= 0) return stored;
+        const def = this.entry.levels.findIndex((l) => l.isDefault);
+        return def >= 0 ? def : 0;
     }
 
     /**
@@ -124,10 +144,23 @@ export class GameSession {
         return opts;
     }
 
-    async start({ side } = {}) {
+    /**
+     * @param {{side?:'a'|'b', mode?:'ai'|'human'}} opts
+     *   mode 'ai'    : un humain, l'autre camp joue par l'ordinateur ;
+     *   mode 'human' : DEUX humains sur le meme appareil, aucun niveau d'IA.
+     */
+    async start({ side, mode } = {}) {
         const Jocly = await loadJocly();
         this.Jocly = Jocly;
-        this.humanSide = side === 'b' ? Jocly.PLAYER_B : Jocly.PLAYER_A;
+        this.mode = mode === 'human' || mode === 'remote' ? mode : 'ai';
+        this.humanSides =
+            this.mode === 'human'
+                ? [Jocly.PLAYER_A, Jocly.PLAYER_B]
+                : [side === 'b' ? Jocly.PLAYER_B : Jocly.PLAYER_A];
+        // En jeu a distance, le camp adverse n'est ni humain-ici ni machine :
+        // son coup ARRIVE. La boucle doit l'attendre au lieu de lancer une
+        // recherche, sinon l'ordinateur jouerait a la place de l'adversaire.
+        this.remoteSide = this.mode === 'remote' ? -this.humanSides[0] : null;
         this.match = await Jocly.createMatch(this.entry.name);
         this.config = await this.match.getConfig();
         await this.match.attachElement(this.area, { viewOptions: this.initialViewOptions(Jocly) });
@@ -153,6 +186,61 @@ export class GameSession {
         await this.rearm();
     }
 
+    isHuman(player) {
+        return (this.humanSides || []).indexOf(player) >= 0;
+    }
+
+    /** Vrai si les deux camps sont tenus par des humains sur cet appareil. */
+    get isTwoHumans() {
+        return (this.humanSides || []).length > 1;
+    }
+
+    /**
+     * Reprend le dernier coup de l'humain.
+     *
+     * On vise d'abord la cible calculee par takeBackTarget() — un coup en
+     * arriere a deux humains, deux contre l'ordinateur (le sien et la
+     * reponse) — PUIS on verifie a qui c'est le tour. Tous les jeux
+     * n'alternent pas strictement les camps, et getPlayedMoves() ne rend que
+     * des coups bruts, sans indication de camp : la verification est le seul
+     * moyen sur. Cas normal : un seul rollback ; cas tordu : deux.
+     *
+     * Rien a craindre du cote du moteur : fairy-stockfish (niveau
+     * « expert ») recoit une FEN COMPLETE a chaque recherche, sans historique
+     * de coups — il n'a donc aucun etat a defaire.
+     */
+    async takeBack() {
+        if (!this.match) return false;
+        const moves = await this.match.getPlayedMoves();
+        let target = takeBackTarget(moves.length, this.humanSides.length);
+        if (target === null) return false;
+        await this.match.rollback(target);
+        if (!this.isHuman(await this.match.getTurn()) && target > 0) {
+            await this.match.rollback(target - 1);
+        }
+        await this.rearm();
+        return true;
+    }
+
+    /**
+     * Applique un etat de partie recu de l'adversaire, puis rearme.
+     * On charge l'ETAT COMPLET et non le dernier coup : c'est ce qui permet
+     * de rejoindre une partie en cours et de repartir apres une coupure.
+     */
+    async applyRemoteState(matchdata) {
+        if (!this.match) return false;
+        await this.match.load(matchdata);
+        await this.rearm();
+        return true;
+    }
+
+    /** Etat complet a publier apres un coup local. */
+    async exportState() {
+        const matchdata = await this.match.save();
+        const moves = await this.match.getPlayedMoves();
+        return { matchdata, nbTurns: moves.length };
+    }
+
     /**
      * Recommence la partie depuis la position initiale.
      * Il n'existe PAS de match.restart() dans l'API jocly : control.html
@@ -169,14 +257,13 @@ export class GameSession {
         return this.applyViewOptions({ skin: name });
     }
 
-    setLevel(name) {
-        store.set('level.' + this.entry.name, name);
+    setLevel(index) {
+        store.set('level.' + this.entry.name, index);
     }
 
     currentLevel() {
         const levels = (this.config && this.config.model && this.config.model.levels) || [];
-        const wanted = this.levelName();
-        return levels.find((l) => l.name === wanted) || levels.find((l) => l.isDefault) || levels[0] || {};
+        return levels[this.levelIndex()] || levels.find((l) => l.isDefault) || levels[0] || {};
     }
 
     /**
@@ -229,8 +316,25 @@ export class GameSession {
             match
                 .getTurn()
                 .then((player) => {
-                    if (this.hooks.onTurn) this.hooks.onTurn(player, player === this.humanSide);
-                    if (player === this.humanSide) return match.userTurn();
+                    const human = this.isHuman(player);
+                    if (this.hooks.onTurn) this.hooks.onTurn(player, human);
+                    if (human) {
+                        return match.userTurn().then(() => {
+                            // Le coup local vient d'etre joue : c'est ICI, et
+                            // pas dans le gestionnaire de clic (il n'y en a
+                            // pas, l'interaction appartient a jocly), qu'on
+                            // peut publier l'etat pour l'adversaire.
+                            if (this.mode === 'remote' && this.hooks.onLocalMove) {
+                                return this.hooks.onLocalMove();
+                            }
+                        });
+                    }
+                    if (player === this.remoteSide) {
+                        // Troisieme branche : on ne joue pas, on attend. La
+                        // reprise se fait par applyRemoteState(), qui rearme.
+                        this.loopActive = false;
+                        return new Promise(() => {});
+                    }
                     return match
                         .machineSearch({
                             level: this.currentLevel(),

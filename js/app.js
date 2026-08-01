@@ -8,6 +8,8 @@ import { detectTier } from './device.js';
 import { CatalogView } from './catalog-view.js';
 import { filterGames } from './catalog.js';
 import { GameSession, loadRules, winnerLabel } from './game.js';
+import { newMatchId, buildInviteLink, parseInviteLink, buildEnvelope, makeId } from './remote/invite.js';
+import { RelayChannel } from './remote/relay-channel.js';
 
 const $ = (sel) => document.querySelector(sel);
 const state = { catalog: null, tier: 'phone', showAll: false, entry: null, session: null };
@@ -67,6 +69,16 @@ function fillSelect(select, options, selected) {
     }
 }
 
+/**
+ * Affiche ou masque les lignes qui n'ont de sens que dans un mode donne :
+ * le camp et le niveau ne concernent que le jeu contre l'ordinateur.
+ */
+function syncModeRows() {
+    const ai = $('#sel-mode').value === 'ai';
+    $('#row-side').hidden = !ai;
+    $('#row-level').hidden = !ai || !state.entry || state.entry.levels.length === 0;
+}
+
 function openDetail(entry) {
     state.entry = entry;
     const locale = getLocale();
@@ -76,16 +88,39 @@ function openDetail(entry) {
     if (entry.thumbnail) thumb.src = gameAssetUrl(entry.module, entry.thumbnail);
     else thumb.removeAttribute('src');
 
+    const view = pref('view.' + entry.name, {}) || {};
+
     fillSelect(
         $('#sel-skin'),
-        entry.skins.map((s) => ({ value: s.name, label: s.title + (s.is3d ? ' · 3D' : '') })),
-        (pref('view.' + entry.name, {}) || {}).skin || entry.defaultSkin
+        entry.skins.map((sk) => ({ value: sk.name, label: sk.title + (sk.is3d ? ' \u00b7 3D' : '') })),
+        view.skin || entry.defaultSkin
     );
+
+    // Niveaux indexes par POSITION : 28 jeux declarent des niveaux sans nom.
+    // On affiche leur `label` et on preselectionne celui marque isDefault.
+    const storedLevel = pref('level.' + entry.name, null);
+    const defaultLevel = entry.levels.findIndex((l) => l.isDefault);
     fillSelect(
         $('#sel-level'),
-        entry.levels.map((l) => ({ value: l, label: l })),
-        pref('level.' + entry.name, null)
+        entry.levels.map((l, i) => ({ value: String(i), label: l.label })),
+        String(typeof storedLevel === 'number' ? storedLevel : defaultLevel >= 0 ? defaultLevel : 0)
     );
+
+    $('#sel-mode').value = pref('mode', 'ai');
+    $('#sel-side').value = pref('side.' + entry.name, 'a');
+    syncModeRows();
+
+    // Sons et notation : affiches par defaut. Tant qu'on n'a pas attache une
+    // partie, on ignore si le jeu les gere — on l'apprend a la premiere
+    // partie (getViewOptions) et on masque alors la ligne inutile, plutot
+    // que de la cacher d'emblee a des jeux qui la geraient tres bien
+    // (mesure : les jeux sondes les gerent tous).
+    const support = pref('support.' + entry.name, null);
+    $('#row-start-sounds').hidden = !!support && !support.sounds;
+    $('#row-start-notation').hidden = !!support && !support.notation;
+    $('#start-sounds').checked = view.sounds !== false;
+    $('#start-notation').checked = view.notation === true;
+
     $('#btn-rules').disabled = !entry.rules;
     showScreen('screen-detail');
 }
@@ -106,12 +141,29 @@ async function startMatch() {
     $('#status').textContent = t('Loading…');
     showScreen('screen-game');
 
-    setPref('view.' + entry.name, Object.assign(pref('view.' + entry.name, {}) || {}, { skin: $('#sel-skin').value }));
-    if ($('#sel-level').value) setPref('level.' + entry.name, $('#sel-level').value);
+    const mode = $('#sel-mode').value;
+    setPref('mode', mode);
+    setPref('side.' + entry.name, $('#sel-side').value);
+    if ($('#sel-level').value !== '') setPref('level.' + entry.name, parseInt($('#sel-level').value, 10));
+    setPref(
+        'view.' + entry.name,
+        Object.assign(pref('view.' + entry.name, {}) || {}, {
+            skin: $('#sel-skin').value,
+            sounds: $('#start-sounds').checked,
+            notation: $('#start-notation').checked,
+        })
+    );
 
     const session = new GameSession(board, entry, {
         onTurn: (player, isHuman) => {
-            $('#status').textContent = isHuman ? t('Your turn') : t('Thinking…');
+            $('#status').textContent = isHuman
+                ? session.isTwoHumans
+                    ? t(player === session.Jocly.PLAYER_A ? 'Player A to move' : 'Player B to move')
+                    : t('Your turn')
+                : session.mode === 'remote'
+                  ? t('Waiting for the other player…')
+                  : t('Thinking…');
+            syncTakeBack();
         },
         onProgress: (p) => {
             const bar = $('#progress');
@@ -120,6 +172,7 @@ async function startMatch() {
         },
         onFinished: (result, Jocly) => {
             $('#status').textContent = winnerLabel(result, Jocly);
+            syncTakeBack();
         },
         onError: (err) => {
             console.error(err);
@@ -128,7 +181,19 @@ async function startMatch() {
     });
     state.session = session;
     try {
-        await session.start({ side: $('#sel-side').value });
+        await session.start({
+            side: state.remote ? state.remote.side : $('#sel-side').value,
+            mode: state.remote ? 'remote' : mode,
+        });
+        if (state.remote) attachRelay(session, state.remote);
+        // Ce que le jeu gere vraiment : appris ici, utilise au prochain
+        // passage sur l'ecran de demarrage.
+        const vo = session.viewOptions || {};
+        setPref('support.' + entry.name, {
+            sounds: vo.sounds !== undefined,
+            notation: vo.notation !== undefined,
+        });
+        syncTakeBack();
     } catch (err) {
         console.error(err);
         $('#status').textContent = t('The game engine could not be loaded.');
@@ -173,6 +238,30 @@ function fillGameOptions(session) {
     }
 }
 
+/**
+ * Le bouton « reprendre le coup » n'apparait que quand il a un sens :
+ * il y a un coup a reprendre, c'est au tour d'un humain, et AUCUN camp n'est
+ * tenu par un joueur distant — reprendre un coup deja parti chez l'adversaire
+ * desynchroniserait les deux plateaux (lecon Tabulon).
+ *
+ * Le niveau « expert » (fairy-stockfish) n'est PAS une exception : le moteur
+ * recoit une FEN complete a chaque recherche, sans historique de coups.
+ */
+async function syncTakeBack() {
+    const btn = $('#btn-take-back');
+    const s = state.session;
+    if (!s || !s.match || state.remote) {
+        btn.hidden = true;
+        return;
+    }
+    try {
+        const moves = await s.match.getPlayedMoves();
+        btn.hidden = !(moves.length > 0 && s.isHuman(await s.match.getTurn()));
+    } catch {
+        btn.hidden = true;
+    }
+}
+
 function wireGameOptions() {
     const apply = (key, read) => async () => {
         if (!state.session) return;
@@ -205,10 +294,83 @@ function wireGameOptions() {
         closePanels();
         $('#status').textContent = t('Loading…');
         await state.session.restart();
+        syncTakeBack();
     });
 }
 
+// ---------------------------------------------------------------- a distance
+
+/**
+ * Prepare une partie a distance : un identifiant, un lien a partager, et
+ * l'attente de l'adversaire. Le lien est au format joclymatch (voir
+ * js/remote/invite.js) : il reste lisible par joclymatch et par Tabulon.
+ */
+function openInvite(entry) {
+    if (!CONFIG.relayUrl) {
+        $('#invite-error').textContent = t('Remote play needs a relay. None is configured.');
+        $('#invite-link').value = '';
+        $('#btn-start-remote').disabled = true;
+    } else {
+        $('#invite-error').textContent = '';
+        $('#btn-start-remote').disabled = false;
+        state.pending = { matchId: newMatchId(), side: 'a' };
+        // L'invite recoit le camp OPPOSE au notre.
+        const link = buildInviteLink({
+            game: entry.name,
+            matchId: state.pending.matchId,
+            side: 'b',
+            locale: getLocale(),
+            base: location.href.split('?')[0],
+        });
+        $('#invite-link').value = link;
+    }
+    openPanel('#panel-invite');
+}
+
+/**
+ * Branche le relai sur la session. La boucle d'ecoute tourne EN PERMANENCE,
+ * pas seulement pendant le tour de l'adversaire : c'est ce qui permet de
+ * rattraper une partie rechargee ou reprise sur un autre appareil.
+ */
+function attachRelay(session, { matchId, side }) {
+    const selfKey = makeId(8);
+    const channel = new RelayChannel({
+        relayUrl: CONFIG.relayUrl,
+        matchId,
+        selfKey,
+        gameName: session.entry.name,
+        onEnvelope: async (env) => {
+            try {
+                await session.applyRemoteState(env.matchdata);
+            } catch (err) {
+                console.error('etat distant refuse', err);
+            }
+        },
+        onError: () => {
+            $('#status').textContent = t('Connection lost, retrying…');
+        },
+    });
+    state.channel = channel;
+    session.hooks.onLocalMove = async () => {
+        const { matchdata, nbTurns } = await session.exportState();
+        await channel.publish(
+            buildEnvelope({
+                matchDetails: { matchId, gameName: session.entry.name, nbTurns, side },
+                matchdata,
+                key: selfKey,
+            })
+        );
+    };
+    channel.start();
+}
+
 async function leaveMatch() {
+    $('#btn-take-back').hidden = true;
+    if (state.channel) {
+        state.channel.stop();
+        state.channel = null;
+    }
+    state.remote = false;
     if (state.session) {
         await state.session.stop();
         state.session = null;
@@ -281,7 +443,29 @@ async function main() {
         }
     });
 
-    $('#btn-play').addEventListener('click', startMatch);
+    $('#btn-play').addEventListener('click', () => {
+        if ($('#sel-mode').value === 'remote') return openInvite(state.entry);
+        state.remote = null;
+        startMatch();
+    });
+
+    $('#btn-copy-invite').addEventListener('click', async () => {
+        const input = $('#invite-link');
+        input.select();
+        try {
+            await navigator.clipboard.writeText(input.value);
+            $('#invite-error').textContent = t('Copied');
+        } catch {
+            // Le presse-papiers est refuse hors contexte securise : le champ
+            // est deja selectionne, la copie manuelle reste possible.
+        }
+    });
+
+    $('#btn-start-remote').addEventListener('click', () => {
+        state.remote = state.pending;
+        closePanels();
+        startMatch();
+    });
     $('#btn-rules').addEventListener('click', () => {
         openPanel('#panel-rules');
         loadRules($('#rules'), state.entry);
@@ -303,6 +487,19 @@ async function main() {
 
     wireGameOptions();
 
+    $('#sel-mode').addEventListener('change', syncModeRows);
+    $('#btn-take-back').addEventListener('click', async () => {
+        const s = state.session;
+        if (!s) return;
+        $('#btn-take-back').disabled = true;
+        try {
+            await s.takeBack();
+        } finally {
+            $('#btn-take-back').disabled = false;
+            syncTakeBack();
+        }
+    });
+
     $('#btn-settings').addEventListener('click', () => openPanel('#panel-settings'));
     fillSelect(
         $('#sel-lang'),
@@ -317,6 +514,23 @@ async function main() {
         updateCount();
         if (state.entry) openDetail(state.entry);
     });
+
+    // Lien d'invitation ouvert par l'adversaire : on lance directement la
+    // partie a distance, sur le bon jeu et le bon camp. Un lien joclymatch
+    // fonctionne ici aussi (memes parametres).
+    const invite = parseInviteLink(location.search);
+    if (invite) {
+        const entry = state.catalog.games.find((g) => g.name === invite.game);
+        if (entry) {
+            openDetail(entry);
+            if (invite.side && CONFIG.relayUrl) {
+                state.remote = { matchId: invite.matchId, side: invite.side };
+                $('#sel-mode').value = 'remote';
+                syncModeRows();
+                startMatch();
+            }
+        }
+    }
 
     const src = state.catalog.source || {};
     $('#about').textContent = `${state.catalog.counts.games} ${t('games')} · jocly ${(src.commit || '').slice(0, 7)}`;

@@ -76,7 +76,19 @@ export function buildEntry(raw, { ineligible }) {
         // switchable : sans ce champ, on ne saurait pas s'il faut proposer
         // « voir en tant que joueur A/B » ni imposer PLAYER_A par defaut.
         switchable: view.switchable === true,
-        levels: Array.isArray(model.levels) ? model.levels.map((l) => l.name) : [],
+        // Les niveaux sont indexes par POSITION et non par nom : 28 jeux sur
+        // 128 declarent des niveaux sans champ `name` (seulement `label`),
+        // qui donnaient des entrees nulles dans le catalogue et des lignes
+        // vides dans la liste deroulante. `label` est ce qu'on affiche,
+        // `isDefault` ce qu'on preselectionne, `ai` sert a reconnaitre le
+        // niveau fairy-stockfish (« expert », present sur 34 jeux).
+        levels: Array.isArray(model.levels)
+            ? model.levels.map((l, i) => ({
+                  label: l.label || l.name || 'Level ' + (i + 1),
+                  isDefault: l.isDefault === true,
+                  ai: l.ai || null,
+              }))
+            : [],
         obsolete: model.obsolete === true,
         // 'phone' = jouable au doigt sur telephone ; 'tablet' = reserve aux
         // grands ecrans (mais toujours atteignable via « afficher tous les
