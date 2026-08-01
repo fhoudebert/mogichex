@@ -33,5 +33,15 @@
   "About": "À propos",
   "obsolete": "obsolète",
   "3D": "3D",
-  "2D": "2D"
+  "2D": "2D",
+  "Game options": "Options de la partie",
+  "View as": "Voir en tant que",
+  "Player A": "Joueur A",
+  "Player B": "Joueur B",
+  "Sounds": "Sons",
+  "Notation": "Notation",
+  "Show possible moves": "Montrer les coups possibles",
+  "Auto-complete moves": "Compléter les coups",
+  "Restart game": "Recommencer la partie",
+  "The game engine could not be found.": "Le moteur de jeu est introuvable."
 }

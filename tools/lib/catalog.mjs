@@ -72,6 +72,10 @@ export function buildEntry(raw, { ineligible }) {
         defaultSkin: skin.name,
         defaultSkinIs2d: skin.is2d,
         ratio: typeof view.preferredRatio === 'number' ? view.preferredRatio : null,
+        // jocly n'accepte viewAs que pour les jeux qui se declarent
+        // switchable : sans ce champ, on ne saurait pas s'il faut proposer
+        // « voir en tant que joueur A/B » ni imposer PLAYER_A par defaut.
+        switchable: view.switchable === true,
         levels: Array.isArray(model.levels) ? model.levels.map((l) => l.name) : [],
         obsolete: model.obsolete === true,
         // 'phone' = jouable au doigt sur telephone ; 'tablet' = reserve aux

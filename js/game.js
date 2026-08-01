@@ -67,6 +67,15 @@ const store = {
     },
 };
 
+/**
+ * Vrai pour l'erreur que jocly leve quand on interrompt volontairement un
+ * tour utilisateur. Exportee pour etre testee : la reconnaitre a tort ou a
+ * raison decide si l'utilisateur voit « panne du moteur » ou rien du tout.
+ */
+export function isAbortError(err) {
+    return !!err && typeof err.message === 'string' && /aborted/i.test(err.message);
+}
+
 export class GameSession {
     /**
      * @param {HTMLElement} area conteneur du plateau
@@ -83,9 +92,13 @@ export class GameSession {
         this.aborted = false;
     }
 
-    /** Skin retenu : preference memorisee, sinon le 2D par defaut du catalogue. */
-    skinName() {
-        return store.get('skin.' + this.entry.name, this.entry.defaultSkin);
+    /** Options de vue memorisees pour ce jeu (skin, sons, notation, viewAs…). */
+    storedViewOptions() {
+        return store.get('view.' + this.entry.name, {});
+    }
+
+    saveViewOptions(opts) {
+        store.set('view.' + this.entry.name, opts);
     }
 
     levelName() {
@@ -93,29 +106,67 @@ export class GameSession {
     }
 
     /**
-     * @param {{side?: 'a'|'b'}} opts camp humain designe par 'a'/'b' et NON par
-     *   Jocly.PLAYER_A : ces constantes n'existent qu'une fois le moteur
-     *   charge, et l'appelant, lui, decide avant. Resoudre ici est le seul
-     *   endroit ou l'on sait que Jocly est pret.
+     * Options de vue passees a attachElement.
+     *
+     * Deux defauts imposes ici, et un seul endroit pour les imposer :
+     *   - le skin 2D du catalogue, tant que l'utilisateur n'en a pas choisi
+     *     un autre (three.js n'est alors jamais charge) ;
+     *   - viewAs = PLAYER_A, pour que le joueur voie toujours le plateau de
+     *     SON cote au premier lancement. jocly n'accepte ce reglage que si le
+     *     jeu se declare switchable ; le poser ailleurs serait ignore, voire
+     *     source de confusion dans le panneau.
      */
+    initialViewOptions(Jocly) {
+        const saved = this.storedViewOptions();
+        const opts = Object.assign({}, saved);
+        if (!opts.skin) opts.skin = this.entry.defaultSkin;
+        if (this.entry.switchable && opts.viewAs === undefined) opts.viewAs = Jocly.PLAYER_A;
+        return opts;
+    }
+
     async start({ side } = {}) {
         const Jocly = await loadJocly();
         this.Jocly = Jocly;
         this.humanSide = side === 'b' ? Jocly.PLAYER_B : Jocly.PLAYER_A;
         this.match = await Jocly.createMatch(this.entry.name);
         this.config = await this.match.getConfig();
-
-        const viewOptions = Object.assign({}, store.get('view.' + this.entry.name, {}), {
-            skin: this.skinName(),
-        });
-        await this.match.attachElement(this.area, { viewOptions });
+        await this.match.attachElement(this.area, { viewOptions: this.initialViewOptions(Jocly) });
+        // getViewOptions() ne rend QUE les options que ce jeu gere : c'est ce
+        // qui permet au panneau de n'afficher ni « sons » ni « auto-complete »
+        // pour un jeu qui les ignore, plutot que des cases sans effet.
+        this.viewOptions = await this.match.getViewOptions();
         this.run();
         return this.match;
     }
 
+    /**
+     * Applique un lot d'options de vue et rearme.
+     * jocly redessine sur setViewOptions mais ne rearme pas le tour : sans
+     * rearmement, les elements cliquables restent perimes (control.html
+     * rappelle RunMatch pour la meme raison).
+     */
+    async applyViewOptions(patch) {
+        const merged = Object.assign({}, this.storedViewOptions(), patch);
+        this.saveViewOptions(merged);
+        await this.match.setViewOptions(patch);
+        this.viewOptions = Object.assign({}, this.viewOptions, patch);
+        await this.rearm();
+    }
+
+    /**
+     * Recommence la partie depuis la position initiale.
+     * Il n'existe PAS de match.restart() dans l'API jocly : control.html
+     * fait rollback(0) puis relance sa boucle, et c'est la seule facon
+     * correcte — rollback redessine mais ne rearme rien.
+     */
+    async restart() {
+        if (!this.match) return;
+        await this.match.rollback(0);
+        await this.rearm();
+    }
+
     setSkin(name) {
-        store.set('skin.' + this.entry.name, name);
-        return this.match.setViewOptions({ skin: name }).then(() => this.rearm());
+        return this.applyViewOptions({ skin: name });
     }
 
     setLevel(name) {
@@ -135,11 +186,21 @@ export class GameSession {
      */
     async rearm() {
         if (!this.match) return;
+        // abortUserTurn() ne se contente pas d'arreter l'attente : il fait
+        // REJETER le userTurn() en cours (« User input aborted »). Sans ce
+        // drapeau, la boucle prend cette interruption VOULUE pour une panne du
+        // moteur et affiche une erreur a chaque changement d'option.
+        this.aborting = true;
         try {
             await this.match.abortUserTurn();
         } catch {
             /* pas de tour utilisateur en cours */
         }
+        // Laisser la rejection se propager jusqu'au catch de la boucle avant
+        // de rearmer, sinon on relancerait pendant que l'ancienne boucle
+        // s'arrete encore et loopActive serait remis a false juste apres.
+        await new Promise((r) => setTimeout(r, 0));
+        this.aborting = false;
         if (!this.loopActive) this.run();
     }
 
@@ -192,7 +253,11 @@ export class GameSession {
                 })
                 .catch((err) => {
                     this.loopActive = false;
-                    if (!this.aborted && this.hooks.onError) this.hooks.onError(err);
+                    if (this.aborted || this.match !== match) return;
+                    // Interruption demandee par nous (rearm, changement
+                    // d'option, redemarrage) : ce n'est pas une panne.
+                    if (this.aborting || isAbortError(err)) return;
+                    if (this.hooks.onError) this.hooks.onError(err);
                 });
         };
         next();

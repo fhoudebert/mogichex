@@ -74,6 +74,7 @@
                 <button class="icon-btn back" data-back data-t-label aria-label="Back to games">‹</button>
                 <h2 id="game-title" class="bar-title"></h2>
                 <button id="btn-rules-game" class="icon-btn" data-t-label aria-label="Rules">?</button>
+                <button id="btn-game-options" class="icon-btn" data-t-label aria-label="Game options">⚙</button>
             </header>
             <div id="status" class="status" role="status"></div>
             <div id="progress" class="progress"><span></span></div>
@@ -87,6 +88,41 @@
                 <button class="icon-btn" data-close-panel data-t-label aria-label="Close">✕</button>
             </header>
             <div id="rules" class="rules"></div>
+        </aside>
+
+        <!-- options de la partie en cours : reprises de control.html, mais
+             seules celles que le jeu declare sont affichees (getViewOptions). -->
+        <aside id="panel-game-options" class="panel" aria-hidden="true">
+            <header class="bar">
+                <h2 class="bar-title" data-t>Game options</h2>
+                <button class="icon-btn" data-close-panel data-t-label aria-label="Close">✕</button>
+            </header>
+            <div class="settings-body">
+                <div class="field" id="row-view-as" hidden>
+                    <label for="opt-view-as" data-t>View as</label>
+                    <select id="opt-view-as">
+                        <option value="a" data-t>Player A</option>
+                        <option value="b" data-t>Player B</option>
+                    </select>
+                </div>
+                <div class="field" id="row-opt-skin" hidden>
+                    <label for="opt-skin" data-t>Board style</label>
+                    <select id="opt-skin"></select>
+                </div>
+                <label class="switch row" id="row-sounds" hidden>
+                    <input id="opt-sounds" type="checkbox"><span data-t>Sounds</span>
+                </label>
+                <label class="switch row" id="row-notation" hidden>
+                    <input id="opt-notation" type="checkbox"><span data-t>Notation</span>
+                </label>
+                <label class="switch row" id="row-show-moves" hidden>
+                    <input id="opt-show-moves" type="checkbox"><span data-t>Show possible moves</span>
+                </label>
+                <label class="switch row" id="row-autocomplete" hidden>
+                    <input id="opt-autocomplete" type="checkbox"><span data-t>Auto-complete moves</span>
+                </label>
+                <button id="btn-restart" class="secondary wide" data-t>Restart game</button>
+            </div>
         </aside>
 
         <!-- panneau de reglages -->

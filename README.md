@@ -16,6 +16,7 @@ mono-fenêtre, et de [Tabulon](https://github.com/fhoudebert/tabulon) pour les a
 | 1 | Catalogue pré-calculé (`app/catalog.json`) | **fait** |
 | 2 | Liste responsive : sections, recherche, filtre d'appareil | **fait** |
 | 3 | Partie solo contre l'IA, 2D par défaut, règles en panneau | **fait** — plateau rendu, coup non validé (voir ci-dessous) |
+| 3b | Options de partie (`control.html`), dist partageable | **fait** |
 | 4 | PWA : manifeste, service worker, cache par module | **fait, non validé sur appareil** |
 | 5 | Multijoueur : signalisation, WebRTC, repli HTTP | relai livré et testé ; côté client à écrire |
 | 6 | COOP/COEP + fairy-stockfish multi-thread | préparé (`.htaccess`, `serve.mjs --coi`), non activé |
@@ -29,7 +30,12 @@ Sonde Playwright, viewport 390×844, pointeur grossier, dist jocly2 réel :
 - « afficher tous les jeux » fait passer de **115 à 126** entrées ;
 - règles chargées, **25 images sur 25** résolues via `{GAME}` ;
 - partie lancée : plateau 2D `skin2dfull` rendu (33 canvas), statut « Your turn »,
-  **aucune erreur de console**.
+  **aucune erreur de console** ;
+- dist résolu et mémorisé, vignettes chargées ;
+- panneau d'options : six lignes pour `classic-chess`, **« voir en tant que » sur joueur A**
+  par défaut, réglages persistés (`{skin, notation, viewAs}`) et relus après rechargement ;
+- notation et retournement **changent réellement le rendu** (empreintes de pixels du plateau
+  différentes avant/après) ; recommencer ramène le statut à « Your turn » sans erreur.
 
 Deux bugs réels ont été trouvés par cette sonde, et corrigés : `Jocly.PLAYER_A` lu avant le
 chargement du moteur, et la recherche qui n'indexait que la langue affichée.
@@ -42,6 +48,10 @@ glisser-déposer, ni le tap ne déclenchent de coup dans l'iframe Jocly. **La m�
 déjà été rencontrée sur Tabulon** — c'est une limite de l'outil de sonde face à cette vue,
 pas un diagnostic sur le code. À vérifier au doigt sur un vrai téléphone, en priorité.
 
+Je n'ai pas pu **confirmer visuellement** l'orientation du plateau après « voir en tant que
+joueur B » : l'empreinte de pixels prouve que le rendu change, mais pas quel camp se retrouve
+en bas. À contrôler d'un coup d'œil sur appareil.
+
 Restent également non vérifiables ici : l'installation PWA, l'éviction de stockage iOS,
 WebRTC entre deux réseaux, et le fonctionnement conjoint COOP/COEP + service worker. Ces
 points ne sont pas couverts par les tests, et les tests ne prétendent pas le contraire.
@@ -50,13 +60,30 @@ points ne sont pas couverts par les tests, et les tests ne prétendent pas le co
 
 ## Mise en route
 
-mogichex a besoin d'un **dist Jocly** dans `./dist` (non versionné : il pèse plusieurs
-dizaines de Mo, et un dist incohérent est la première cause de panne — voir *Pièges*).
+mogichex a besoin d'un **dist Jocly** (non versionné : il pèse plusieurs dizaines de Mo, et
+un dist incohérent est la première cause de panne — voir *Pièges*). Il n'a pas à être *dans*
+mogichex : au démarrage, l'application le cherche successivement dans
+
+```
+dist/            embarqué dans mogichex (développement, ou copie dédiée)
+../dist/         au même niveau que mogichex
+jocly/dist/      un checkout jocly dans mogichex
+../jocly/dist/   un checkout jocly à côté de mogichex
+```
+
+ce qui permet de **partager un seul dist avec joclymatch** sur l'hébergement. L'emplacement
+trouvé est mémorisé et essayé en premier la fois suivante ; s'il a disparu, la recherche
+reprend sans rien casser. `window.MOGICHEX_CONFIG = { distBase: '…' }` court-circuite tout.
+
+Le statut HTTP ne suffit pas à valider un emplacement : le `.htaccess` livré renvoie
+`index.html` pour toute URL sans fichier correspondant, donc un candidat absent répondrait
+**200 avec la page de l'application** et le premier de la liste gagnerait toujours. La sonde
+vérifie donc la **signature du contenu**.
 
 ```sh
 git clone https://github.com/fhoudebert/jocly2 ../jocly2
 cd ../jocly2 && npm install && npx gulp build      # produit dist/
-cd - && ln -s ../jocly2/dist/browser dist           # ou copier
+cd - && ln -s ../jocly2/dist/browser dist           # ou ../dist, ou jocly/dist
 
 npm run build      # catalogue + estampille du service worker + tests
 npm run serve      # http://localhost:8080
@@ -150,6 +177,32 @@ Le tri alphabétique suit la **langue affichée**, pas l'anglais.
 
 ---
 
+## Options de la partie
+
+Reprises de `control.html` de Jocly, dans un panneau accessible pendant la partie :
+**voir en tant que joueur A ou B**, **style de plateau**, **sons**, **notation**,
+**montrer les coups possibles**, **compléter les coups**, et **recommencer la partie**.
+
+Une seule ligne s'affiche si le jeu la gère : `getViewOptions()` ne rend que les options
+supportées, et une case sans effet est pire qu'une case absente. Mesure : `classic-chess`
+expose les six, `english-draughts` n'expose pas *compléter les coups*.
+
+**« Voir en tant que joueur A » est le défaut**, pour que le joueur voie d'emblée le plateau
+de son côté. Jocly n'accepte `viewAs` que pour les jeux qui se déclarent `switchable`
+(107 sur 128) — ailleurs la ligne est masquée et le réglage n'est pas envoyé.
+
+Les choix sont mémorisés par jeu, sous une clé unique (`view.<jeu>`), et rechargés au
+lancement suivant.
+
+Deux écarts assumés par rapport à `control.html` : **reculer** en est absent (il devra rester
+désactivé dès qu'un côté est distant, cf. *Pièges*), ainsi que *sauver / charger / instantané*
+et le mode *ordinateur contre ordinateur*, hors sujet sur téléphone pour l'instant.
+
+**Recommencer** appelle `rollback(0)` puis ré-arme : il n'existe pas de `match.restart()`
+dans l'API Jocly, et `rollback` redessine sans rien ré-armer.
+
+---
+
 ## Règles
 
 Accessibles depuis deux endroits — le panneau de détail avant de jouer, et le bouton `?`
@@ -233,6 +286,7 @@ appelle le relai. C'est ce qui rend l'embarquement possible sans réécriture.
 index.html              coquille mono-fenêtre (écrans + panneaux)
 css/mogichex.css        mobile d'abord, cibles tactiles ≥ 44 px
 js/config.js            chemins, relai, surcharge à l'exécution
+js/dist-locator.js      recherche du dist (pur, testé)
 js/i18n.js              t(), pickLocalized(), chargement des langues
 js/device.js            classe d'appareil par capacité
 js/catalog.js           filtrage, groupement (pur, testé)
@@ -265,6 +319,9 @@ tests/                       Node pur + PHP réel
   de balise fermante du tout.
 - **Le plateau ne doit pas défiler.** `touch-action: none` sur le conteneur, sinon déplacer
   une pièce fait défiler la page.
+- **`abortUserTurn()` fait *rejeter* le `userTurn()` en cours** (« User input aborted »).
+  C'est une interruption voulue, pas une panne : sans la distinguer, changer une option de
+  vue affichait « le moteur de jeu n'a pas pu être chargé ». Constaté à la sonde.
 - **Le point d'entrée du dist est `jocly.js`, pas `jocly.embed.js`** (ce dernier ne sert qu'à
   l'intégration par iframe et n'expose rien), et c'est `dist/browser` d'un checkout jocly2,
   pas `dist`.

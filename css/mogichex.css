@@ -123,6 +123,11 @@ button[disabled] { opacity: .45; }
 
 .field { display: flex; align-items: center; gap: .75rem; margin: .75rem 0; }
 .field label { flex: 0 0 8rem; color: var(--fg-dim); font-size: .9rem; }
+.switch.row { justify-content: flex-start; padding: 0 0 0 .1rem; gap: .6rem; }
+.switch.row span { font-size: .95rem; }
+button.wide { width: 100%; margin-top: 1.25rem; }
+[hidden] { display: none !important; }
+
 .field select {
     flex: 1; min-height: var(--tap); padding: 0 .5rem; font-size: 1rem;
     color: var(--fg); background: var(--bg-soft);

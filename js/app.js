@@ -1,7 +1,8 @@
 // Amorcage : catalogue -> detail -> partie, plus les panneaux regles/reglages.
 // Mono-fenetre : on ne fait qu'echanger la classe .is-active.
 
-import { CONFIG, gameAssetUrl } from './config.js';
+import { CONFIG, gameAssetUrl, setDistBase, distBaseIsForced } from './config.js';
+import { locateDist } from './dist-locator.js';
 import { initLocales, setLocale, applyTranslations, availableLocales, getLocale, t, pickLocalized } from './i18n.js';
 import { detectTier } from './device.js';
 import { CatalogView } from './catalog-view.js';
@@ -78,7 +79,7 @@ function openDetail(entry) {
     fillSelect(
         $('#sel-skin'),
         entry.skins.map((s) => ({ value: s.name, label: s.title + (s.is3d ? ' · 3D' : '') })),
-        pref('skin.' + entry.name, entry.defaultSkin)
+        (pref('view.' + entry.name, {}) || {}).skin || entry.defaultSkin
     );
     fillSelect(
         $('#sel-level'),
@@ -93,13 +94,19 @@ function openDetail(entry) {
 
 async function startMatch() {
     const entry = state.entry;
+    if (state.distMissing) {
+        showScreen('screen-game');
+        $('#game-title').textContent = pickLocalized(entry.title, getLocale());
+        $('#status').textContent = t('The game engine could not be found.');
+        return;
+    }
     const board = $('#board');
     board.textContent = '';
     $('#game-title').textContent = pickLocalized(entry.title, getLocale());
     $('#status').textContent = t('Loading…');
     showScreen('screen-game');
 
-    setPref('skin.' + entry.name, $('#sel-skin').value);
+    setPref('view.' + entry.name, Object.assign(pref('view.' + entry.name, {}) || {}, { skin: $('#sel-skin').value }));
     if ($('#sel-level').value) setPref('level.' + entry.name, $('#sel-level').value);
 
     const session = new GameSession(board, entry, {
@@ -128,6 +135,79 @@ async function startMatch() {
     }
 }
 
+/**
+ * Renseigne le panneau d'options a partir de ce que le jeu declare vraiment.
+ * getViewOptions() ne rend que les options gerees : une ligne dont l'option
+ * est absente reste masquee, plutot que d'offrir une case sans effet.
+ */
+function fillGameOptions(session) {
+    const vo = session.viewOptions || {};
+    const rows = [
+        ['#row-sounds', '#opt-sounds', 'sounds'],
+        ['#row-notation', '#opt-notation', 'notation'],
+        ['#row-show-moves', '#opt-show-moves', 'showMoves'],
+        ['#row-autocomplete', '#opt-autocomplete', 'autoComplete'],
+    ];
+    for (const [rowSel, inputSel, key] of rows) {
+        const supported = vo[key] !== undefined;
+        $(rowSel).hidden = !supported;
+        if (supported) $(inputSel).checked = !!vo[key];
+    }
+
+    const skinRow = $('#row-opt-skin');
+    skinRow.hidden = session.entry.skins.length < 2;
+    if (!skinRow.hidden) {
+        fillSelect(
+            $('#opt-skin'),
+            session.entry.skins.map((sk) => ({ value: sk.name, label: sk.title + (sk.is3d ? ' · 3D' : '') })),
+            vo.skin || session.entry.defaultSkin
+        );
+    }
+
+    // « Voir en tant que » n'a de sens que pour un jeu switchable : jocly
+    // ignore viewAs ailleurs.
+    const viewAsRow = $('#row-view-as');
+    viewAsRow.hidden = !session.entry.switchable;
+    if (!viewAsRow.hidden) {
+        $('#opt-view-as').value = vo.viewAs === session.Jocly.PLAYER_B ? 'b' : 'a';
+    }
+}
+
+function wireGameOptions() {
+    const apply = (key, read) => async () => {
+        if (!state.session) return;
+        try {
+            await state.session.applyViewOptions({ [key]: read() });
+        } catch (err) {
+            console.error('option de vue refusee', key, err);
+        }
+    };
+    $('#opt-sounds').addEventListener('change', apply('sounds', () => $('#opt-sounds').checked));
+    $('#opt-notation').addEventListener('change', apply('notation', () => $('#opt-notation').checked));
+    $('#opt-show-moves').addEventListener('change', apply('showMoves', () => $('#opt-show-moves').checked));
+    $('#opt-autocomplete').addEventListener(
+        'change',
+        apply('autoComplete', () => $('#opt-autocomplete').checked)
+    );
+    $('#opt-skin').addEventListener('change', apply('skin', () => $('#opt-skin').value));
+    $('#opt-view-as').addEventListener(
+        'change',
+        apply('viewAs', () =>
+            $('#opt-view-as').value === 'b' ? state.session.Jocly.PLAYER_B : state.session.Jocly.PLAYER_A
+        )
+    );
+    $('#btn-game-options').addEventListener('click', () => {
+        if (state.session) fillGameOptions(state.session);
+        openPanel('#panel-game-options');
+    });
+    $('#btn-restart').addEventListener('click', async () => {
+        if (!state.session) return;
+        closePanels();
+        $('#status').textContent = t('Loading…');
+        await state.session.restart();
+    });
+}
+
 async function leaveMatch() {
     if (state.session) {
         await state.session.stop();
@@ -148,6 +228,22 @@ async function main() {
     state.tier = detectTier();
     state.showAll = pref('showAll', false);
     $('#show-all').checked = state.showAll;
+
+    // Le dist doit etre localise AVANT le premier rendu : les vignettes de la
+    // liste en viennent, pas seulement le moteur.
+    if (!distBaseIsForced()) {
+        const remembered = pref('distBase', null);
+        const found = await locateDist({ remembered });
+        if (found.base) {
+            setDistBase(found.base);
+            if (found.base !== remembered) setPref('distBase', found.base);
+        } else {
+            // Sans dist, la liste reste consultable (elle lit catalog.json) :
+            // on n'arrete pas l'application, on le dit au moment de jouer.
+            console.warn('dist jocly introuvable ; emplacements essayes :', found.tried);
+            state.distMissing = true;
+        }
+    }
 
     const res = await fetch(CONFIG.catalogUrl);
     state.catalog = await res.json();
@@ -198,6 +294,8 @@ async function main() {
             } else showScreen('screen-catalog');
         });
     }
+
+    wireGameOptions();
 
     $('#btn-settings').addEventListener('click', () => openPanel('#panel-settings'));
     fillSelect(

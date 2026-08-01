@@ -3,7 +3,7 @@
  "source": {
   "repo": "jocly2",
   "commit": "ffbaf21807452f4fbfe6491358d134d2f67ae7a4",
-  "builtAt": "2026-08-01T06:10:21.883Z"
+  "builtAt": "2026-08-01T07:22:14.361Z"
  },
  "counts": {
   "games": 128,
@@ -59,6 +59,7 @@
    "defaultSkin": "2d-wood-alquerque",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     null,
     null,
@@ -121,6 +122,7 @@
    "defaultSkin": "classical",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     null,
     null,
@@ -183,6 +185,7 @@
    "defaultSkin": "classical",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     null,
     null,
@@ -245,6 +248,7 @@
    "defaultSkin": "classical",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     null,
     null,
@@ -309,6 +313,7 @@
    "defaultSkin": "classical",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     null,
     null,
@@ -351,6 +356,7 @@
    "defaultSkin": "kids",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     null,
     null,
@@ -394,6 +400,7 @@
    "defaultSkin": "2d-wood-alquerque",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     null,
     null,
@@ -456,6 +463,7 @@
    "defaultSkin": "classical",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     null,
     null,
@@ -519,6 +527,7 @@
    "defaultSkin": "classical",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     null,
     null,
@@ -581,6 +590,7 @@
    "defaultSkin": "classical",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     null,
     null,
@@ -640,6 +650,7 @@
    "defaultSkin": "green",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     null,
     null,
@@ -683,6 +694,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -726,6 +738,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -767,6 +780,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -809,6 +823,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -852,6 +867,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -895,6 +911,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -936,6 +953,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1.7,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -978,6 +996,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -1019,6 +1038,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -1073,6 +1093,7 @@
    "defaultSkin": "skin2dfull",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -1116,6 +1137,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -1158,6 +1180,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -1200,6 +1223,7 @@
    "defaultSkin": "skin2dwestern",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -1241,6 +1265,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -1283,6 +1308,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1.5,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -1326,6 +1352,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1.3333333333333,
+   "switchable": false,
    "levels": [
     "easy",
     "fast",
@@ -1367,6 +1394,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -1408,6 +1436,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1.154700538,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -1449,6 +1478,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -1491,6 +1521,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -1533,6 +1564,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -1575,6 +1607,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -1616,6 +1649,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -1658,6 +1692,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -1700,6 +1735,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -1742,6 +1778,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 0.89,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -1783,6 +1820,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -1826,6 +1864,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 0.9,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -1868,6 +1907,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -1909,6 +1949,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -1952,6 +1993,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -1995,6 +2037,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -2037,6 +2080,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -2078,6 +2122,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -2119,6 +2164,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -2167,6 +2213,7 @@
    "defaultSkin": "skin2dmnemonic",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -2219,6 +2266,7 @@
    "defaultSkin": "skin2dmnemonic",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -2261,6 +2309,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -2302,6 +2351,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -2356,6 +2406,7 @@
    "defaultSkin": "skin2dfull",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -2399,6 +2450,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -2441,6 +2493,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -2483,6 +2536,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -2525,6 +2579,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -2566,6 +2621,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -2607,6 +2663,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -2649,6 +2706,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -2691,6 +2749,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -2744,6 +2803,7 @@
    "defaultSkin": "skin2dwestern",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -2787,6 +2847,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -2828,6 +2889,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -2869,6 +2931,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -2911,6 +2974,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -2954,6 +3018,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1.1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -2996,6 +3061,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -3031,6 +3097,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1.2,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -3066,6 +3133,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -3107,6 +3175,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -3148,6 +3217,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -3189,6 +3259,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -3236,6 +3307,7 @@
    "defaultSkin": "skin2dwestern",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -3277,6 +3349,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -3320,6 +3393,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -3363,6 +3437,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -3416,6 +3491,7 @@
    "defaultSkin": "skin2dwestern",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -3459,6 +3535,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -3501,6 +3578,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -3543,6 +3621,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -3585,6 +3664,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -3626,6 +3706,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -3667,6 +3748,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -3708,6 +3790,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -3750,6 +3833,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -3791,6 +3875,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -3833,6 +3918,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -3869,6 +3955,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -3911,6 +3998,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -3952,6 +4040,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -3993,6 +4082,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -4056,6 +4146,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 0.9,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -4099,6 +4190,7 @@
    "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -4142,6 +4234,7 @@
    "defaultSkin": "fiar2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": false,
    "levels": [
     "easy",
     "fast",
@@ -4184,6 +4277,7 @@
    "defaultSkin": "fiar2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": false,
    "levels": [
     "easy",
     "fast",
@@ -4226,6 +4320,7 @@
    "defaultSkin": "fiar2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": false,
    "levels": [
     "easy",
     "fast",
@@ -4268,6 +4363,7 @@
    "defaultSkin": "fiar2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": false,
    "levels": [
     "easy",
     "fast",
@@ -4310,6 +4406,7 @@
    "defaultSkin": "fiar2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": false,
    "levels": [
     "easy",
     "fast",
@@ -4352,6 +4449,7 @@
    "defaultSkin": "medieval",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": false,
    "levels": [
     null,
     null,
@@ -4394,6 +4492,7 @@
    "defaultSkin": "official",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     null,
     null,
@@ -4443,6 +4542,7 @@
    "defaultSkin": "wood",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": false,
    "levels": [
     null,
     null,
@@ -4493,6 +4593,7 @@
    "defaultSkin": "wood",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": false,
    "levels": [
     null,
     null,
@@ -4543,6 +4644,7 @@
    "defaultSkin": "wood",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": false,
    "levels": [
     null,
     null,
@@ -4593,6 +4695,7 @@
    "defaultSkin": "wood",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": false,
    "levels": [
     null,
     null,
@@ -4643,6 +4746,7 @@
    "defaultSkin": "wood",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": false,
    "levels": [
     null,
     null,
@@ -4693,6 +4797,7 @@
    "defaultSkin": "wood",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": false,
    "levels": [
     null,
     null,
@@ -4741,6 +4846,7 @@
    "defaultSkin": "wood",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": false,
    "levels": [
     null,
     null,
@@ -4793,6 +4899,7 @@
    "defaultSkin": "stone",
    "defaultSkinIs2d": true,
    "ratio": 1.2857142857143,
+   "switchable": true,
    "levels": [
     null,
     null,
@@ -4844,6 +4951,7 @@
    "defaultSkin": "stone",
    "defaultSkinIs2d": true,
    "ratio": 1.2857142857143,
+   "switchable": true,
    "levels": [
     null,
     null,
@@ -4895,6 +5003,7 @@
    "defaultSkin": "stone",
    "defaultSkinIs2d": true,
    "ratio": 1.4,
+   "switchable": true,
    "levels": [
     null,
     null,
@@ -4946,6 +5055,7 @@
    "defaultSkin": "stone",
    "defaultSkinIs2d": true,
    "ratio": 1.4,
+   "switchable": true,
    "levels": [
     null,
     null,
@@ -4997,6 +5107,7 @@
    "defaultSkin": "stone",
    "defaultSkinIs2d": true,
    "ratio": 1.2857142857143,
+   "switchable": true,
    "levels": [
     null,
     null,
@@ -5048,6 +5159,7 @@
    "defaultSkin": "stone",
    "defaultSkinIs2d": true,
    "ratio": 1.2857142857143,
+   "switchable": true,
    "levels": [
     null,
     null,
@@ -5090,6 +5202,7 @@
    "defaultSkin": "official",
    "defaultSkinIs2d": true,
    "ratio": 1.1638,
+   "switchable": true,
    "levels": [
     "baby",
     "fast",
@@ -5130,6 +5243,7 @@
    "defaultSkin": "classic2d",
    "defaultSkinIs2d": true,
    "ratio": null,
+   "switchable": false,
    "levels": [
     "easy",
     "fast",
@@ -5170,6 +5284,7 @@
    "defaultSkin": "classic2d",
    "defaultSkinIs2d": true,
    "ratio": null,
+   "switchable": false,
    "levels": [
     "easy",
     "fast",
@@ -5210,6 +5325,7 @@
    "defaultSkin": "classic2d",
    "defaultSkinIs2d": true,
    "ratio": null,
+   "switchable": false,
    "levels": [
     "easy",
     "fast",
@@ -5250,6 +5366,7 @@
    "defaultSkin": "classic2d",
    "defaultSkinIs2d": true,
    "ratio": null,
+   "switchable": false,
    "levels": [
     "easy",
     "fast",
@@ -5290,6 +5407,7 @@
    "defaultSkin": "classic2d",
    "defaultSkinIs2d": true,
    "ratio": null,
+   "switchable": false,
    "levels": [
     "easy",
     "fast",
@@ -5330,6 +5448,7 @@
    "defaultSkin": "classic2d",
    "defaultSkinIs2d": true,
    "ratio": null,
+   "switchable": false,
    "levels": [
     "easy",
     "fast",
@@ -5370,6 +5489,7 @@
    "defaultSkin": "classic2d",
    "defaultSkinIs2d": true,
    "ratio": null,
+   "switchable": false,
    "levels": [
     "easy",
     "fast",
@@ -5493,6 +5613,7 @@
    "defaultSkin": "regular",
    "defaultSkinIs2d": true,
    "ratio": 0.58,
+   "switchable": true,
    "levels": [
     null,
     null,
@@ -5538,6 +5659,7 @@
    "defaultSkin": "tafl2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -5579,6 +5701,7 @@
    "defaultSkin": "tafl2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -5620,6 +5743,7 @@
    "defaultSkin": "tafl2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -5661,6 +5785,7 @@
    "defaultSkin": "tafl2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -5702,6 +5827,7 @@
    "defaultSkin": "tafl2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -5743,6 +5869,7 @@
    "defaultSkin": "tafl2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
+   "switchable": true,
    "levels": [
     "easy",
     "fast",
@@ -5789,6 +5916,7 @@
    "defaultSkin": "official",
    "defaultSkinIs2d": true,
    "ratio": 1.1164274322169,
+   "switchable": true,
    "levels": [
     null,
     null,

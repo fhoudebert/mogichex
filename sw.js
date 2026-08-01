@@ -19,7 +19,7 @@
 // SHELL_VERSION doit changer a chaque livraison — tools/stamp-sw.mjs s'en
 // charge au build pour eviter l'oubli.
 
-const SHELL_VERSION = '202608010610-6f10edb';
+const SHELL_VERSION = '202608010722-7324f62';
 const SHELL_CACHE = 'mogichex-shell-' + SHELL_VERSION;
 const DIST_CACHE = 'mogichex-dist-' + SHELL_VERSION;
 
@@ -30,6 +30,7 @@ const SHELL = [
     './css/mogichex.css',
     './js/app.js',
     './js/config.js',
+    './js/dist-locator.js',
     './js/i18n.js',
     './js/device.js',
     './js/catalog.js',
@@ -72,8 +73,12 @@ self.addEventListener('activate', (event) => {
     );
 });
 
+// Le dist n'est plus forcement sous /dist/ : il peut etre partage avec
+// joclymatch (../dist, ../jocly/dist). On le reconnait a sa STRUCTURE plutot
+// qu'a son emplacement, sinon un dist voisin serait cache comme la coquille
+// (revalidation a chaque requete) au lieu d'etre servi depuis le cache.
 function isDist(url) {
-    return url.pathname.includes('/dist/');
+    return /(^|\/)(dist)\//.test(url.pathname) || /\/games\/[^/]+\//.test(url.pathname);
 }
 
 self.addEventListener('fetch', (event) => {

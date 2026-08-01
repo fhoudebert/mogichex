@@ -17,6 +17,8 @@ import { buildCatalog, buildEntry, normalizeLocalized, pick2dSkin } from '../too
 import { pickLocalized, preferredLocale, configure, t } from '../js/i18n.js';
 import { filterGames, groupByModule, initialCollapsed, normalize, searchableText } from '../js/catalog.js';
 import { classify } from '../js/device.js';
+import { isAbortError } from '../js/game.js';
+import { orderedCandidates, locateDist, looksLikeJocly, normalizeBase } from '../js/dist-locator.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -113,6 +115,15 @@ test('buildCatalog : signale les jeux sans skin 2D et sans regles', () => {
     assert.ok(warnings.some((w) => /aucune regle pour only3d/.test(w)));
 });
 
+test('buildCatalog : switchable est retenu (viewAs n\'a de sens que la)', () => {
+    const { catalog } = buildCatalog(
+        [{ module: 'm', games: [raw('a', { view: { switchable: true, skins: [{ name: 's2d' }] } }), raw('b')] }],
+        { ineligible: [] }
+    );
+    assert.equal(catalog.games.find((g) => g.name === 'a').switchable, true);
+    assert.equal(catalog.games.find((g) => g.name === 'b').switchable, false);
+});
+
 test('buildEntry : entree invalide rendue null plutot que partielle', () => {
     assert.equal(buildEntry(null, { ineligible: new Set() }), null);
     assert.equal(buildEntry({ name: 'x' }, { ineligible: new Set() }), null);
@@ -193,6 +204,97 @@ test('classify : pointeur fin = tablette quelle que soit la taille', () => {
     assert.equal(classify({ shortSide: 768, coarsePointer: true }), 'tablet');
     assert.equal(classify({ shortSide: 599, coarsePointer: true }), 'phone');
     assert.equal(classify({ shortSide: 600, coarsePointer: true }), 'tablet');
+});
+
+// ---------------------------------------------------------------- interruptions
+
+test("isAbortError : l'interruption voulue d'un tour n'est pas une panne", () => {
+    // abortUserTurn() fait REJETER le userTurn() en cours. Sans cette
+    // distinction, changer une option de vue affichait « le moteur de jeu
+    // n'a pas pu etre charge » (constate a la sonde).
+    assert.ok(isAbortError(new Error('User input aborted')));
+    assert.ok(isAbortError(new Error('aborted')));
+    assert.ok(!isAbortError(new Error('Failed to load script: dist/jocly.js')));
+    assert.ok(!isAbortError(null));
+    assert.ok(!isAbortError({}));
+});
+
+// ---------------------------------------------------------------- dist
+
+const JOCLY_BODY = 'var Jocly=function(){global.BrowserScriptLoader={};}();';
+const SPA_FALLBACK = '<!doctype html><html><body><div id="app"></div></body></html>';
+
+function fakeFetch(map) {
+    return async (url) => {
+        if (!(url in map)) return { ok: false, status: 404, text: async () => '' };
+        return { ok: true, status: 200, text: async () => map[url] };
+    };
+}
+
+test('normalizeBase : une seule barre finale, quelle que soit l\'entree', () => {
+    assert.equal(normalizeBase('dist'), 'dist/');
+    assert.equal(normalizeBase('dist/'), 'dist/');
+    assert.equal(normalizeBase('../jocly/dist//'), '../jocly/dist/');
+});
+
+test('orderedCandidates : l\'emplacement memorise passe en tete, sans doublon', () => {
+    assert.deepEqual(orderedCandidates(null, ['dist', '../dist']), ['dist/', '../dist/']);
+    assert.deepEqual(orderedCandidates('../dist', ['dist', '../dist']), ['../dist/', 'dist/']);
+    // Un emplacement memorise hors liste reste essaye en premier.
+    assert.deepEqual(orderedCandidates('x/y', ['dist']), ['x/y/', 'dist/']);
+});
+
+test('locateDist : trouve un dist frere quand il n\'est pas dans mogichex', async () => {
+    const r = await locateDist({
+        fetchImpl: fakeFetch({ '../dist/jocly.js': JOCLY_BODY }),
+        candidates: ['dist', '../dist', 'jocly/dist'],
+    });
+    assert.equal(r.base, '../dist/');
+});
+
+test('locateDist : un 200 qui rend la page de repli ne compte PAS', async () => {
+    // Le .htaccess livre renvoie index.html pour toute URL sans fichier
+    // correspondant : sans verification du contenu, le premier candidat
+    // gagnerait toujours et le vrai dist ne serait jamais trouve.
+    const r = await locateDist({
+        fetchImpl: fakeFetch({ 'dist/jocly.js': SPA_FALLBACK, '../jocly/dist/jocly.js': JOCLY_BODY }),
+        candidates: ['dist', '../jocly/dist'],
+    });
+    assert.equal(r.base, '../jocly/dist/');
+    assert.ok(r.tried.some((t) => /contenu non reconnu/.test(t)));
+});
+
+test('locateDist : un emplacement memorise devenu invalide ne bloque pas', async () => {
+    const r = await locateDist({
+        remembered: '../dist',
+        fetchImpl: fakeFetch({ 'dist/jocly.js': JOCLY_BODY }),
+        candidates: ['dist', '../dist'],
+    });
+    assert.equal(r.base, 'dist/');
+});
+
+test('locateDist : aucun dist => base nulle et liste de ce qui a ete essaye', async () => {
+    const r = await locateDist({ fetchImpl: fakeFetch({}), candidates: ['dist', '../dist'] });
+    assert.equal(r.base, null);
+    assert.equal(r.tried.length, 2);
+});
+
+test('locateDist : une erreur reseau sur un candidat n\'interrompt pas la recherche', async () => {
+    const r = await locateDist({
+        fetchImpl: async (url) => {
+            if (url.startsWith('dist/')) throw new Error('reseau coupe');
+            return { ok: true, status: 200, text: async () => JOCLY_BODY };
+        },
+        candidates: ['dist', '../dist'],
+    });
+    assert.equal(r.base, '../dist/');
+});
+
+test('looksLikeJocly distingue le moteur de la page de repli', () => {
+    assert.ok(looksLikeJocly(JOCLY_BODY));
+    assert.ok(!looksLikeJocly(SPA_FALLBACK));
+    assert.ok(!looksLikeJocly(''));
+    assert.ok(!looksLikeJocly(undefined));
 });
 
 // ---------------------------------------------------------------- coherence
