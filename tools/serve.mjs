@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 // Serveur de developpement. Aucune dependance : le module http suffit.
 //
-//   node tools/serve.mjs [--port 8080] [--coi]
+//   node tools/serve.mjs [--port 8080] [--no-coi]
 //
 // Deux raisons de ne pas se contenter de `python3 -m http.server` :
 //   - les modules ES et le service worker exigent des types MIME corrects ;
-//   - --coi ajoute COOP/COEP, pour reproduire EN LOCAL les en-tetes qui
-//     conditionnent l'isolation cross-origin (et donc fairy-stockfish
-//     multi-thread). Sans cela on ne decouvre le probleme qu'en production.
+//   - COOP/COEP sont poses par defaut, pour reproduire EN LOCAL les en-tetes
+//     qui conditionnent l'isolation cross-origin, et donc fairy-stockfish.
+//     Sans eux le niveau « Expert » rend un coup instantane sans reflechir.
 //
 // Ce fichier n'est PAS destine a la production : voir deploy/.htaccess.
 
@@ -19,7 +19,11 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const argv = process.argv;
 const port = parseInt(argv[argv.indexOf('--port') + 1], 10) || 8080;
-const coi = argv.includes('--coi');
+// L'isolation cross-origin est ACTIVE PAR DEFAUT, comme en production
+// (deploy/.htaccess) : sans elle le niveau « Expert » ne reflechit pas, et
+// developper sans elle reviendrait a ne jamais voir le vrai comportement.
+// --no-coi permet de reproduire une configuration sans les en-tetes.
+const coi = !argv.includes('--no-coi');
 
 const TYPES = {
     '.html': 'text/html; charset=utf-8',
@@ -58,6 +62,6 @@ createServer((req, res) => {
     res.writeHead(200, headers);
     createReadStream(file).pipe(res);
 }).listen(port, () => {
-    console.log(`http://localhost:${port}/  (coi ${coi ? 'actif' : 'inactif'})`);
+    console.log(`http://localhost:${port}/  (isolation cross-origin ${coi ? 'active' : 'INACTIVE'})`);
     console.log('Rappel : le dist jocly doit etre present dans ./dist (voir README).');
 });

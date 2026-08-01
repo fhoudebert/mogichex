@@ -32,16 +32,28 @@ AddType text/javascript           .mjs
     </FilesMatch>
 </IfModule>
 
-# --- isolation cross-origin (ETAPE 6, DESACTIVEE PAR DEFAUT) ---
-# require-corp casse TOUTE ressource tierce depourvue d'en-tete CORP, et le
-# service worker doit preserver ces en-tetes sur les reponses servies depuis
-# son cache. A n'activer qu'apres l'avoir prouve en local
-# (node tools/serve.mjs --coi) puis sur une copie du site. [a valider]
-#<IfModule mod_headers.c>
-#    Header set Cross-Origin-Opener-Policy   "same-origin"
-#    Header set Cross-Origin-Embedder-Policy "require-corp"
-#    Header set Cross-Origin-Resource-Policy "same-origin"
-#</IfModule>
+# --- isolation cross-origin (ETAPE 6, ACTIVEE) ---
+# Sans ces en-tetes, SharedArrayBuffer n'existe pas, le worker de
+# fairy-stockfish refuse de demarrer AVANT meme de telecharger le moteur, et
+# le niveau « Expert » (34 jeux sur 128) rend un coup instantane sans avoir
+# reflechi -- sans aucun avertissement visible.
+#
+# Mesure, meme position hors livre d'ouverture :
+#   sans ces en-tetes : crossOriginIsolated=false, Expert repond en    5 ms
+#   avec ces en-tetes : crossOriginIsolated=true,  Expert repond en 2418 ms
+#                       (chargement du moteur + la seconde de reflexion prevue)
+#
+# require-corp casse toute ressource TIERCE depourvue d'en-tete CORP. mogichex
+# ne charge que des ressources de sa propre origine (l'application, le dist
+# jocly, le relai), donc rien n'est concerne dans le deploiement de reference.
+# Si vous ajoutez un jour une police, une carte ou un script externe, il
+# faudra soit qu'il envoie Cross-Origin-Resource-Policy, soit le charger en
+# CORS, soit commenter ce bloc -- au prix du niveau Expert.
+<IfModule mod_headers.c>
+    Header set Cross-Origin-Opener-Policy   "same-origin"
+    Header set Cross-Origin-Embedder-Policy "require-corp"
+    Header set Cross-Origin-Resource-Policy "same-origin"
+</IfModule>
 
 # --- compression ---
 <IfModule mod_deflate.c>

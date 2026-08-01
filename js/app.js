@@ -7,7 +7,7 @@ import { initLocales, setLocale, applyTranslations, availableLocales, getLocale,
 import { detectTier } from './device.js';
 import { CatalogView } from './catalog-view.js';
 import { filterGames } from './catalog.js';
-import { GameSession, loadRules, winnerLabel } from './game.js';
+import { GameSession, loadRules, winnerLabel, fallbackNotice } from './game.js';
 import { newMatchId, buildInviteLink, parseInviteLink, buildEnvelope, makeId } from './remote/invite.js';
 import { RelayChannel } from './remote/relay-channel.js';
 import { locateRelay, RELAY_ROOTS } from './remote/relay-locator.js';
@@ -140,6 +140,8 @@ async function startMatch() {
     board.textContent = '';
     $('#game-title').textContent = pickLocalized(entry.title, getLocale());
     $('#status').textContent = t('Loading…');
+    $('#notice').hidden = true;
+    $('#notice').textContent = '';
     showScreen('screen-game');
 
     const mode = $('#sel-mode').value;
@@ -174,6 +176,15 @@ async function startMatch() {
         onFinished: (result, Jocly) => {
             $('#status').textContent = winnerLabel(result, Jocly);
             syncTakeBack();
+        },
+        onFallback: (fb) => {
+            // Source AUTORITAIRE : c'est jocly qui dit que « Expert » n'a pas
+            // pu demarrer, pas une deduction de notre part.
+            const notice = fallbackNotice({ fairyFallback: fb }, t);
+            const el = $('#notice');
+            el.textContent = notice;
+            el.hidden = false;
+            console.warn('fairy-stockfish indisponible :', fb.reason);
         },
         onError: (err) => {
             console.error(err);

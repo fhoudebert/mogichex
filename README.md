@@ -21,7 +21,7 @@ mono-fenêtre, et de [Tabulon](https://github.com/fhoudebert/tabulon) pour les a
 | 5a | Invitations (format joclymatch) + fichiers de partie | **fait** — codec pur testé, `match.php` testé sous PHP |
 | 5b | Multijoueur côté client : invitation, transport HTTP, garde reculer | **fait** — échange prouvé entre deux navigateurs |
 | 5c | WebRTC par-dessus `signal.php` (latence) | à écrire |
-| 6 | COOP/COEP + fairy-stockfish multi-thread | préparé (`.htaccess`, `serve.mjs --coi`), non activé |
+| 6 | COOP/COEP + fairy-stockfish multi-thread | **fait** — activé, mesuré, repli signalé à l'utilisateur |
 
 ### Ce qui a été mesuré au navigateur
 
@@ -257,6 +257,42 @@ donc le test de fin qui le suivait n'était jamais atteint et le message de vict
 pas chez celui qui avait ouvert la partie. C'est aussi l'ordre de `RunMatch()` dans
 `control.html` de Jocly.
 
+## Le niveau « Expert » et l'isolation cross-origin
+
+34 jeux sur 128 proposent un niveau **Expert** confié à Fairy-Stockfish. Son moteur WebAssembly
+est multi-thread : il exige `SharedArrayBuffer`, que les navigateurs ne donnent qu'aux pages
+**cross-origin isolated**.
+
+Sans les en-têtes, le worker refuse de démarrer *avant même de télécharger le moteur* — aucune
+requête vers `stockfish.wasm` n'est jamais émise — et jocly se rabat sur l'IA native.
+`deploy/.htaccess` pose donc `Cross-Origin-Opener-Policy: same-origin` et
+`Cross-Origin-Embedder-Policy: require-corp`. Mesure, même position :
+
+| | `crossOriginIsolated` | Expert |
+|---|---|---|
+| sans les en-têtes | `false` | **5 ms** |
+| avec les en-têtes | `true` | **2418 ms** |
+
+`require-corp` casserait toute ressource **tierce** dépourvue d'en-tête CORP. mogichex ne charge
+que sa propre origine, donc rien n'est concerné dans le déploiement de référence ; le
+`.htaccess` explique quoi faire si cela changeait. Vérifié : l'isolation tient **sous le service
+worker**, les en-têtes le traversent, et rien d'autre ne casse.
+
+`tools/serve.mjs` pose les mêmes en-têtes **par défaut**, pour que le développement local
+reflète la production (`--no-coi` pour s'en passer).
+
+### Quand ça n'a pas marché, on le dit
+
+Si le moteur ne démarre pas malgré tout, jocly (branche 2.4) pose `result.fairyFallback` sur le
+retour de `machineSearch`. mogichex le lit et affiche un bandeau : *« Expert » est indisponible —
+vous jouez contre l'IA native (Strong)*. C'est la source **autoritaire**, venue du moteur, et non
+une déduction de notre part. Annoncé **une seule fois par partie**.
+
+Vérifié que le drapeau **traverse la frontière de l'iframe** : `FallbackToNativeAI` s'exécute
+dans l'iframe, la reconstruction du résultat y ajoute `fairyFallback`, et `jocly.embed.js`
+reposte l'objet entier. Mesuré sans isolation : `{engine, reason, level}` arrive intact côté hôte
+dès le premier coup. Bandeau présent sans isolation, absent avec.
+
 ## Options de la partie
 
 Reprises de `control.html` de Jocly, dans un panneau accessible pendant la partie :
@@ -461,6 +497,10 @@ tests/                       Node pur + PHP réel
   de balise fermante du tout.
 - **Le plateau ne doit pas défiler.** `touch-action: none` sur le conteneur, sinon déplacer
   une pièce fait défiler la page.
+- **`StaticGenerateMoves` court-circuite toute IA.** `classic-chess` a un livre d'ouverture qui
+  répond en 1 à 3 ms sans consulter ni le niveau ni le moteur : mesurer un niveau sur les
+  premiers coups ne mesure rien. `shako-chess` et le shogi ont le niveau Expert **sans** livre —
+  ce sont eux qu'il faut prendre pour tester le moteur.
 - **Tester la fin de partie AVANT d'armer un tour.** `userTurn()` ne se résout jamais sur une
   partie finie, donc tout test placé après lui est inatteignable.
 - **`abortUserTurn()` fait *rejeter* le `userTurn()` en cours** (« User input aborted »).

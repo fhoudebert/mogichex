@@ -72,6 +72,31 @@ const store = {
  * tour utilisateur. Exportee pour etre testee : la reconnaitre a tort ou a
  * raison decide si l'utilisateur voit « panne du moteur » ou rien du tout.
  */
+/**
+ * Message a montrer quand jocly signale que « Expert » n'a pas pu tourner.
+ *
+ * jocly2 (branche 2.4) pose `result.fairyFallback` sur le retour de
+ * machineSearch quand le moteur Fairy-Stockfish ne demarre pas et qu'il se
+ * rabat sur l'IA native. C'est la source AUTORITAIRE : elle vient du moteur,
+ * pas d'une deduction de notre part.
+ *
+ * VERIFIE : le drapeau traverse la frontiere de l'iframe. FallbackToNativeAI
+ * s'execute dans l'iframe, la reconstruction du resultat y ajoute
+ * `fairyFallback`, et jocly.embed.js reposte l'objet entier (structured
+ * clone). Mesure sur shako-chess sans isolation : { engine, reason, level }
+ * arrive intact cote hote des le premier coup.
+ *
+ * Rend null s'il n'y a rien a dire.
+ */
+export function fallbackNotice(result, translate) {
+    const fb = result && result.fairyFallback;
+    if (!fb) return null;
+    const t = translate || ((x) => x);
+    return t(
+        '“Expert” is unavailable — you are playing against the native AI ({level}). Serve the page cross-origin isolated to enable Fairy-Stockfish.'
+    ).replace('{level}', fb.level || '?');
+}
+
 export function isAbortError(err) {
     return !!err && typeof err.message === 'string' && /aborted/i.test(err.message);
 }
@@ -101,6 +126,7 @@ export class GameSession {
         this.match = null;
         this.humanSides = [];
         this.mode = 'ai';
+        this.fallbackAnnounced = false;
         this.loopActive = false;
         this.aborted = false;
     }
@@ -360,6 +386,15 @@ export class GameSession {
                         .then((result) => {
                             if (!result || !result.move)
                                 throw new Error('machineSearch n\'a produit aucun coup');
+                            // Une seule annonce par partie : jocly purge son
+                            // drapeau apres l'avoir signale, mais il le
+                            // reposerait a chaque coup tant que le moteur ne
+                            // demarre pas, et repeter la meme phrase a chaque
+                            // tour serait du bruit.
+                            if (!this.fallbackAnnounced && result.fairyFallback) {
+                                this.fallbackAnnounced = true;
+                                if (this.hooks.onFallback) this.hooks.onFallback(result.fairyFallback);
+                            }
                             return match.playMove(result.move);
                         })
                         .then(() => this.hooks.onProgress && this.hooks.onProgress(null));

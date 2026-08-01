@@ -17,7 +17,7 @@ import { buildCatalog, buildEntry, normalizeLocalized, pick2dSkin } from '../too
 import { pickLocalized, preferredLocale, configure, t } from '../js/i18n.js';
 import { filterGames, groupByModule, initialCollapsed, normalize, searchableText } from '../js/catalog.js';
 import { classify } from '../js/device.js';
-import { isAbortError, takeBackTarget, GameSession } from '../js/game.js';
+import { isAbortError, takeBackTarget, GameSession, fallbackNotice } from '../js/game.js';
 import {
     shouldApplyEnvelope,
     envelopeTurns,
@@ -547,6 +547,50 @@ function session(match, opts = {}, hooks = {}) {
 }
 
 const tick = (ms = 60) => new Promise((r) => setTimeout(r, ms));
+
+// ---------------------------------------------------------------- repli Expert
+
+test("fallbackNotice : silencieuse tant que jocly ne signale rien", () => {
+    assert.equal(fallbackNotice(null), null);
+    assert.equal(fallbackNotice({}), null);
+    assert.equal(fallbackNotice({ move: 'e4' }), null);
+    assert.equal(fallbackNotice({ fairyFallback: null }), null);
+});
+
+test('fallbackNotice : nomme le niveau reellement joue', () => {
+    const msg = fallbackNotice({
+        fairyFallback: { engine: 'fairy-stockfish', reason: 'SharedArrayBuffer…', level: 'Strong' },
+    });
+    assert.match(msg, /Strong/);
+    assert.match(msg, /Expert/);
+    assert.ok(!/\{level\}/.test(msg), 'le gabarit doit etre remplace');
+});
+
+test('fallbackNotice : passe par la traduction fournie', () => {
+    const msg = fallbackNotice(
+        { fairyFallback: { level: 'Fort' } },
+        () => 'Niveau reel : {level}'
+    );
+    assert.equal(msg, 'Niveau reel : Fort');
+});
+
+test("le repli n'est annonce QU'UNE FOIS par partie", async () => {
+    // jocly purge son drapeau apres l'avoir signale, mais il le reposerait a
+    // chaque coup tant que le moteur ne demarre pas : repeter la phrase a
+    // chaque tour serait du bruit.
+    const annonces = [];
+    const m = fakeMatch({ turn: J.PLAYER_B, maxTurns: 6 });
+    m.machineSearch = function () {
+        this.searched++;
+        return Promise.resolve({ move: 'm', fairyFallback: { level: 'Strong' } });
+    };
+    const s = session(m, { humanSides: [J.PLAYER_A] }, { onFallback: (fb) => annonces.push(fb.level) });
+    s.run();
+    await tick(120);
+    assert.ok(m.searched >= 2, 'plusieurs recherches doivent avoir eu lieu');
+    assert.deepEqual(annonces, ['Strong']);
+});
+
 
 test('la fin de partie est annoncee meme quand elle arrive du camp adverse', async () => {
     // Symptome constate sur appareil : « joueur B gagne » ne revenait pas au
