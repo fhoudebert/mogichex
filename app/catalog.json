@@ -2,18 +2,18 @@
  "catalogVersion": 1,
  "source": {
   "repo": "jocly2",
-  "commit": "ffbaf21807452f4fbfe6491358d134d2f67ae7a4",
-  "builtAt": "2026-08-01T11:13:02.917Z"
+  "commit": "8e0cb1a4e73dadf8931f71b1bd347e11d4681d5d",
+  "builtAt": "2026-08-01T16:08:41.759Z"
  },
  "counts": {
-  "games": 128,
+  "games": 127,
   "modules": 12,
-  "phone": 117,
+  "phone": 116,
   "tablet": 11,
-  "obsolete": 2,
+  "obsolete": 0,
   "byModule": {
    "checkers": 11,
-   "chessbase": 81,
+   "chessbase": 80,
    "fourinarow": 5,
    "hunt": 1,
    "mana": 1,
@@ -1172,70 +1172,6 @@
     }
    ],
    "obsolete": false,
-   "tier": "phone"
-  },
-  {
-   "name": "basic-chess",
-   "module": "chessbase",
-   "title": {
-    "en": "Basic Chess"
-   },
-   "summary": {
-    "en": "Basic Chess without openings book",
-    "fr": "Échecs simples, sans bibliothèque d’ouvertures"
-   },
-   "thumbnail": "res/rules/famous/knight-thumbnail.png",
-   "rules": {
-    "en": "res/rules/famous/rules.html",
-    "fr": "res/rules/famous/rules-fr.html"
-   },
-   "credits": {
-    "en": "famous/credits.html"
-   },
-   "skins": [
-    {
-     "name": "skin3d",
-     "title": "3D Classic",
-     "is3d": true
-    },
-    {
-     "name": "skin2d",
-     "title": "2D Classic",
-     "is3d": false
-    }
-   ],
-   "defaultSkin": "skin2d",
-   "defaultSkinIs2d": true,
-   "ratio": 1,
-   "switchable": true,
-   "levels": [
-    {
-     "label": "Easy",
-     "isDefault": false,
-     "ai": "uct"
-    },
-    {
-     "label": "Fast [1sec]",
-     "isDefault": true,
-     "ai": "uct"
-    },
-    {
-     "label": "Medium",
-     "isDefault": false,
-     "ai": "uct"
-    },
-    {
-     "label": "Strong",
-     "isDefault": false,
-     "ai": "uct"
-    },
-    {
-     "label": "Expert",
-     "isDefault": false,
-     "ai": "fairy-stockfish"
-    }
-   ],
-   "obsolete": true,
    "tier": "phone"
   },
   {
@@ -3060,7 +2996,7 @@
      "ai": "fairy-stockfish"
     }
    ],
-   "obsolete": true,
+   "obsolete": false,
    "tier": "phone"
   },
   {

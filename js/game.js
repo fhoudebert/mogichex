@@ -313,9 +313,26 @@ export class GameSession {
         this.loopActive = true;
         const next = () => {
             if (this.aborted || this.match !== match) return;
+            // La FIN DE PARTIE se teste AVANT d'armer quoi que ce soit.
+            //
+            // Dans l'autre ordre, un camp qui recoit l'etat final de
+            // l'adversaire armait un tour utilisateur sur une partie deja
+            // finie : userTurn() ne se resolvait jamais, donc le
+            // getFinished() qui le suivait n'etait jamais atteint et le
+            // « joueur B gagne » n'arrivait jamais chez celui qui avait
+            // ouvert la partie. Symptome constate sur appareil.
+            //
+            // C'est aussi l'ordre de RunMatch() dans control.html de jocly.
             match
-                .getTurn()
-                .then((player) => {
+                .getFinished()
+                .then((result) => {
+                    if (this.aborted || this.match !== match) return null;
+                    if (result && result.finished) {
+                        this.loopActive = false;
+                        if (this.hooks.onFinished) this.hooks.onFinished(result, Jocly);
+                        return null;
+                    }
+                    return match.getTurn().then((player) => {
                     const human = this.isHuman(player);
                     if (this.hooks.onTurn) this.hooks.onTurn(player, human);
                     if (human) {
@@ -346,14 +363,11 @@ export class GameSession {
                             return match.playMove(result.move);
                         })
                         .then(() => this.hooks.onProgress && this.hooks.onProgress(null));
+                    });
                 })
-                .then(() => match.getFinished())
-                .then((result) => {
+                .then(() => {
                     if (this.aborted || this.match !== match) return;
-                    if (result && result.finished) {
-                        this.loopActive = false;
-                        if (this.hooks.onFinished) this.hooks.onFinished(result, Jocly);
-                    } else next();
+                    if (this.loopActive) next();
                 })
                 .catch((err) => {
                     this.loopActive = false;

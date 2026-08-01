@@ -247,8 +247,15 @@ partie jamais sauvegardée n'est **pas** un état jouable ; sa propre enveloppe 
 deux camps écrivent dans le même fichier — sans ce test, chacun se rechargerait en boucle et
 interromprait son propre tour) ; une enveloppe sans coup nouveau ne redessine rien.
 
-**Reculer est masqué dès qu'un camp est distant** : reprendre un coup déjà parti chez
-l'adversaire désynchroniserait les deux plateaux.
+**Reculer et recommencer sont masqués dès qu'un camp est distant** : rejouer une position déjà
+partie chez l'adversaire désynchroniserait les deux plateaux. Ce sont les deux seules commandes
+de position accessibles en partie, et un garde de fond double le masquage dans les gestionnaires.
+
+**La fin de partie est testée avant d'armer un tour.** Dans l'autre ordre, le camp qui *reçoit*
+l'état final arme un tour utilisateur sur une partie déjà finie : ce tour ne se résout jamais,
+donc le test de fin qui le suivait n'était jamais atteint et le message de victoire n'arrivait
+pas chez celui qui avait ouvert la partie. C'est aussi l'ordre de `RunMatch()` dans
+`control.html` de Jocly.
 
 ## Options de la partie
 
@@ -454,6 +461,8 @@ tests/                       Node pur + PHP réel
   de balise fermante du tout.
 - **Le plateau ne doit pas défiler.** `touch-action: none` sur le conteneur, sinon déplacer
   une pièce fait défiler la page.
+- **Tester la fin de partie AVANT d'armer un tour.** `userTurn()` ne se résout jamais sur une
+  partie finie, donc tout test placé après lui est inatteignable.
 - **`abortUserTurn()` fait *rejeter* le `userTurn()` en cours** (« User input aborted »).
   C'est une interruption voulue, pas une panne : sans la distinguer, changer une option de
   vue affichait « le moteur de jeu n'a pas pu être chargé ». Constaté à la sonde.

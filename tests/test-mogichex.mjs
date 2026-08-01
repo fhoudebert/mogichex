@@ -17,7 +17,7 @@ import { buildCatalog, buildEntry, normalizeLocalized, pick2dSkin } from '../too
 import { pickLocalized, preferredLocale, configure, t } from '../js/i18n.js';
 import { filterGames, groupByModule, initialCollapsed, normalize, searchableText } from '../js/catalog.js';
 import { classify } from '../js/device.js';
-import { isAbortError, takeBackTarget } from '../js/game.js';
+import { isAbortError, takeBackTarget, GameSession } from '../js/game.js';
 import {
     shouldApplyEnvelope,
     envelopeTurns,
@@ -491,6 +491,110 @@ test("buildEnvelope / isUsableEnvelope : format joclymatch, debris rejetes", () 
     assert.ok(!isUsableEnvelope({}));
     assert.ok(!isUsableEnvelope(null));
     assert.ok(!isUsableEnvelope({ matchDetails: {} }));
+});
+
+// ---------------------------------------------------------------- boucle de jeu
+
+const J = { PLAYER_A: 1, PLAYER_B: -1 };
+
+/**
+ * Faux match : juste ce que la boucle appelle. Il permet de tester l'ordre
+ * des operations sans jocly, sans DOM et sans reseau.
+ * `maxTurns` borne la partie pour qu'un test qui tourne mal ne parte pas en
+ * boucle infinie (ce qui est arrive en ecrivant ces tests).
+ */
+function fakeMatch(o = {}) {
+    return {
+        finished: o.finished || false,
+        turn: o.turn === undefined ? J.PLAYER_A : o.turn,
+        armed: 0,
+        searched: 0,
+        moves: 0,
+        maxTurns: o.maxTurns === undefined ? 2 : o.maxTurns,
+        getTurn() {
+            return Promise.resolve(this.turn);
+        },
+        userTurn() {
+            this.armed++;
+            if (o.userTurnHangs) return new Promise(() => {});
+            this.moves++;
+            if (this.moves >= this.maxTurns) this.finished = true;
+            return Promise.resolve();
+        },
+        getFinished() {
+            return Promise.resolve({ finished: this.finished, winner: J.PLAYER_B });
+        },
+        machineSearch() {
+            this.searched++;
+            return Promise.resolve({ move: 'm' });
+        },
+        playMove() {
+            this.moves++;
+            if (this.moves >= this.maxTurns) this.finished = true;
+            return Promise.resolve();
+        },
+    };
+}
+
+function session(match, opts = {}, hooks = {}) {
+    const s = new GameSession({}, { name: 'g', levels: [] }, hooks);
+    s.Jocly = J;
+    s.match = match;
+    s.humanSides = opts.humanSides || [J.PLAYER_A];
+    s.mode = opts.mode || 'ai';
+    s.remoteSide = opts.remoteSide || null;
+    return s;
+}
+
+const tick = (ms = 60) => new Promise((r) => setTimeout(r, ms));
+
+test('la fin de partie est annoncee meme quand elle arrive du camp adverse', async () => {
+    // Symptome constate sur appareil : « joueur B gagne » ne revenait pas au
+    // telephone qui avait ouvert la partie. Cause : la boucle testait
+    // getFinished() APRES avoir arme un tour, donc elle armait userTurn() sur
+    // une partie deja finie — et userTurn() ne se resout jamais dans ce cas.
+    const m = fakeMatch({ finished: true, turn: J.PLAYER_A, userTurnHangs: true });
+    let finished = null;
+    const s = session(m, { mode: 'remote', remoteSide: J.PLAYER_B }, {
+        onFinished: (res) => (finished = res),
+    });
+    s.run();
+    await tick();
+    assert.ok(finished, 'onFinished doit etre appele');
+    assert.equal(finished.winner, J.PLAYER_B);
+    assert.equal(m.armed, 0, 'aucun tour ne doit etre arme sur une partie finie');
+    assert.equal(s.loopActive, false);
+});
+
+test('partie en cours : le tour humain est bien arme', async () => {
+    const m = fakeMatch({ maxTurns: 1 });
+    let finished = null;
+    const s = session(m, {}, { onFinished: (res) => (finished = res) });
+    s.run();
+    await tick();
+    assert.equal(m.armed, 1);
+    assert.ok(finished, 'la fin qui suit le coup doit etre vue');
+});
+
+test("camp distant : on attend, on n'arme rien et on ne fait pas jouer l'ordinateur", async () => {
+    // Sans cette troisieme branche, l'ordinateur jouerait a la place de
+    // l'adversaire distant.
+    const m = fakeMatch({ turn: J.PLAYER_B });
+    const s = session(m, { mode: 'remote', remoteSide: J.PLAYER_B });
+    s.run();
+    await tick();
+    assert.equal(m.armed, 0);
+    assert.equal(m.searched, 0);
+    assert.equal(s.loopActive, false, 'la boucle se met en pause jusqu\'a l\'arrivee du coup');
+});
+
+test('contre l\'ordinateur : une recherche est lancee pour le camp machine', async () => {
+    const m = fakeMatch({ turn: J.PLAYER_B, maxTurns: 1 });
+    const s = session(m, { humanSides: [J.PLAYER_A] });
+    s.run();
+    await tick();
+    assert.equal(m.searched, 1);
+    assert.equal(m.armed, 0);
 });
 
 // ---------------------------------------------------------------- jeu a distance

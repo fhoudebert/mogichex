@@ -232,6 +232,12 @@ function fillGameOptions(session) {
 
     // « Voir en tant que » n'a de sens que pour un jeu switchable : jocly
     // ignore viewAs ailleurs.
+    // « Recommencer » disparait des qu'un camp est distant, pour la meme
+    // raison que « reprendre le coup » : rejouer depuis le debut de son cote
+    // seulement desynchroniserait les deux plateaux. C'etait la derniere
+    // commande de position encore accessible en jeu a distance.
+    $('#btn-restart').hidden = !!state.remote;
+
     const viewAsRow = $('#row-view-as');
     viewAsRow.hidden = !session.entry.switchable;
     if (!viewAsRow.hidden) {
@@ -291,7 +297,7 @@ function wireGameOptions() {
         openPanel('#panel-game-options');
     });
     $('#btn-restart').addEventListener('click', async () => {
-        if (!state.session) return;
+        if (!state.session || state.remote) return;
         closePanels();
         $('#status').textContent = t('Loading…');
         await state.session.restart();
