@@ -2,8 +2,8 @@
  "catalogVersion": 1,
  "source": {
   "repo": "jocly2",
-  "commit": "4d6d1cec2f72cad79cb560de70b2c626835ff3be",
-  "builtAt": "2026-07-31T21:18:31.510Z"
+  "commit": "ffbaf21807452f4fbfe6491358d134d2f67ae7a4",
+  "builtAt": "2026-08-01T06:10:21.883Z"
  },
  "counts": {
   "games": 128,
@@ -2171,8 +2171,7 @@
     "easy",
     "fast",
     "medium",
-    "strong",
-    "expert"
+    "strong"
    ],
    "obsolete": false,
    "tier": "phone"
@@ -3439,7 +3438,8 @@
    },
    "thumbnail": "res/rules/smess/smess-thumb.png",
    "rules": {
-    "en": "res/rules/smess/smess-rules.html"
+    "en": "res/rules/smess/smess-rules.html",
+    "fr": "res/rules/smess/smess-rules_fr.html"
    },
    "credits": {
     "en": "res/rules/smess/smess-credits.html"
@@ -4074,7 +4074,7 @@
    },
    "summary": {
     "en": "Extended Metamachy - 12x12",
-    "fr": "Metamachy étendu — 12x12"
+    "fr": "Metamachie étendu — 12x12"
    },
    "thumbnail": "res/rules/metamachy/zanzibar-s-thumb.png",
    "rules": {
