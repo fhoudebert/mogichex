@@ -1,7 +1,7 @@
 // Amorcage : catalogue -> detail -> partie, plus les panneaux regles/reglages.
 // Mono-fenetre : on ne fait qu'echanger la classe .is-active.
 
-import { CONFIG, gameAssetUrl, setDistBase, distBaseIsForced } from './config.js';
+import { CONFIG, gameAssetUrl, setDistBase, distBaseIsForced, setRelayUrl, relayUrlIsForced } from './config.js';
 import { locateDist, expandCandidates, DIST_ROOTS } from './dist-locator.js';
 import { initLocales, setLocale, applyTranslations, availableLocales, getLocale, t, pickLocalized } from './i18n.js';
 import { detectTier } from './device.js';
@@ -10,6 +10,7 @@ import { filterGames } from './catalog.js';
 import { GameSession, loadRules, winnerLabel } from './game.js';
 import { newMatchId, buildInviteLink, parseInviteLink, buildEnvelope, makeId } from './remote/invite.js';
 import { RelayChannel } from './remote/relay-channel.js';
+import { locateRelay, RELAY_ROOTS } from './remote/relay-locator.js';
 
 const $ = (sel) => document.querySelector(sel);
 const state = { catalog: null, tier: 'phone', showAll: false, entry: null, session: null };
@@ -305,7 +306,35 @@ function wireGameOptions() {
  * l'attente de l'adversaire. Le lien est au format joclymatch (voir
  * js/remote/invite.js) : il reste lisible par joclymatch et par Tabulon.
  */
-function openInvite(entry) {
+/**
+ * Trouve le relai, une seule fois, au moment ou on en a besoin. Quelqu'un qui
+ * ne joue que contre l'ordinateur ne paie jamais cette requete.
+ */
+async function ensureRelay() {
+    if (CONFIG.relayUrl || relayUrlIsForced()) return CONFIG.relayUrl;
+    const remembered = pref('relayUrl', null);
+    const roots = (CONFIG.relayRoots || []).concat(RELAY_ROOTS);
+    const found = await locateRelay({ remembered, roots });
+    if (found.base) {
+        setRelayUrl(found.base);
+        if (found.base !== remembered) setPref('relayUrl', found.base);
+    } else {
+        console.warn(
+            'relai introuvable. Emplacements essayes (relatifs a cette page) :\n  ' +
+                found.tried.join('\n  ') +
+                "\nDeposer deploy/signal.php et deploy/match.php a cote de index.html," +
+                ' ou imposer window.MOGICHEX_CONFIG = { relayUrl: "…" }.'
+        );
+    }
+    return CONFIG.relayUrl;
+}
+
+async function openInvite(entry) {
+    $('#invite-error').textContent = '';
+    $('#invite-link').value = '';
+    $('#btn-start-remote').disabled = true;
+    openPanel('#panel-invite');
+    await ensureRelay();
     if (!CONFIG.relayUrl) {
         $('#invite-error').textContent = t('Remote play needs a relay. None is configured.');
         $('#invite-link').value = '';
@@ -324,7 +353,6 @@ function openInvite(entry) {
         });
         $('#invite-link').value = link;
     }
-    openPanel('#panel-invite');
 }
 
 /**
@@ -523,11 +551,19 @@ async function main() {
         const entry = state.catalog.games.find((g) => g.name === invite.game);
         if (entry) {
             openDetail(entry);
-            if (invite.side && CONFIG.relayUrl) {
-                state.remote = { matchId: invite.matchId, side: invite.side };
-                $('#sel-mode').value = 'remote';
-                syncModeRows();
-                startMatch();
+            if (invite.side) {
+                await ensureRelay();
+                if (CONFIG.relayUrl) {
+                    state.remote = { matchId: invite.matchId, side: invite.side };
+                    $('#sel-mode').value = 'remote';
+                    syncModeRows();
+                    startMatch();
+                } else {
+                    $('#invite-error').textContent = t(
+                        'Remote play needs a relay. None is configured.'
+                    );
+                    openPanel('#panel-invite');
+                }
             }
         }
     }

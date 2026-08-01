@@ -27,6 +27,13 @@ import {
 } from '../js/remote/protocol.js';
 import { RelayChannel } from '../js/remote/relay-channel.js';
 import {
+    orderedRelays,
+    locateRelay,
+    looksLikeRelay,
+    normalizeRelay,
+    RELAY_ROOTS,
+} from '../js/remote/relay-locator.js';
+import {
     makeId,
     newMatchId,
     otherSide,
@@ -632,6 +639,66 @@ test('RelayChannel : une panne du relai remonte sans casser la boucle', async ()
     });
     await assert.rejects(() => ch.pollOnce(), /relai 503/);
     assert.equal(errors.length, 0); // onError n'est appele que par la boucle
+});
+
+// ---------------------------------------------------------------- relai
+
+const relayFetch = (map) => async (url) => {
+    const key = url.replace(/\/match\.php$/, '');
+    if (!(key in map)) return { ok: false, status: 404, json: async () => { throw new Error('non JSON'); } };
+    const v = map[key];
+    return { ok: true, status: 200, json: async () => v };
+};
+const RELAY_OK = { error: 'bad match id' };
+const SPA_HTML = null; // json() qui echoue est simule par l'absence de cle
+
+test('normalizeRelay / orderedRelays', () => {
+    assert.equal(normalizeRelay('.'), '.');
+    assert.equal(normalizeRelay('../joclymatch/'), '../joclymatch');
+    assert.deepEqual(orderedRelays(null), ['.', '../joclymatch']);
+    assert.deepEqual(orderedRelays('../joclymatch'), ['../joclymatch', '.']);
+    // Le defaut couvre le deploiement de reference.
+    assert.deepEqual(RELAY_ROOTS, ['.', '../joclymatch']);
+});
+
+test('locateRelay : le relai chez mogichex est trouve en premier', async () => {
+    const r = await locateRelay({ fetchImpl: relayFetch({ '.': RELAY_OK }) });
+    assert.equal(r.base, '.');
+});
+
+test('locateRelay : repli sur le relai de joclymatch', async () => {
+    const r = await locateRelay({ fetchImpl: relayFetch({ '../joclymatch': RELAY_OK }) });
+    assert.equal(r.base, '../joclymatch');
+});
+
+test("locateRelay : une page HTML servie en repli n'est pas un relai", async () => {
+    // Le .htaccess renvoie index.html pour toute URL sans fichier : sans
+    // verification de la signature, « . » gagnerait toujours.
+    const r = await locateRelay({
+        fetchImpl: async (url) => ({
+            ok: true,
+            status: 200,
+            json: async () => {
+                if (url.startsWith('./')) throw new Error('non JSON');
+                return RELAY_OK;
+            },
+        }),
+    });
+    assert.equal(r.base, '../joclymatch');
+    assert.ok(r.tried.some((t) => /reponse non JSON/.test(t)));
+});
+
+test('locateRelay : aucun relai => base nulle et liste des essais', async () => {
+    const r = await locateRelay({ fetchImpl: relayFetch({}) });
+    assert.equal(r.base, null);
+    assert.equal(r.tried.length, 2);
+});
+
+test('looksLikeRelay : seule une erreur JSON de match.php compte', () => {
+    assert.ok(looksLikeRelay({ error: 'bad match id' }));
+    assert.ok(!looksLikeRelay({}));
+    assert.ok(!looksLikeRelay(null));
+    assert.ok(!looksLikeRelay('<!doctype html>'));
 });
 
 // ---------------------------------------------------------------- coherence

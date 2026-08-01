@@ -34,13 +34,29 @@ export const CONFIG = Object.assign(
         distRoots: [],
         // Fichier produit par tools/build-catalog.mjs.
         catalogUrl: 'app/catalog.json',
-        // Relai HTTP : signalisation WebRTC ET transport de repli (etape 5).
-        // Vide = jeu solo uniquement. Voir README § Hebergement.
-        relayUrl: '',
+        // Relai HTTP (signal.php / match.php). null = a chercher au moment de
+        // proposer une partie a distance, parmi relayRoots. Une valeur donnee
+        // ici ou dans window.MOGICHEX_CONFIG court-circuite la recherche —
+        // c'est ce qu'il faudra faire dans une coquille NATIVE, dont l'origine
+        // n'est pas celle du site et pour qui « . » ne veut rien dire.
+        relayUrl: null,
+        // Emplacements ou chercher le relai, avant ceux par defaut.
+        // Defauts : « . » (le relai chez mogichex, meme origine donc aucun
+        // CORS) puis « ../joclymatch ».
+        relayRoots: [],
         storagePrefix: 'mogichex.',
     },
     overrides
 );
+
+export function setRelayUrl(url) {
+    CONFIG.relayUrl = url;
+}
+
+/** Vrai si l'emplacement du relai a ete impose (pas de recherche). */
+export function relayUrlIsForced() {
+    return !!overrides.relayUrl;
+}
 
 /** Vrai si l'emplacement du dist a ete impose (config figee, pas de recherche). */
 export function distBaseIsForced() {

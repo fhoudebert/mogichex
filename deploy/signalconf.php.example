@@ -17,7 +17,20 @@ $signalTTL = 3600;
 // coquille NATIVE le jour ou l'application y sera embarquee : son origine
 // n'est ni le site ni GitHub Pages, et sans cette entree elle recevra un
 // refus CORS.
+// Deploiement de reference :
+//   https://biscandine.fr/variantes/mogichex/     l'application
+//   https://biscandine.fr/variantes/joclymatch/   joclymatch
+//   https://biscandine.fr/variantes/jocly/dist/   le dist partage
+//
+// Si signal.php et match.php sont deposes DANS variantes/mogichex/, l'appel
+// se fait en meme origine et cette liste ne sert a rien : aucun en-tete CORS
+// n'est alors emis, ce qui est le reglage le plus sur.
+//
+// Elle devient necessaire des que l'application est servie depuis une AUTRE
+// origine que le relai : un miroir GitHub Pages, ou une coquille native
+// (capacitor://localhost sous iOS, https://localhost sous Android).
 $signalOrigins = array(
+    'https://biscandine.fr',
     'https://fhoudebert.github.io',
     'capacitor://localhost',
     'ionic://localhost',

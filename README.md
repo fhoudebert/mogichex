@@ -298,6 +298,36 @@ pendant la partie. Les fichiers de règles de Jocly référencent leurs images p
 
 ---
 
+## Déploiement de référence
+
+```
+https://biscandine.fr/variantes/mogichex/     l'application
+https://biscandine.fr/variantes/joclymatch/   joclymatch
+https://biscandine.fr/variantes/jocly/dist/   le dist partagé (moteur sous dist/browser/)
+```
+
+**Aucune configuration n'est nécessaire.** Déposer `deploy/signal.php`, `deploy/match.php`,
+`deploy/.htaccess` et `deploy/signalconf.php.example` (renommé en `signalconf.php`) dans
+`variantes/mogichex/`, et c'est tout :
+
+- le **dist** est trouvé en `../jocly/dist/browser/` (racine `../jocly/dist` + suffixe `browser`) ;
+- le **relai** est trouvé en `.` — le répertoire de mogichex lui-même.
+
+Mettre le relai chez mogichex plutôt que chez joclymatch a un avantage concret : **même origine,
+donc aucun en-tête CORS émis ni à configurer**, ce qui est le réglage le plus sûr. Le repli
+`../joclymatch` existe si vous préférez l'y déposer.
+
+Les deux emplacements trouvés sont mémorisés et réessayés en premier. La recherche du relai est
+**paresseuse** : elle n'a lieu qu'au moment de proposer une partie à distance, donc qui ne joue
+que contre l'ordinateur ne paie jamais cette requête.
+
+Mesuré sur cette arborescence reconstituée, repli mono-page du `.htaccess` actif : dist en
+`../jocly/dist/browser/`, relai en `.`, vignettes chargées, invitation créée, second navigateur
+qui rejoint — **sans une ligne de configuration**.
+
+`signalconf.php` ne sert qu'aux origines *autres* que le relai : un miroir GitHub Pages, ou une
+coquille native. `https://biscandine.fr` y figure déjà.
+
 ## Hébergement
 
 **Décision : à côté de joclymatch, sur l'hébergement mutualisé.**
@@ -391,6 +421,7 @@ js/dist-locator.js      recherche du dist (pur, testé)
 js/remote/invite.js     codec d'invitation joclymatch (pur, testé)
 js/remote/protocol.js   décisions du jeu à distance (pur, testé)
 js/remote/relay-channel.js  transport sur match.php
+js/remote/relay-locator.js  recherche du relai (pur, testé)
 js/i18n.js              t(), pickLocalized(), chargement des langues
 js/device.js            classe d'appareil par capacité
 js/catalog.js           filtrage, groupement (pur, testé)
