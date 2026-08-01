@@ -1,0 +1,168 @@
+/* mogichex — mobile d'abord.
+   Regles d'ergonomie tenues partout : cibles tactiles >= 44 px, aucun survol
+   comme seul moyen d'acces, et la zone du plateau ne defile pas (sinon un
+   glisser sur une piece fait defiler la page). */
+
+:root {
+    --bg: #16171b;
+    --bg-soft: #1f2026;
+    --line: #303239;
+    --fg: #e9e9ee;
+    --fg-dim: #a0a2ad;
+    --accent: #4a9d5f;
+    --accent-2: #5b7fd4;
+    --bar-h: 3.25rem;
+    --tap: 2.75rem;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+    margin: 0;
+    height: 100%;
+    background: var(--bg);
+    color: var(--fg);
+    font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overscroll-behavior: none;
+}
+
+#app { height: 100%; position: relative; overflow: hidden; }
+
+.screen {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+}
+.screen.is-active { display: flex; }
+
+.bar {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    min-height: var(--bar-h);
+    padding: 0 .5rem;
+    background: var(--bg-soft);
+    border-bottom: 1px solid var(--line);
+    flex: 0 0 auto;
+}
+.brand { font-size: 1.15rem; margin: 0; flex: 1; letter-spacing: .02em; }
+.bar-title { font-size: 1.05rem; margin: 0; flex: 1; font-weight: 600;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.icon-btn {
+    min-width: var(--tap); min-height: var(--tap);
+    background: none; border: 0; color: var(--fg);
+    font-size: 1.35rem; line-height: 1; border-radius: .5rem;
+}
+.icon-btn:active { background: #ffffff18; }
+.icon-btn.back { font-size: 2rem; }
+
+/* ---- recherche et filtres ---- */
+.searchbar { padding: .5rem; flex: 0 0 auto; }
+.searchbar input {
+    width: 100%; min-height: var(--tap);
+    padding: 0 .75rem; font-size: 1rem;
+    color: var(--fg); background: var(--bg-soft);
+    border: 1px solid var(--line); border-radius: .6rem;
+}
+.filterbar {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: .5rem; padding: 0 .75rem .5rem; flex: 0 0 auto;
+    color: var(--fg-dim); font-size: .85rem;
+}
+.switch { display: flex; align-items: center; gap: .4rem; min-height: var(--tap); }
+.switch input { width: 1.15rem; height: 1.15rem; }
+
+/* ---- liste des jeux ---- */
+.catalog { flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.module { border-top: 1px solid var(--line); }
+.module-head {
+    display: flex; align-items: center; gap: .6rem; width: 100%;
+    min-height: var(--tap); padding: .5rem .75rem;
+    background: var(--bg-soft); border: 0; color: var(--fg);
+    font-size: .95rem; font-weight: 600; text-align: left;
+}
+.module-name { flex: 1; text-transform: capitalize; }
+.module-count { color: var(--fg-dim); font-weight: 400; font-size: .85rem; }
+.chevron::before { content: "▸"; display: inline-block; color: var(--fg-dim); }
+.module-head[aria-expanded="true"] .chevron::before { transform: rotate(90deg); }
+
+.games { list-style: none; margin: 0; padding: 0; }
+.game + .game { border-top: 1px solid var(--line); }
+.game-btn {
+    display: flex; align-items: center; gap: .75rem; width: 100%;
+    min-height: 4rem; padding: .5rem .75rem;
+    background: none; border: 0; color: var(--fg); text-align: left;
+}
+.game-btn:active { background: #ffffff10; }
+.thumb { width: 2.75rem; height: 2.75rem; object-fit: contain; flex: 0 0 auto; }
+.game-text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.game-title { font-weight: 600; }
+.game-summary {
+    color: var(--fg-dim); font-size: .82rem;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.tag-large { color: var(--fg-dim); font-size: 1.1rem; }
+.empty { padding: 2rem 1rem; text-align: center; color: var(--fg-dim); }
+
+/* ---- detail ---- */
+.detail-body { flex: 1 1 auto; overflow-y: auto; padding: 1rem; }
+.detail-thumb { width: 5rem; height: 5rem; object-fit: contain; }
+.detail-summary { color: var(--fg-dim); }
+.detail-actions { display: flex; gap: .75rem; margin: 1rem 0 1.5rem; }
+button.primary, button.secondary {
+    flex: 1; min-height: var(--tap); border: 0; border-radius: .6rem;
+    font-size: 1rem; font-weight: 600; color: #fff;
+}
+button.primary { background: var(--accent); }
+button.secondary { background: var(--accent-2); }
+button[disabled] { opacity: .45; }
+
+.field { display: flex; align-items: center; gap: .75rem; margin: .75rem 0; }
+.field label { flex: 0 0 8rem; color: var(--fg-dim); font-size: .9rem; }
+.field select {
+    flex: 1; min-height: var(--tap); padding: 0 .5rem; font-size: 1rem;
+    color: var(--fg); background: var(--bg-soft);
+    border: 1px solid var(--line); border-radius: .5rem;
+}
+
+/* ---- partie ---- */
+.status { padding: .4rem .75rem; color: var(--fg-dim); font-size: .9rem; flex: 0 0 auto; }
+.progress { height: 3px; background: var(--line); display: none; flex: 0 0 auto; }
+.progress.is-visible { display: block; }
+.progress > span { display: block; height: 100%; width: 0; background: var(--accent); }
+.board {
+    flex: 1 1 auto; min-height: 0; position: relative;
+    /* Le plateau capte le geste : sans cela, deplacer une piece fait defiler. */
+    touch-action: none; overflow: hidden;
+}
+
+/* ---- panneaux ---- */
+.panel {
+    position: absolute; inset: 0; z-index: 10;
+    display: flex; flex-direction: column;
+    background: var(--bg);
+    transform: translateY(100%); transition: transform .18s ease-out;
+    padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom);
+}
+.panel.is-open { transform: none; }
+.rules, .settings-body { flex: 1 1 auto; overflow-y: auto; padding: 1rem; }
+.rules img { max-width: 100%; height: auto; }
+.rules table { max-width: 100%; }
+.rules a { color: var(--accent-2); }
+.about { color: var(--fg-dim); font-size: .8rem; margin-top: 2rem; }
+.fatal { color: #ff8686; padding: 1rem; white-space: pre-wrap; }
+
+@media (prefers-reduced-motion: reduce) {
+    .panel { transition: none; }
+}
+
+/* Ecran large : la liste et le detail peuvent cohabiter. Reserve a plus tard,
+   on garde ici la seule adaptation utile tout de suite. */
+@media (min-width: 900px) {
+    .catalog { column-width: 24rem; column-gap: 0; }
+    .module { break-inside: avoid; }
+}

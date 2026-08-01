@@ -1,0 +1,17 @@
+{
+  "name": "mogichex",
+  "version": "0.1.0",
+  "description": "Board games (Jocly) playable with a thumb — installable web app.",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/fhoudebert/mogichex" },
+  "scripts": {
+    "test": "node --test \"tests/*.mjs\"",
+    "catalog": "node tools/build-catalog.mjs --jocly ../jocly2",
+    "scan": "node tools/scan-geometry.mjs --jocly ../jocly2",
+    "stamp": "node tools/stamp-sw.mjs",
+    "build": "npm run catalog && npm run stamp && npm test",
+    "serve": "node tools/serve.mjs"
+  }
+}

@@ -1,0 +1,26 @@
+<?php
+// Copier en signalconf.php a cote de signal.php et adapter.
+// Ce fichier N'A PAS de balise fermante : une ligne vide apres elle se
+// retrouverait devant le JSON et casserait le JSON.parse() du client.
+// (Panne deja rencontree sur joclymatch, diagnostiquee au caractere pres.)
+
+// Repertoire de stockage des salons de signalisation. Le placer HORS de la
+// racine web si l'hebergeur le permet -- c'est la seule protection vraiment
+// solide ; le refus par .htaccess n'est qu'un repli.
+$signalPath = __DIR__ . '/../signals/';
+
+// Duree de vie d'un salon, en secondes. La signalisation dure quelques
+// secondes : une heure est deja tres large.
+$signalTTL = 3600;
+
+// Origines autorisees a appeler le relai. Ajouter ici l'origine de la
+// coquille NATIVE le jour ou l'application y sera embarquee : son origine
+// n'est ni le site ni GitHub Pages, et sans cette entree elle recevra un
+// refus CORS.
+$signalOrigins = array(
+    'https://fhoudebert.github.io',
+    'capacitor://localhost',
+    'ionic://localhost',
+    'https://localhost',
+    'http://localhost:8080',
+);

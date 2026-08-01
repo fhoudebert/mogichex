@@ -1,0 +1,68 @@
+# .htaccess pour un hebergement mutualise Apache (a cote de joclymatch).
+# A copier a la racine du repertoire ou mogichex est deploye.
+#
+# Ce que ce fichier obtient, et que GitHub Pages ne peut pas donner :
+# le controle des en-tetes HTTP. C'est ce controle qui rend possible
+# l'isolation cross-origin (et donc fairy-stockfish multi-thread), la que
+# l'application de bureau Tabulon echouait sous le protocole tauri://.
+
+# --- types MIME (certains hebergeurs ne connaissent pas .webmanifest) ---
+AddType application/manifest+json .webmanifest
+AddType application/wasm          .wasm
+AddType model/gltf-binary         .glb
+AddType text/javascript           .mjs
+
+# --- service worker ---
+<IfModule mod_headers.c>
+    # Le SW ne doit JAMAIS etre servi depuis un cache navigateur perime,
+    # sinon une mise en ligne n'atteint pas les visiteurs deja venus.
+    <FilesMatch "sw\.js$">
+        Header set Cache-Control "no-cache, max-age=0"
+        Header set Service-Worker-Allowed "/"
+    </FilesMatch>
+
+    # Le catalogue et les langues changent a chaque livraison : revalidation.
+    <FilesMatch "\.(json|webmanifest)$">
+        Header set Cache-Control "no-cache, max-age=0"
+    </FilesMatch>
+
+    # Le dist jocly est immuable pour une version donnee.
+    <FilesMatch "\.(glb|png|jpg|jpeg|gif|svg|mp3|ogg|woff2?)$">
+        Header set Cache-Control "public, max-age=2592000"
+    </FilesMatch>
+</IfModule>
+
+# --- isolation cross-origin (ETAPE 6, DESACTIVEE PAR DEFAUT) ---
+# require-corp casse TOUTE ressource tierce depourvue d'en-tete CORP, et le
+# service worker doit preserver ces en-tetes sur les reponses servies depuis
+# son cache. A n'activer qu'apres l'avoir prouve en local
+# (node tools/serve.mjs --coi) puis sur une copie du site. [a valider]
+#<IfModule mod_headers.c>
+#    Header set Cross-Origin-Opener-Policy   "same-origin"
+#    Header set Cross-Origin-Embedder-Policy "require-corp"
+#    Header set Cross-Origin-Resource-Policy "same-origin"
+#</IfModule>
+
+# --- compression ---
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css text/javascript application/javascript application/json application/manifest+json image/svg+xml
+</IfModule>
+
+# --- protection du stockage de signalisation ---
+# Si l'hebergeur ne permet pas de placer signals/ hors de la racine web, ce
+# refus empeche au moins de lire les salons par URL directe.
+<IfModule mod_authz_core.c>
+    <FilesMatch "^.*\.json$">
+        <If "%{REQUEST_URI} =~ m#/signals/#">
+            Require all denied
+        </If>
+    </FilesMatch>
+</IfModule>
+
+# --- mono-page : toute URL inconnue retombe sur l'application ---
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule . index.html [L]
+</IfModule>

@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>mogichex</title>
+    <meta name="description" content="Board games, playable with a thumb.">
+    <meta name="theme-color" content="#1b1c20">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" href="i/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="i/icon-192.png">
+    <link rel="stylesheet" href="css/mogichex.css">
+</head>
+
+<body>
+    <!-- Tout tient dans une page : les « fenetres » sont des panneaux. -->
+    <div id="app">
+
+        <!-- ecran 1 : catalogue -->
+        <section id="screen-catalog" class="screen is-active">
+            <header class="bar">
+                <h1 class="brand">mogichex</h1>
+                <button id="btn-settings" class="icon-btn" data-t-label aria-label="Settings">⚙</button>
+            </header>
+            <div class="searchbar">
+                <input id="search" type="search" autocomplete="off" data-t-placeholder
+                    placeholder="Search a game" data-t-label aria-label="Search a game">
+            </div>
+            <div class="filterbar">
+                <label class="switch">
+                    <input id="show-all" type="checkbox">
+                    <span data-t>Show all games</span>
+                </label>
+                <span id="game-count" class="count"></span>
+            </div>
+            <div id="catalog" class="catalog"></div>
+        </section>
+
+        <!-- ecran 2 : detail d'un jeu -->
+        <section id="screen-detail" class="screen">
+            <header class="bar">
+                <button class="icon-btn back" data-back data-t-label aria-label="Back">‹</button>
+                <h2 id="detail-title" class="bar-title"></h2>
+            </header>
+            <div class="detail-body">
+                <img id="detail-thumb" class="detail-thumb" alt="">
+                <p id="detail-summary" class="detail-summary"></p>
+                <div class="detail-actions">
+                    <button id="btn-play" class="primary" data-t>Play</button>
+                    <button id="btn-rules" class="secondary" data-t>Rules</button>
+                </div>
+                <div class="field">
+                    <label for="sel-side" data-t>You play</label>
+                    <select id="sel-side">
+                        <option value="a" data-t>White / Player A</option>
+                        <option value="b" data-t>Black / Player B</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label for="sel-level" data-t>Level</label>
+                    <select id="sel-level"></select>
+                </div>
+                <div class="field">
+                    <label for="sel-skin" data-t>Board style</label>
+                    <select id="sel-skin"></select>
+                </div>
+            </div>
+        </section>
+
+        <!-- ecran 3 : partie -->
+        <section id="screen-game" class="screen">
+            <header class="bar">
+                <button class="icon-btn back" data-back data-t-label aria-label="Back to games">‹</button>
+                <h2 id="game-title" class="bar-title"></h2>
+                <button id="btn-rules-game" class="icon-btn" data-t-label aria-label="Rules">?</button>
+            </header>
+            <div id="status" class="status" role="status"></div>
+            <div id="progress" class="progress"><span></span></div>
+            <div id="board" class="board"></div>
+        </section>
+
+        <!-- panneau de regles, glisse par-dessus l'ecran courant -->
+        <aside id="panel-rules" class="panel" aria-hidden="true">
+            <header class="bar">
+                <h2 class="bar-title" data-t>Rules</h2>
+                <button class="icon-btn" data-close-panel data-t-label aria-label="Close">✕</button>
+            </header>
+            <div id="rules" class="rules"></div>
+        </aside>
+
+        <!-- panneau de reglages -->
+        <aside id="panel-settings" class="panel" aria-hidden="true">
+            <header class="bar">
+                <h2 class="bar-title" data-t>Settings</h2>
+                <button class="icon-btn" data-close-panel data-t-label aria-label="Close">✕</button>
+            </header>
+            <div class="settings-body">
+                <div class="field">
+                    <label for="sel-lang" data-t>Language</label>
+                    <select id="sel-lang"></select>
+                </div>
+                <p id="about" class="about"></p>
+            </div>
+        </aside>
+    </div>
+
+    <script type="module" src="js/app.js"></script>
+</body>
+
+</html>
