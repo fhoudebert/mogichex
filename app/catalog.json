@@ -2,8 +2,8 @@
  "catalogVersion": 1,
  "source": {
   "repo": "jocly2",
-  "commit": "545225ad5eddc715d91925cbfa85cf970822491f",
-  "builtAt": "2026-08-01T21:31:39.590Z"
+  "commit": "51413f29cb391064af595403ace75057b4e8baf3",
+  "builtAt": "2026-08-02T07:29:34.193Z"
  },
  "counts": {
   "games": 127,
@@ -34,7 +34,8 @@
     "en": "Arabic Alquerque"
    },
    "summary": {
-    "en": "Alquerque as played in Middle-East and Spain."
+    "en": "Alquerque as played in Middle-East and Spain.",
+    "fr": "L'alquerque tel qu'on y jouait au Moyen-Orient et en Espagne."
    },
    "thumbnail": "alquerque-arabic-thumb.png",
    "rules": {
@@ -102,7 +103,8 @@
     "en": "Brazilian Draughts"
    },
    "summary": {
-    "en": "Same as international checkers on a 8x8 board."
+    "en": "Same as international checkers on a 8x8 board.",
+    "fr": "Comme les dames internationales, sur un plateau 8x8."
    },
    "thumbnail": "draughts8-thumb3d.png",
    "rules": {
@@ -189,7 +191,8 @@
     "en": "English Draughts"
    },
    "summary": {
-    "en": "A popular version of checkers on a 8x8 board."
+    "en": "A popular version of checkers on a 8x8 board.",
+    "fr": "Une version populaire des dames sur un plateau 8x8."
    },
    "thumbnail": "draughts8-thumb3d.png",
    "rules": {
@@ -276,7 +279,8 @@
     "en": "German Draughts"
    },
    "summary": {
-    "en": "Checkers according to German Draughts rules."
+    "en": "Checkers according to German Draughts rules.",
+    "fr": "Les dames selon les règles allemandes."
    },
    "thumbnail": "draughts8-thumb3d.png",
    "rules": {
@@ -452,7 +456,8 @@
     "en": "Kids Draughts"
    },
    "summary": {
-    "en": "A version for kids of checkers on a 6x6 board."
+    "en": "A version for kids of checkers on a 6x6 board.",
+    "fr": "Une version des dames pour enfants sur un plateau 6x6."
    },
    "thumbnail": "kidsdraughts-thumb3d.png",
    "rules": {
@@ -519,7 +524,8 @@
     "en": "Roman Alquerque"
    },
    "summary": {
-    "en": "Alquerque as played in France and England."
+    "en": "Alquerque as played in France and England.",
+    "fr": "L'alquerque tel qu'on y jouait en France et en Angleterre."
    },
    "thumbnail": "alquerque-roman-thumb3d.png",
    "rules": {
@@ -587,7 +593,8 @@
     "en": "Spanish Draughts"
    },
    "summary": {
-    "en": "Same as international checkers on a 8x8 board, no backward capture."
+    "en": "Same as international checkers on a 8x8 board, no backward capture.",
+    "fr": "Comme les dames internationales sur un plateau 8x8, sans prise en arrière."
    },
    "thumbnail": "draughts8-thumb3d.png",
    "rules": {
@@ -674,7 +681,8 @@
     "en": "Suicide checkers"
    },
    "summary": {
-    "en": "A.k.a Giveaway checkers or Anti-checkers"
+    "en": "A.k.a Giveaway checkers or Anti-checkers",
+    "fr": "Aussi appelé qui-perd-gagne ou anti-dames."
    },
    "thumbnail": "draughts8-suicide-thumb3d.png",
    "rules": {
@@ -762,7 +770,8 @@
     "en": "Thai Draughts"
    },
    "summary": {
-    "en": "Checkers according to Thai rules."
+    "en": "Checkers according to Thai rules.",
+    "fr": "Les dames selon les règles thaïlandaises."
    },
    "thumbnail": "draughts8-thumb3d.png",
    "rules": {
@@ -1697,12 +1706,17 @@
      "is3d": true
     },
     {
+     "name": "skin2dmnemonic",
+     "title": "2D Mnemonic",
+     "is3d": false
+    },
+    {
      "name": "skin2d",
      "title": "2D Classic",
      "is3d": false
     }
    ],
-   "defaultSkin": "skin2d",
+   "defaultSkin": "skin2dmnemonic",
    "defaultSkinIs2d": true,
    "ratio": 1,
    "switchable": true,
@@ -7183,7 +7197,8 @@
     "en": "Annexation"
    },
    "summary": {
-    "en": "Reversi / Othello"
+    "en": "Reversi / Othello",
+    "fr": "Reversi / Othello"
    },
    "thumbnail": "thumb-reversi.png",
    "rules": {
@@ -7240,7 +7255,8 @@
     "en": "Annexation 10"
    },
    "summary": {
-    "en": "Reversi/Othello rules on a 10x10 board"
+    "en": "Reversi/Othello rules on a 10x10 board",
+    "fr": "Règles du Reversi/Othello sur un plateau 10x10"
    },
    "thumbnail": "thumb-reversi10.png",
    "rules": {
@@ -7297,7 +7313,8 @@
     "en": "Annexation 4"
    },
    "summary": {
-    "en": "Reversi/Othello rules on a 4x4 board"
+    "en": "Reversi/Othello rules on a 4x4 board",
+    "fr": "Règles du Reversi/Othello sur un plateau 4x4"
    },
    "thumbnail": "thumb-reversi4.png",
    "rules": {
@@ -7354,7 +7371,8 @@
     "en": "Annexation 6"
    },
    "summary": {
-    "en": "Reversi/Othello rules on a 6x6 board"
+    "en": "Reversi/Othello rules on a 6x6 board",
+    "fr": "Règles du Reversi/Othello sur un plateau 6x6"
    },
    "thumbnail": "thumb-reversi6.png",
    "rules": {
@@ -7411,7 +7429,8 @@
     "en": "Annexation Cross"
    },
    "summary": {
-    "en": "Reversi/Othello rules on a cross-shaped board"
+    "en": "Reversi/Othello rules on a cross-shaped board",
+    "fr": "Règles du Reversi/Othello sur un plateau en forme de croix"
    },
    "thumbnail": "thumb-cross.png",
    "rules": {
@@ -7468,7 +7487,8 @@
     "en": "Annexation Cross 10"
    },
    "summary": {
-    "en": "Reversi/Othello rules on a 10x10 cross-shaped board"
+    "en": "Reversi/Othello rules on a 10x10 cross-shaped board",
+    "fr": "Règles du Reversi/Othello sur un plateau 10x10 en forme de croix"
    },
    "thumbnail": "thumb-cross10.png",
    "rules": {
@@ -7525,7 +7545,8 @@
     "en": "Annexation Turn-Over"
    },
    "summary": {
-    "en": "Reversi/Othello rules on a 10x10 octogonal-shaped board"
+    "en": "Reversi/Othello rules on a 10x10 octogonal-shaped board",
+    "fr": "Règles du Reversi/Othello sur un plateau 10x10 octogonal"
    },
    "thumbnail": "thumb-turnover.png",
    "rules": {
@@ -7787,7 +7808,8 @@
     "en": "Ardri"
    },
    "summary": {
-    "en": "7x7 board (from Scotland)"
+    "en": "7x7 board (from Scotland)",
+    "fr": "Tablier de 7x7 (Écosse)"
    },
    "thumbnail": "thumb-tafl-ardri.png",
    "rules": {
@@ -7841,7 +7863,8 @@
     "en": "Brandubh"
    },
    "summary": {
-    "en": "7x7 board (from Ireland)"
+    "en": "7x7 board (from Ireland)",
+    "fr": "Tablier de 7x7 (Irlande)"
    },
    "thumbnail": "thumb-tafl-brandubh.png",
    "rules": {
@@ -7895,7 +7918,8 @@
     "en": "Hnefatafl"
    },
    "summary": {
-    "en": "11x11 board (from Scandinavia)"
+    "en": "11x11 board (from Scandinavia)",
+    "fr": "Tablier de 11x11 (Scandinavie)"
    },
    "thumbnail": "thumb-tafl-hnefatafl.png",
    "rules": {
@@ -7949,7 +7973,8 @@
     "en": "Tablut"
    },
    "summary": {
-    "en": "9x9 board (from Laponia)"
+    "en": "9x9 board (from Laponia)",
+    "fr": "Tablier de 9x9 (Laponie)"
    },
    "thumbnail": "thumb-tafl-tablut.png",
    "rules": {
@@ -8003,7 +8028,8 @@
     "en": "Tawlbwrdd"
    },
    "summary": {
-    "en": "11x11 board (from Wales)"
+    "en": "11x11 board (from Wales)",
+    "fr": "Tablier de 11x11 (Pays de Galles)"
    },
    "thumbnail": "thumb-tawlbwrdd.png",
    "rules": {

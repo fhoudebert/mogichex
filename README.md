@@ -20,7 +20,7 @@ mono-fenêtre, et de [Tabulon](https://github.com/fhoudebert/tabulon) pour les a
 | 4 | PWA : manifeste, service worker, cache par module | **fait, non validé sur appareil** |
 | 5a | Invitations (format joclymatch) + fichiers de partie | **fait** — codec pur testé, `match.php` testé sous PHP |
 | 5b | Multijoueur côté client : invitation, transport HTTP, garde reculer | **fait** — échange prouvé entre deux navigateurs |
-| 5c | WebRTC par-dessus `signal.php` (latence) | à écrire |
+| 5c | Canal pair-à-pair WebRTC par-dessus `signal.php` | **fait** — canal ouvert des deux côtés, attente longue supprimée |
 | 6 | COOP/COEP + fairy-stockfish multi-thread | **fait** — activé, mesuré, repli signalé à l'utilisateur |
 
 ### Ce qui a été mesuré au navigateur
@@ -247,6 +247,28 @@ partie jamais sauvegardée n'est **pas** un état jouable ; sa propre enveloppe 
 deux camps écrivent dans le même fichier — sans ce test, chacun se rechargerait en boucle et
 interromprait son propre tour) ; une enveloppe sans coup nouveau ne redessine rien.
 
+### Le canal pair-à-pair (WebRTC)
+
+En plus du relai, **jamais à sa place**. La raison n'est pas la latence — au tour par tour,
+l'attente longue livre un coup en quelques centaines de millisecondes, ce qui ne se voit pas.
+C'est le **coût sur l'hébergement mutualisé** : chaque joueur en attente immobilise un processus
+PHP pendant 20 s, en boucle, tant que dure la partie.
+
+Une fois le canal ouvert, l'attente longue **s'arrête**. Le relai n'est plus sollicité que par une
+écriture brève après chaque coup, pour que rechargement et reprise restent possibles. Si le canal
+tombe, l'attente longue reprend. Mesuré sur 45 s d'observation après ouverture : **0 requête en
+attente longue**, contre 1 avant.
+
+La signalisation passe par `signal.php` (les deux boîtes par salon), puis le salon est libéré. Le
+camp du lien d'invitation décide qui émet l'offre : sans ordre stable, les deux pairs offrent en
+même temps et aucune négociation n'aboutit. La description de session est toujours appliquée avant
+les candidats ICE, faute de quoi `addIceCandidate` échoue et le candidat est perdu.
+
+**STUN public, aucun TURN** : un mutualisé ne peut pas héberger coturn. Deux réseaux qui ne se
+voient pas directement ne se connecteront donc jamais — c'est prévu, on reste sur le relai, et
+l'utilisateur ne voit aucune différence. Idem là où `RTCPeerConnection` n'existe pas (WebKitGTK des
+distributions Linux, constaté sur Tabulon).
+
 **Reculer et recommencer sont masqués dès qu'un camp est distant** : rejouer une position déjà
 partie chez l'adversaire désynchroniserait les deux plateaux. Ce sont les deux seules commandes
 de position accessibles en partie, et un garde de fond double le masquage dans les gestionnaires.
@@ -465,6 +487,8 @@ js/remote/invite.js     codec d'invitation joclymatch (pur, testé)
 js/remote/protocol.js   décisions du jeu à distance (pur, testé)
 js/remote/relay-channel.js  transport sur match.php
 js/remote/relay-locator.js  recherche du relai (pur, testé)
+js/remote/signalling.js     décisions de la négociation WebRTC (pur, testé)
+js/remote/peer-channel.js   canal pair-à-pair sur signal.php
 js/i18n.js              t(), pickLocalized(), chargement des langues
 js/device.js            classe d'appareil par capacité
 js/catalog.js           filtrage, groupement (pur, testé)

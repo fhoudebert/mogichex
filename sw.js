@@ -19,7 +19,7 @@
 // SHELL_VERSION doit changer a chaque livraison — tools/stamp-sw.mjs s'en
 // charge au build pour eviter l'oubli.
 
-const SHELL_VERSION = '202608012131-c23c19f';
+const SHELL_VERSION = '202608020729-dd006a8';
 const SHELL_CACHE = 'mogichex-shell-' + SHELL_VERSION;
 const DIST_CACHE = 'mogichex-dist-' + SHELL_VERSION;
 
@@ -36,6 +36,12 @@ const SHELL = [
     './js/catalog.js',
     './js/catalog-view.js',
     './js/game.js',
+    './js/remote/invite.js',
+    './js/remote/peer-channel.js',
+    './js/remote/protocol.js',
+    './js/remote/relay-channel.js',
+    './js/remote/relay-locator.js',
+    './js/remote/signalling.js',
     './app/catalog.json',
     './lang/index.json',
     './lang/en.json',

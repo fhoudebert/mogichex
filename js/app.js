@@ -11,6 +11,7 @@ import { GameSession, loadRules, winnerLabel, fallbackNotice } from './game.js';
 import { newMatchId, buildInviteLink, parseInviteLink, buildEnvelope, makeId } from './remote/invite.js';
 import { RelayChannel } from './remote/relay-channel.js';
 import { locateRelay, RELAY_ROOTS } from './remote/relay-locator.js';
+import { PeerChannel } from './remote/peer-channel.js';
 
 const $ = (sel) => document.querySelector(sel);
 const state = { catalog: null, tier: 'phone', showAll: false, entry: null, session: null };
@@ -396,21 +397,54 @@ function attachRelay(session, { matchId, side }) {
         },
     });
     state.channel = channel;
+
+    // Canal pair-a-pair, en PLUS du relai et jamais a sa place. Tant qu'il est
+    // ouvert, on suspend l'attente longue : chaque joueur en attente
+    // immobilisait sinon un processus PHP pendant 20 s, en boucle.
+    const peer = new PeerChannel({
+        relayUrl: CONFIG.relayUrl,
+        matchId,
+        side,
+        onEnvelope: async (env) => {
+            // Meme filtre que par le relai : une enveloppe recue deux fois, ou
+            // la sienne, ne doit pas etre rejouee.
+            if (env && env.key === selfKey) return;
+            try {
+                await session.applyRemoteState(env.matchdata);
+                channel.lastTurns = Math.max(channel.lastTurns, (env.matchDetails || {}).nbTurns || 0);
+            } catch (err) {
+                console.error('etat pair refuse', err);
+            }
+        },
+        onStateChange: (st) => {
+            channel.setLongPolling(st !== 'open');
+            console.info('canal pair-a-pair :', st);
+        },
+    });
+    state.peer = peer;
+
     session.hooks.onLocalMove = async () => {
         const { matchdata, nbTurns } = await session.exportState();
-        await channel.publish(
-            buildEnvelope({
-                matchDetails: { matchId, gameName: session.entry.name, nbTurns, side },
-                matchdata,
-                key: selfKey,
-            })
-        );
+        const env = buildEnvelope({
+            matchDetails: { matchId, gameName: session.entry.name, nbTurns, side },
+            matchdata,
+            key: selfKey,
+        });
+        // Le pair d'abord (immediat), le relai ensuite (reference durable :
+        // c'est lui qui permet de recharger la page ou de reprendre plus tard).
+        peer.publish(env);
+        await channel.publish(env);
     };
     channel.start();
+    peer.start().catch((err) => console.warn('negociation pair-a-pair abandonnee', err));
 }
 
 async function leaveMatch() {
     $('#btn-take-back').hidden = true;
+    if (state.peer) {
+        state.peer.stop();
+        state.peer = null;
+    }
     if (state.channel) {
         state.channel.stop();
         state.channel = null;

@@ -86,9 +86,20 @@ export class RelayChannel {
      * tour de l'adversaire : c'est ce qui permet de rattraper une partie
      * rechargee ou reprise sur un autre appareil.
      */
+    /**
+     * Suspend ou reprend l'ATTENTE LONGUE. Suspendue, la boucle ne dort pas :
+     * elle ne demande plus au serveur de la faire patienter 20 s, ce qui
+     * libere un processus PHP par joueur en attente — c'est tout l'interet du
+     * canal pair-a-pair sur un hebergement mutualise.
+     */
+    setLongPolling(active) {
+        this.longPolling = active !== false;
+    }
+
     start() {
         if (this.running) return;
         this.running = true;
+        if (this.longPolling === undefined) this.longPolling = true;
         const loop = async () => {
             // Premiere lecture IMMEDIATE : rattrape une partie deja commencee
             // (page rechargee, invite qui arrive en retard) sans attendre le
@@ -96,8 +107,12 @@ export class RelayChannel {
             let first = true;
             while (this.running) {
                 try {
-                    await this.pollOnce({ wait: !first });
+                    await this.pollOnce({ wait: !first && this.longPolling !== false });
                     first = false;
+                    // Sans attente longue, ne pas marteler le relai : le canal
+                    // pair-a-pair porte deja les coups, cette boucle n'est
+                    // qu'un filet de securite.
+                    if (this.longPolling === false) await sleep(5000);
                     this.failures = 0;
                 } catch (err) {
                     if (!this.running) return;

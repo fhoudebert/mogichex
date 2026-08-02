@@ -9,7 +9,7 @@
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -26,6 +26,15 @@ import {
     sidesFor,
 } from '../js/remote/protocol.js';
 import { RelayChannel } from '../js/remote/relay-channel.js';
+import {
+    isOfferer,
+    boxesFor,
+    orderSignals,
+    shouldLongPoll,
+    signalMessage,
+    ICE_SERVERS,
+} from '../js/remote/signalling.js';
+import { PeerChannel } from '../js/remote/peer-channel.js';
 import {
     orderedRelays,
     locateRelay,
@@ -849,6 +858,151 @@ test('looksLikeRelay : seule une erreur JSON de match.php compte', () => {
     assert.ok(!looksLikeRelay('<!doctype html>'));
 });
 
+// ---------------------------------------------------------------- pair-a-pair
+
+test('isOfferer / boxesFor : un ordre stable, connu des deux cotes', () => {
+    // Sans ordre fixe, les deux pairs offrent en meme temps et aucune
+    // negociation n'aboutit. Le camp vient du lien d'invitation.
+    assert.equal(isOfferer('a'), true);
+    assert.equal(isOfferer('b'), false);
+    // On n'ecrit jamais dans la boite ou l'on lit.
+    assert.deepEqual(boxesFor('a'), { mine: 'a', theirs: 'b' });
+    assert.deepEqual(boxesFor('b'), { mine: 'b', theirs: 'a' });
+});
+
+test('orderSignals : la description AVANT les candidats', () => {
+    // addIceCandidate echoue si la description distante n'est pas encore
+    // posee, et le candidat est alors perdu.
+    const brut = [
+        signalMessage('candidate', { candidate: 'c1' }),
+        signalMessage('offer', { sdp: 'x' }),
+        signalMessage('candidate', { candidate: 'c2' }),
+    ];
+    assert.deepEqual(orderSignals(brut).map((m) => m.t), ['offer', 'candidate', 'candidate']);
+});
+
+test('orderSignals : les candidats vides (fin de collecte) sont ecartes', () => {
+    const brut = [
+        signalMessage('answer', { sdp: 'y' }),
+        signalMessage('candidate', {}),
+        signalMessage('candidate', null),
+        signalMessage('candidate', { candidate: 'c' }),
+    ];
+    assert.deepEqual(orderSignals(brut).map((m) => m.t), ['answer', 'candidate']);
+    assert.deepEqual(orderSignals(null), []);
+});
+
+test("shouldLongPoll : l'attente longue s'arrete quand le pair est ouvert", () => {
+    // C'est tout l'interet : un joueur en attente immobilisait un processus
+    // PHP pendant 20 s, en boucle.
+    assert.equal(shouldLongPoll('open'), false);
+    assert.equal(shouldLongPoll('connecting'), true);
+    assert.equal(shouldLongPoll('failed'), true);
+    assert.equal(shouldLongPoll('unsupported'), true);
+});
+
+test('ICE_SERVERS : du STUN, aucun TURN', () => {
+    // Un mutualise ne peut pas heberger coturn, et TURN facturerait de la
+    // bande passante pour un service que le relai rend deja.
+    assert.ok(ICE_SERVERS.length > 0);
+    assert.ok(ICE_SERVERS.every((s) => /^stun:/.test(s.urls)));
+});
+
+test("PeerChannel : sans RTCPeerConnection, on reste sur le relai sans bruit", async () => {
+    // WebKitGTK des distributions Linux n'expose pas RTCPeerConnection
+    // (constate sur Tabulon). Ce n'est pas une panne.
+    const etats = [];
+    const ch = new PeerChannel({
+        relayUrl: 'https://exemple.fr/relai',
+        matchId: '1754035200000-AbCdEfGhIjKlMn',
+        side: 'a',
+        onEnvelope: () => {},
+        onStateChange: (s) => etats.push(s),
+        rtcFactory: () => null,
+        fetchImpl: async () => {
+            throw new Error('ne doit pas etre appele');
+        },
+    });
+    await ch.start();
+    assert.deepEqual(etats, ['unsupported']);
+    assert.equal(ch.isOpen, false);
+    // publish() doit refuser proprement plutot que de lever.
+    assert.equal(ch.publish({ a: 1 }), false);
+});
+
+test("PeerChannel : l'offreur cree le canal AVANT l'offre", async () => {
+    // Le canal doit exister avant createOffer, sinon la description ne
+    // contient aucune piste de donnees et la connexion ne sert a rien.
+    const ordre = [];
+    const envois = [];
+    const fauxCanal = { readyState: 'connecting', send: () => {}, close: () => {} };
+    const fauxPc = {
+        createDataChannel: () => {
+            ordre.push('createDataChannel');
+            return fauxCanal;
+        },
+        createOffer: async () => {
+            ordre.push('createOffer');
+            return { type: 'offer', sdp: 'SDP' };
+        },
+        setLocalDescription: async () => ordre.push('setLocalDescription'),
+        setRemoteDescription: async () => {},
+        addIceCandidate: async () => {},
+        close: () => {},
+    };
+    const ch = new PeerChannel({
+        relayUrl: 'https://exemple.fr/relai',
+        matchId: '1754035200000-AbCdEfGhIjKlMn',
+        side: 'a',
+        onEnvelope: () => {},
+        rtcFactory: () => fauxPc,
+        timeoutMs: 50,
+        fetchImpl: async (u, init) => {
+            const p = new URLSearchParams(init.body);
+            envois.push(p.get('action') + ':' + (p.get('box') || ''));
+            return { ok: true, status: 200, json: async () => ({ messages: [], next: 0 }) };
+        },
+    });
+    await ch.start();
+    assert.deepEqual(ordre, ['createDataChannel', 'createOffer', 'setLocalDescription']);
+    // L'offre part dans SA boite, et il lit celle d'en face.
+    assert.ok(envois.includes('post:a'));
+    ch.running = false;
+});
+
+test('PeerChannel : publish rend false tant que le canal n\'est pas ouvert', () => {
+    const ch = new PeerChannel({
+        relayUrl: 'https://exemple.fr/relai',
+        matchId: '1754035200000-AbCdEfGhIjKlMn',
+        side: 'b',
+        onEnvelope: () => {},
+        rtcFactory: () => null,
+    });
+    assert.equal(ch.publish({ x: 1 }), false);
+    ch.state = 'open';
+    ch.channel = { readyState: 'open', send: () => {} };
+    assert.equal(ch.publish({ x: 1 }), true);
+});
+
+test("RelayChannel : setLongPolling(false) supprime le parametre d'attente", async () => {
+    const asked = [];
+    const ch = new RelayChannel({
+        relayUrl: 'https://exemple.fr/relai',
+        matchId: '1754035200000-AbCdEfGhIjKlMn',
+        selfKey: 'moi',
+        onEnvelope: () => {},
+        fetchImpl: async (u, init) => {
+            asked.push(new URLSearchParams(init.body).has('since'));
+            return { ok: true, status: 200, headers: { get: () => '1' }, json: async () => ({}) };
+        },
+    });
+    ch.setLongPolling(false);
+    await ch.pollOnce({ wait: ch.longPolling });
+    ch.setLongPolling(true);
+    await ch.pollOnce({ wait: ch.longPolling });
+    assert.deepEqual(asked, [false, true]);
+});
+
 // ---------------------------------------------------------------- coherence
 
 test('lang/ : chaque locale declaree a son fichier, et le JSON est valide', () => {
@@ -868,6 +1022,24 @@ test('manifest : chaque icone declaree existe sur le disque', () => {
     for (const icon of man.icons) {
         assert.ok(existsSync(path.join(root, icon.src)), 'icone manquante : ' + icon.src);
     }
+});
+
+test('sw.js : TOUS les modules js/ sont pre-caches', () => {
+    // L'inverse du test suivant. Trois modules js/remote/ manquaient a la
+    // liste : l'application n'aurait pas demarre hors ligne, et rien ne le
+    // signalait — le pre-cache tolere les entrees manquantes, pas les oubliees.
+    const src = readFileSync(path.join(root, 'sw.js'), 'utf8');
+    const list = src.slice(src.indexOf('const SHELL = ['), src.indexOf('];', src.indexOf('const SHELL = [')));
+    const caches = new Set([...list.matchAll(/'\.\/([^']+)'/g)].map((m) => m[1]));
+    const walk = (dir, prefix) => {
+        for (const e of readdirSync(path.join(root, dir), { withFileTypes: true })) {
+            if (e.isDirectory()) walk(dir + '/' + e.name, prefix + e.name + '/');
+            else if (e.name.endsWith('.js')) {
+                assert.ok(caches.has(prefix + e.name), 'absent du pre-cache : ' + prefix + e.name);
+            }
+        }
+    };
+    walk('js', 'js/');
 });
 
 test('sw.js : la coquille pre-cachee existe reellement sur le disque', () => {
