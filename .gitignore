@@ -1,0 +1,7 @@
+# Le dist jocly est volumineux et construit avec l'application : il ne fait
+# pas partie du depot (voir README, « Mise en route »).
+/dist
+/node_modules
+/signals
+/deploy/signalconf.php
+.DS_Store

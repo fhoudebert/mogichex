@@ -1,0 +1,31 @@
+{
+  "_comment": [
+    "Jeux exclus du catalogue 'telephone' : plateau trop grand ou geometrie 3D",
+    "difficile a manipuler au doigt. Le reste du catalogue est eligible.",
+    "",
+    "Les noms doivent correspondre EXACTEMENT au champ 'name' des entrees de",
+    "src/games/<module>/index.js dans jocly2. build-catalog.mjs echoue si un nom",
+    "de cette liste n'existe pas dans le catalogue source : c'est volontaire, une",
+    "faute de frappe rendrait le filtre silencieusement inoperant.",
+    "",
+    "Decisions explicites (ne PAS reintroduire au vu du seul scan de geometrie) :",
+    "  - fantasticXIII-chess (13x13) : accepte sur telephone.",
+    "  - circular-chess, byzantine-chess, cylinder-chess (cylindriques) : acceptes.",
+    "",
+    "Pour reexaminer cette liste quand jocly2 gagne des jeux :",
+    "  node tools/scan-geometry.mjs --jocly ../jocly2"
+  ],
+  "ineligible": [
+    "bigorra-chess",
+    "giga-chess",
+    "giga-chessII",
+    "tera-chess",
+    "sweet16-chess",
+    "makromachy",
+    "dukerutland-chess",
+    "space-spartan",
+    "3dchess",
+    "cubic-chess",
+    "raumschach"
+  ]
+}
