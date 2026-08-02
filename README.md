@@ -52,7 +52,8 @@ It's a Progressive Web App, so there's no store to go through.
 It then behaves like any other app: full screen, its own icon. Games you've already played stay
 available **offline**; ones you haven't will need a connection the first time.
 
-An **Android APK** can also be built — see [android/README.md](android/README.md).
+An **Android APK** is available : [Download apk](https://github.com/fhoudebert/mogichex/releases/download/1.0/mogichex.apk).
+It can also be built — see [android/README.md](android/README.md).
 
 ---
 
@@ -121,9 +122,8 @@ relay works, what was measured, and the traps worth knowing before changing anyt
 
 ## Credits
 
-Games, engines and artwork come from **Jocly**, created by **Michel Gutierrez**. The original
-project is no longer maintained; it lives on as **[jocly2](https://github.com/fhoudebert/jocly2)**,
-which is what mogichex builds on and where any engine or game work should go.
+Games, engines and artwork come from **Jocly**, created by Michel Gutierrez, Jérôme Choain. 
+The original project is no longer maintained; it lives on as **[jocly2](https://github.com/fhoudebert/jocly2)**.
 
 The Expert level uses [Fairy-Stockfish](https://github.com/fairy-stockfish/Fairy-Stockfish) by
 Fabian Fichter, derived from Stockfish. The single-window interface follows
@@ -139,9 +139,3 @@ It is not a program that merely talks to Jocly: it loads the library into its ow
 it alongside — or inside, for the Android build. The two form a single work, so the whole is
 AGPL-3.0. Fairy-Stockfish is GPL-3.0, which combines with AGPL-3.0 under both licenses' terms.
 
-The practical consequence, and the point of the AGPL: **if you run a modified mogichex on a
-server, the people using it are entitled to your source.** Running it unmodified, as described
-above, is satisfied by the *Source code* links the app shows in its settings.
-
-If you were hoping for a permissive license, the constraint comes from Jocly, not from here —
-there is no version of this app that works without it.
