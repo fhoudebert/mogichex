@@ -15,7 +15,7 @@ import { fileURLToPath } from 'node:url';
 
 import { buildCatalog, buildEntry, normalizeLocalized, pick2dSkin } from '../tools/lib/catalog.mjs';
 import { keepFile, citedVisuals, summarize } from '../tools/lib/dist-trim.mjs';
-import { pickLocalized, preferredLocale, configure, t } from '../js/i18n.js';
+import { pickLocalized, preferredLocale, configure, t, translateLevelLabel } from '../js/i18n.js';
 import { filterGames, groupByModule, initialCollapsed, normalize, searchableText } from '../js/catalog.js';
 import { classify } from '../js/device.js';
 import { isAbortError, takeBackTarget, GameSession, fallbackNotice } from '../js/game.js';
@@ -109,6 +109,46 @@ test('t : cle absente = texte anglais affiche, pas un identifiant technique', ()
     assert.equal(t('Play'), 'Jouer');
     assert.equal(t('Not translated yet'), 'Not translated yet');
     configure({ translations: {}, locale: 'en' });
+});
+
+// ---------------------------------------------------------------- niveaux
+
+test('translateLevelLabel : traduction directe quand elle existe', () => {
+    const tr = (x) => ({ Easy: 'Facile', Strong: 'Fort' }[x] || x);
+    assert.equal(translateLevelLabel('Easy', tr), 'Facile');
+    assert.equal(translateLevelLabel('Strong', tr), 'Fort');
+    // Libelle sans traduction : on rend l'anglais, jamais une chaine vide.
+    assert.equal(translateLevelLabel('Padawan', tr), 'Padawan');
+    assert.equal(translateLevelLabel('', tr), '');
+    assert.equal(translateLevelLabel(null, tr), '');
+});
+
+test('translateLevelLabel : les durees se traduisent par MOTIF', () => {
+    // Cinq libelles du catalogue portent une duree, en crochets OU en
+    // parentheses. Les traiter par motif plutot que par table fait que
+    // « Fast [5sec] », le jour ou jocly en ajoute une, ne restera pas en
+    // anglais sans qu'on s'en apercoive.
+    const tr = (x) => ({ Fast: 'Rapide', Slow: 'Lent', sec: 's' }[x] || x);
+    assert.equal(translateLevelLabel('Fast [1sec]', tr), 'Rapide [1 s]');
+    assert.equal(translateLevelLabel('Fast (1sec)', tr), 'Rapide [1 s]');
+    assert.equal(translateLevelLabel('Slow (10sec)', tr), 'Lent [10 s]');
+    assert.equal(translateLevelLabel('Fast [3sec]', tr), 'Rapide [3 s]');
+    // Duree inedite : traduite quand meme.
+    assert.equal(translateLevelLabel('Fast [5sec]', tr), 'Rapide [5 s]');
+});
+
+test('translateLevelLabel : « Level N » est aussi un motif', () => {
+    // C'est le libelle que le catalogue fabrique pour les niveaux que jocly
+    // ne nomme pas.
+    const tr = (x) => ({ 'Level {n}': 'Niveau {n}' }[x] || x);
+    assert.equal(translateLevelLabel('Level 3', tr), 'Niveau 3');
+    assert.equal(translateLevelLabel('Level 12', tr), 'Niveau 12');
+});
+
+test('translateLevelLabel : sans traducteur, rend le libelle inchange', () => {
+    const identity = (x) => x;
+    assert.equal(translateLevelLabel('Expert', identity), 'Expert');
+    assert.equal(translateLevelLabel('Fast [1sec]', identity), 'Fast [1 sec]');
 });
 
 // ---------------------------------------------------------------- skins
@@ -1083,6 +1123,24 @@ test('summarize : compte les fichiers et les octets par motif de retrait', () =>
 });
 
 // ---------------------------------------------------------------- coherence
+
+test('tous les libelles de niveaux du catalogue sont traduits en francais', () => {
+    // 28 libelles distincts viennent de jocly. Ce test attrape celui qui
+    // apparaitrait a la prochaine mise a jour sans traduction : sans lui,
+    // « Fast [5sec] » resterait en anglais dans une interface francaise sans
+    // que personne le remarque.
+    const cat = JSON.parse(readFileSync(path.join(root, 'app', 'catalog.json'), 'utf8'));
+    const fr = JSON.parse(readFileSync(path.join(root, 'lang', 'fr.json'), 'utf8'));
+    const tr = (x) => (fr[x] !== undefined ? fr[x] : x);
+    // Ceux-la s'ecrivent pareil dans les deux langues : c'est voulu.
+    const identiques = new Set(['Expert', 'Padawan', 'Papa']);
+    const labels = [...new Set(cat.games.flatMap((g) => g.levels.map((l) => l.label)))];
+    const manquants = labels.filter(
+        (l) => translateLevelLabel(l, tr) === l && !identiques.has(l)
+    );
+    assert.deepEqual(manquants, [], 'libelles de niveaux sans traduction francaise');
+    assert.ok(labels.length >= 20, 'le catalogue doit bien porter des niveaux');
+});
 
 test('lang/ : chaque locale declaree a son fichier, et le JSON est valide', () => {
     const index = JSON.parse(readFileSync(path.join(root, 'lang', 'index.json'), 'utf8'));
