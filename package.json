@@ -4,7 +4,7 @@
   "description": "Board games (Jocly) playable with a thumb — installable web app.",
   "type": "module",
   "private": true,
-  "license": "MIT",
+  "license": "AGPL-3.0-or-later",
   "repository": {
     "type": "git",
     "url": "https://github.com/fhoudebert/mogichex"

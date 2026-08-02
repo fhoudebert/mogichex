@@ -125,8 +125,23 @@ Games, engines and artwork come from **Jocly**, created by **Michel Gutierrez**.
 project is no longer maintained; it lives on as **[jocly2](https://github.com/fhoudebert/jocly2)**,
 which is what mogichex builds on and where any engine or game work should go.
 
-The Expert level uses [Fairy-Stockfish](https://github.com/fairy-stockfish/Fairy-Stockfish). The
-single-window interface follows [joclymatch](https://github.com/fhoudebert/joclymatch).
+The Expert level uses [Fairy-Stockfish](https://github.com/fairy-stockfish/Fairy-Stockfish) by
+Fabian Fichter, derived from Stockfish. The single-window interface follows
+[joclymatch](https://github.com/fhoudebert/joclymatch).
 
-mogichex is MIT-licensed. The Jocly library it depends on is AGPL-3.0 — see the license shipped
-with the build.
+Game artwork under `chessbase/res` is **CC BY-SA 3.0**.
+
+## License
+
+**mogichex is free software under the [GNU Affero General Public License v3](LICENSE) or later.**
+
+It is not a program that merely talks to Jocly: it loads the library into its own page and ships
+it alongside — or inside, for the Android build. The two form a single work, so the whole is
+AGPL-3.0. Fairy-Stockfish is GPL-3.0, which combines with AGPL-3.0 under both licenses' terms.
+
+The practical consequence, and the point of the AGPL: **if you run a modified mogichex on a
+server, the people using it are entitled to your source.** Running it unmodified, as described
+above, is satisfied by the *Source code* links the app shows in its settings.
+
+If you were hoping for a permissive license, the constraint comes from Jocly, not from here —
+there is no version of this app that works without it.

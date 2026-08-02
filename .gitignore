@@ -3,5 +3,25 @@
 /dist
 /node_modules
 /signals
+
 /deploy/signalconf.php
 .DS_Store
+package-lock.json
+# Le contenu web Android est genere par tools/build-android.mjs, et le projet
+# natif par « npx cap add android » : ni l'un ni l'autre n'a sa place ici.
+# android/README.md, lui, est versionne.
+/android/www
+/android/app
+/android/build.gradle
+/android/gradle*
+/android/.gitignore
+/android/.idea
+/android/*.properties
+/android/.gradle
+/android/*.gradle
+/capacitor.config.json
+# Signature : jamais dans le depot.
+*.keystore
+keystore.properties
+/android/mogichex.keystore
+/android/keystore.properties
