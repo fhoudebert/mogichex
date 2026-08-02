@@ -2,8 +2,8 @@
  "catalogVersion": 1,
  "source": {
   "repo": "jocly2",
-  "commit": "51413f29cb391064af595403ace75057b4e8baf3",
-  "builtAt": "2026-08-02T07:29:34.193Z"
+  "commit": "74262718d3e8702d1c063b715377bea1daed3967",
+  "builtAt": "2026-08-02T11:37:00.874Z"
  },
  "counts": {
   "games": 127,
@@ -104,7 +104,7 @@
    },
    "summary": {
     "en": "Same as international checkers on a 8x8 board.",
-    "fr": "Comme les dames internationales, sur un plateau 8x8."
+    "fr": "Comme les dames internationales en 8x8."
    },
    "thumbnail": "draughts8-thumb3d.png",
    "rules": {
@@ -192,7 +192,7 @@
    },
    "summary": {
     "en": "A popular version of checkers on a 8x8 board.",
-    "fr": "Une version populaire des dames sur un plateau 8x8."
+    "fr": "Une version populaire des dames en 8x8."
    },
    "thumbnail": "draughts8-thumb3d.png",
    "rules": {
@@ -594,7 +594,7 @@
    },
    "summary": {
     "en": "Same as international checkers on a 8x8 board, no backward capture.",
-    "fr": "Comme les dames internationales sur un plateau 8x8, sans prise en arrière."
+    "fr": "Comme les dames internationales en 8x8, sans prise en arrière."
    },
    "thumbnail": "draughts8-thumb3d.png",
    "rules": {
@@ -3603,7 +3603,8 @@
    },
    "thumbnail": "res/rules/metamachy/metamachy-thumb.png",
    "rules": {
-    "en": "res/rules/metamachy/metamachy-rules.html"
+    "en": "res/rules/metamachy/metamachy-rules.html",
+    "fr": "res/rules/metamachy/metamachy-rules_fr.html"
    },
    "credits": {
     "en": "res/rules/metamachy/metamachy-credits.html"
@@ -4501,7 +4502,8 @@
    },
    "thumbnail": "res/rules/scirocco/scirocco-thumb.png",
    "rules": {
-    "en": "res/rules/decimal/scirocco-rules.html"
+    "en": "res/rules/decimal/scirocco-rules.html",
+    "fr": "res/rules/decimal/scirocco-rules_fr.html"
    },
    "credits": {
     "en": "res/rules/decimal/scirocco-credits.html"
@@ -5182,7 +5184,8 @@
    },
    "thumbnail": "res/rules/team-mate/team-mate-thumb.png",
    "rules": {
-    "en": "res/rules/team-mate/team-mate-rules.html"
+    "en": "res/rules/team-mate/team-mate-rules.html",
+    "fr": "res/rules/metamachy/team-mate-rules_fr.html"
    },
    "credits": {
     "en": "res/rules/team-mate/team-mate-credits.html"

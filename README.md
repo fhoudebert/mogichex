@@ -315,6 +315,16 @@ dans l'iframe, la reconstruction du résultat y ajoute `fairyFallback`, et `jocl
 reposte l'objet entier. Mesuré sans isolation : `{engine, reason, level}` arrive intact côté hôte
 dès le premier coup. Bandeau présent sans isolation, absent avec.
 
+## La liste des jeux
+
+**Tous les modules sont repliés par défaut.** Douze modules et jusqu'à 116 jeux : déroulée, la
+liste enterre `checkers`, `tafl` ou `margo` sous `chessbase`. Repliée, elle donne d'emblée la
+carte des familles disponibles, et un module s'ouvre d'un doigt. Une recherche déroule tout —
+afficher des sections fermées sur des résultats qu'on vient de demander n'aurait pas de sens.
+
+Les réglages portent une section **À propos** renvoyant aux deux dépôts : mogichex pour
+l'application, jocly2 pour la bibliothèque de jeux et les moteurs.
+
 ## Options de la partie
 
 Reprises de `control.html` de Jocly, dans un panneau accessible pendant la partie :
@@ -362,6 +372,22 @@ pendant la partie. Les fichiers de règles de Jocly référencent leurs images p
 `{GAME}` : il est remplacé par le chemin du module dans le dist, comme le fait Jocly.
 
 ---
+
+## Android (Capacitor)
+
+`npm run android` produit le contenu web d'une application Android : dist Jocly **limité à
+chessbase** en production, application, catalogue restreint à ce module. La génération et la
+signature de l'APK restent indépendantes — **voir [`android/README.md`](android/README.md)**.
+
+| Variante | `www` |
+|---|---|
+| `npm run android` | 85 Mo |
+| `npm run android:light` (sans 3D) | 67 Mo |
+
+Sur 113 Mo de dist chessbase, le script retire les captures promotionnelles non citées par les
+règles (11,8 Mo), le moteur de dames que chessbase n'utilise pas (10,3 Mo) et les ressources VR
+(5,6 Mo) ; `--no-3d` retire en plus les modèles 3D (18,4 Mo) **et les skins 3D du catalogue**,
+pour ne pas proposer d'option qui échouerait.
 
 ## Déploiement de référence
 
@@ -500,7 +526,9 @@ data/phone-ineligible.json   liste explicite des jeux réservés aux grands écr
 tools/build-catalog.mjs      extraction du catalogue (build)
 tools/scan-geometry.mjs      aide à la maintenance de la liste
 tools/stamp-sw.mjs           estampille SHELL_VERSION
-tools/serve.mjs              serveur de développement (--coi)
+tools/serve.mjs              serveur de développement (--no-coi)
+tools/build-android.mjs      contenu web de l'application Android
+tools/lib/dist-trim.mjs      quoi embarquer dans l'APK (pur, testé)
 deploy/                      signal.php, match.php, .htaccess, signalconf.php.example
 tests/                       Node pur + PHP réel
 ```

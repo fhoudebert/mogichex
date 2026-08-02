@@ -14,6 +14,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { buildCatalog, buildEntry, normalizeLocalized, pick2dSkin } from '../tools/lib/catalog.mjs';
+import { keepFile, citedVisuals, summarize } from '../tools/lib/dist-trim.mjs';
 import { pickLocalized, preferredLocale, configure, t } from '../js/i18n.js';
 import { filterGames, groupByModule, initialCollapsed, normalize, searchableText } from '../js/catalog.js';
 import { classify } from '../js/device.js';
@@ -230,11 +231,19 @@ test('groupByModule : modules tries, jeux tries par titre LOCALISE', () => {
     assert.deepEqual(g[0].games.map((x) => x.title.fr || x.title.en), ['Basic', 'Échecs', 'Sweet 16']);
 });
 
-test('initialCollapsed : gros module replie, mais tout deroule pendant une recherche', () => {
-    const big = { module: 'chessbase', games: new Array(81).fill({}) };
-    const small = { module: 'margo', games: new Array(7).fill({}) };
-    assert.deepEqual([...initialCollapsed([big, small])], ['chessbase']);
-    assert.equal(initialCollapsed([big, small], { searching: true }).size, 0);
+test('initialCollapsed : TOUS les modules replies, mais tout deroule en recherche', () => {
+    // 12 modules et jusqu'a 116 jeux : deroulee, la liste enterre checkers,
+    // tafl ou margo sous chessbase. Repliee, elle donne la carte des familles.
+    const groups = [
+        { module: 'chessbase', games: new Array(80).fill({}) },
+        { module: 'checkers', games: new Array(11).fill({}) },
+        { module: 'tafl', games: new Array(6).fill({}) },
+    ];
+    assert.deepEqual([...initialCollapsed(groups)].sort(), ['checkers', 'chessbase', 'tafl']);
+    // Afficher des sections fermees sur des resultats qu'on vient de demander
+    // n'aurait pas de sens.
+    assert.equal(initialCollapsed(groups, { searching: true }).size, 0);
+    assert.equal(initialCollapsed([]).size, 0);
 });
 
 // ---------------------------------------------------------------- appareil
@@ -1001,6 +1010,76 @@ test("RelayChannel : setLongPolling(false) supprime le parametre d'attente", asy
     ch.setLongPolling(true);
     await ch.pollOnce({ wait: ch.longPolling });
     assert.deepEqual(asked, [false, true]);
+});
+
+// ---------------------------------------------------------------- paquet Android
+
+const refs = new Set(['res/visuals/amazon-600x600-2d.jpg']);
+const keep = (p, o = {}) => keepFile(p, { referencedVisuals: refs, ...o });
+
+test('citedVisuals : on LIT le HTML des regles, on ne devine pas', () => {
+    const html = '<img src="{GAME}/res/visuals/amazon-600x600-2d.jpg"> et res/visuals/autre.png';
+    assert.deepEqual(
+        [...citedVisuals(html)].sort(),
+        ['res/visuals/amazon-600x600-2d.jpg', 'res/visuals/autre.png']
+    );
+    assert.equal(citedVisuals('rien ici').size, 0);
+});
+
+test('keepFile : les captures citees par les regles sont CONSERVEES', () => {
+    // 151 captures, dont 24 citees par 32 pages de regles : les supprimer
+    // toutes casserait ces pages.
+    assert.equal(keep('games/chessbase/res/visuals/amazon-600x600-2d.jpg').keep, true);
+    assert.equal(keep('games/chessbase/res/visuals/baby-600x600-3d.jpg').keep, false);
+});
+
+test('keepFile : scan/ et res/vr sont du poids mort', () => {
+    // chessbase n'utilise que les IA uct et fairy-stockfish.
+    assert.equal(keep('scan/scan.wasm').keep, false);
+    assert.equal(keep('scan/data/x.bin').keep, false);
+    assert.equal(keep('res/vr/quelque-chose.png').keep, false);
+    // Un dossier au nom voisin ne doit pas etre emporte.
+    assert.equal(keep('scanner/x.js').keep, true);
+    assert.equal(keep('res/vrai/x.png').keep, true);
+});
+
+test('keepFile : three.js reste embarque MEME sans 3D', () => {
+    // jocly le charge sans condition, y compris pour un skin 2D : le retirer
+    // donnait « 404 dist/three.js » et un plateau vide. Mesure, pas theorie.
+    assert.equal(keep('three.js', { keep3d: false }).keep, true);
+});
+
+test('keepFile : la 3D se filtre par EXTENSION, jamais par dossier', () => {
+    // res/fairy melange modeles .gltf et planches de sprites 2D. Retirer le
+    // dossier faisait disparaitre wikipedia-fairy-sprites.png, dont les skins
+    // 2D ont besoin.
+    assert.equal(keep('games/chessbase/res/fairy/roi.gltf', { keep3d: false }).keep, false);
+    assert.equal(
+        keep('games/chessbase/res/fairy/wikipedia-fairy-sprites.png', { keep3d: false }).keep,
+        true
+    );
+    // Sans l'option, la 3D reste.
+    assert.equal(keep('games/chessbase/res/fairy/roi.gltf').keep, true);
+});
+
+test('keepFile : le reste du dist est conserve', () => {
+    assert.equal(keep('jocly.js').keep, true);
+    assert.equal(keep('games/chessbase/res/rules/mini/mini-thumb.png').keep, true);
+    assert.equal(keep('fairy-stockfish/stockfish.wasm').keep, true);
+});
+
+test('summarize : compte les fichiers et les octets par motif de retrait', () => {
+    const r = summarize([
+        { keep: true, reason: 'garde', size: 100 },
+        { keep: false, reason: 'visuel-non-cite', size: 30 },
+        { keep: false, reason: 'visuel-non-cite', size: 20 },
+        { keep: false, reason: 'ressource-3d', size: 50 },
+    ]);
+    assert.equal(r.keptFiles, 1);
+    assert.equal(r.keptBytes, 100);
+    assert.equal(r.droppedFiles, 3);
+    assert.equal(r.droppedBytes, 100);
+    assert.deepEqual(r.byReason['visuel-non-cite'], { files: 2, bytes: 50 });
 });
 
 // ---------------------------------------------------------------- coherence

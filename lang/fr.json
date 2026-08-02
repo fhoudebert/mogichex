@@ -59,5 +59,7 @@
   "Remote play needs a relay. None is configured.": "Le jeu à distance a besoin d'un relai. Aucun n'est configuré.",
   "Waiting for the other player…": "En attente de l'autre joueur…",
   "Connection lost, retrying…": "Connexion perdue, nouvelle tentative…",
-  "“Expert” is unavailable — you are playing against the native AI ({level}). Serve the page cross-origin isolated to enable Fairy-Stockfish.": "« Expert » est indisponible — vous jouez contre l'IA native ({level}). Servez la page en cross-origin isolated pour activer Fairy-Stockfish."
+  "“Expert” is unavailable — you are playing against the native AI ({level}). Serve the page cross-origin isolated to enable Fairy-Stockfish.": "« Expert » est indisponible — vous jouez contre l'IA native ({level}). Servez la page en cross-origin isolated pour activer Fairy-Stockfish.",
+  "— the application source code": "— le code source de l'application",
+  "— the game library and engines": "— la bibliothèque de jeux et les moteurs"
 }

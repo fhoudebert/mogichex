@@ -13,6 +13,8 @@
     "scan": "node tools/scan-geometry.mjs --jocly ../jocly2",
     "stamp": "node tools/stamp-sw.mjs",
     "build": "npm run catalog && npm run stamp && npm test",
-    "serve": "node tools/serve.mjs"
+    "serve": "node tools/serve.mjs",
+    "android": "node tools/build-android.mjs --jocly ../jocly2",
+    "android:light": "node tools/build-android.mjs --jocly ../jocly2 --no-3d"
   }
 }

@@ -67,15 +67,19 @@ export function groupByModule(games, locale = 'en') {
 }
 
 /**
- * Sections repliees par defaut. chessbase pese 81 jeux sur 128 : deroule, il
- * enterre les onze autres modules (etude §4.2). On replie donc tout module
- * au-dela d'un seuil, et on deroule tout quand une recherche est en cours.
+ * Sections repliees par defaut : TOUTES.
+ *
+ * La liste compte 12 modules et jusqu'a 116 jeux. Deroulee, elle oblige a
+ * faire defiler longuement avant d'apercevoir checkers, tafl ou margo, que
+ * chessbase enterre a lui seul. Tout replier donne d'emblee la carte des
+ * familles disponibles ; un module s'ouvre d'un doigt.
+ *
+ * Exception : pendant une recherche, tout est deroule — sinon on afficherait
+ * des sections fermees sur des resultats qu'on vient justement de demander.
  */
-export const COLLAPSE_THRESHOLD = 12;
-
 export function initialCollapsed(groups, { searching = false } = {}) {
     const set = new Set();
     if (searching) return set;
-    for (const g of groups) if (g.games.length > COLLAPSE_THRESHOLD) set.add(g.module);
+    for (const g of groups) set.add(g.module);
     return set;
 }
