@@ -61,5 +61,6 @@
   "Connection lost, retrying…": "Connexion perdue, nouvelle tentative…",
   "“Expert” is unavailable — you are playing against the native AI ({level}). Serve the page cross-origin isolated to enable Fairy-Stockfish.": "« Expert » est indisponible — vous jouez contre l'IA native ({level}). Servez la page en cross-origin isolated pour activer Fairy-Stockfish.",
   "— the application source code": "— le code source de l'application",
-  "— the game library and engines": "— la bibliothèque de jeux et les moteurs"
+  "— the game library and engines": "— la bibliothèque de jeux et les moteurs",
+  "Free software under the GNU Affero General Public License v3 or later. Jocly is AGPL-3.0, Fairy-Stockfish is GPL-3.0, game artwork is CC BY-SA 3.0.": "Logiciel libre sous licence GNU Affero General Public License v3 ou ultérieure. Jocly est en AGPL-3.0, Fairy-Stockfish en GPL-3.0, les illustrations en CC BY-SA 3.0."
 }

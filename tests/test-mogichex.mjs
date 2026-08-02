@@ -1094,6 +1094,25 @@ test('lang/ : chaque locale declaree a son fichier, et le JSON est valide', () =
     assert.ok(index.locales.some((l) => l.code === index.fallback));
 });
 
+test('la mention legale AGPL est presente dans l\'application', () => {
+    // Article 13 de l'AGPL : quiconque utilise le programme A TRAVERS UN
+    // RESEAU doit se voir offrir le code source correspondant. Les liens de
+    // la section « A propos » SONT cette offre — un allegement d'ecran ne
+    // doit pas les faire disparaitre sans qu'on s'en apercoive.
+    const html = readFileSync(path.join(root, 'index.html'), 'utf8');
+    assert.match(html, /github\.com\/fhoudebert\/mogichex/, 'lien vers le source de l\'application');
+    assert.match(html, /github\.com\/fhoudebert\/jocly2/, 'lien vers le source de la bibliotheque');
+    assert.match(html, /Affero General Public License/, 'mention de la licence');
+    assert.match(html, /CC BY-SA 3\.0/, 'attribution des illustrations');
+    // Le fichier de licence existe et est bien l'AGPL v3.
+    const lic = readFileSync(path.join(root, 'LICENSE'), 'utf8');
+    assert.match(lic, /GNU AFFERO GENERAL PUBLIC LICENSE/);
+    assert.match(lic, /Version 3, 19 November 2007/);
+    // package.json ne doit plus annoncer une licence permissive.
+    const pkg = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'));
+    assert.match(pkg.license, /^AGPL-3\.0/);
+});
+
 test('manifest : chaque icone declaree existe sur le disque', () => {
     // Une icone manquante ne casse rien de visible en developpement, mais
     // l'invite d'installation PWA peut ne jamais apparaitre sur mobile.

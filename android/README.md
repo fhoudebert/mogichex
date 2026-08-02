@@ -106,6 +106,21 @@ Android Studio fait la même chose par *Build → Generate Signed Bundle / APK*.
 
 ---
 
+## Licence : ce que l'APK doit embarquer
+
+mogichex est sous **AGPL-3.0 ou ultérieure**, la bibliothèque Jocly sous AGPL-3.0, le moteur
+Fairy-Stockfish sous GPL-3.0, et les illustrations de `chessbase/res` sous **CC BY-SA 3.0**.
+Distribuer un APK, c'est distribuer cette œuvre combinée — trois obligations en découlent :
+
+- **le texte des licences voyage avec le paquet.** `AGPL-3.0.txt` est déjà à la racine du dist et
+  le script le conserve (vérifié) ; le `LICENSE` de mogichex est copié avec l'application ;
+- **l'offre de code source doit rester accessible depuis l'application.** Les liens de la section
+  *À propos* la constituent : ne pas les retirer pour alléger l'écran ;
+- **l'attribution CC BY-SA** des illustrations doit apparaître — elle est dans *À propos*.
+
+Sur les magasins : Google Play s'accommode du GPL et de l'AGPL. L'App Store d'Apple pose un
+conflit connu avec ces licences, si un portage iOS devait suivre un jour.
+
 ## Ce qui n'a pas été vérifié ici
 
 L'environnement ne dispose ni du SDK Android ni de Gradle : **aucun APK n'a été construit ni

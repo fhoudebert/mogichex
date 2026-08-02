@@ -107,7 +107,10 @@ for (const rel of walk(distSrc)) {
 }
 
 // --- 4. application + catalogue limite au module ---------------------------
-const APP_FILES = ['index.html', 'manifest.webmanifest', 'sw.js'];
+// LICENSE voyage avec l'application : distribuer un APK, c'est distribuer une
+// oeuvre combinee sous AGPL-3.0, et le texte de la licence doit l'accompagner.
+// (AGPL-3.0.txt du dist est conserve par le filtre, verifie separement.)
+const APP_FILES = ['index.html', 'manifest.webmanifest', 'sw.js', 'LICENSE'];
 const APP_DIRS = ['css', 'js', 'lang', 'i'];
 for (const f of APP_FILES) copyFileSync(path.join(root, f), path.join(outDir, f));
 for (const d of APP_DIRS) {
