@@ -3,7 +3,7 @@
 
 import { CONFIG, gameAssetUrl, setDistBase, distBaseIsForced, setRelayUrl, relayUrlIsForced } from './config.js';
 import { locateDist, expandCandidates, DIST_ROOTS } from './dist-locator.js';
-import { initLocales, setLocale, applyTranslations, availableLocales, getLocale, t, pickLocalized } from './i18n.js';
+import { initLocales, setLocale, applyTranslations, availableLocales, getLocale, t, pickLocalized, translateLevelLabel } from './i18n.js';
 import { detectTier } from './device.js';
 import { CatalogView } from './catalog-view.js';
 import { filterGames } from './catalog.js';
@@ -104,7 +104,7 @@ function openDetail(entry) {
     const defaultLevel = entry.levels.findIndex((l) => l.isDefault);
     fillSelect(
         $('#sel-level'),
-        entry.levels.map((l, i) => ({ value: String(i), label: l.label })),
+        entry.levels.map((l, i) => ({ value: String(i), label: translateLevelLabel(l.label) })),
         String(typeof storedLevel === 'number' ? storedLevel : defaultLevel >= 0 ? defaultLevel : 0)
     );
 
@@ -591,7 +591,13 @@ async function main() {
         applyTranslations();
         view.render();
         updateCount();
-        if (state.entry) openDetail(state.entry);
+        // Re-rendre le detail SEULEMENT s'il est a l'ecran : openDetail()
+        // bascule d'ecran, et changer de langue depuis le catalogue faisait
+        // donc atterrir sur la fiche d'un jeu qu'on n'avait pas demande.
+        // Une fiche ouverte plus tard sera de toute facon rendue a neuf.
+        if (state.entry && $('#screen-detail').classList.contains('is-active')) {
+            openDetail(state.entry);
+        }
     });
 
     // Lien d'invitation ouvert par l'adversaire : on lance directement la

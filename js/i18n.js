@@ -45,6 +45,43 @@ export function t(text, vars) {
     return out;
 }
 
+/**
+ * Traduit le libelle d'un niveau de jeu.
+ *
+ * Les libelles viennent de jocly, en anglais : « Easy », « Expert », mais
+ * aussi « Fast [1sec] », « Slow (10sec) », « Cabin boy »… 28 libelles
+ * distincts sur le catalogue, dont cinq portent une DUREE.
+ *
+ * On traduit donc par MOTIF et pas seulement par table : une duree inedite
+ * (« Fast [5sec] », le jour ou jocly en ajoute une) resterait sinon en
+ * anglais sans que personne s'en apercoive. Le tronc se traduit, la duree se
+ * reformate.
+ *
+ * @param {string} label libelle anglais venu du catalogue
+ * @param {Function} [translate] par defaut la fonction t() de ce module
+ */
+export function translateLevelLabel(label, translate) {
+    const tr = translate || t;
+    if (!label) return '';
+
+    const direct = tr(label);
+    if (direct !== label) return direct;
+
+    // « Fast [1sec] », « Slow (10sec) » : crochets ou parentheses, les deux
+    // existent dans le catalogue.
+    const withDuration = /^(.+?)\s*[[(](\d+)\s*sec[\])]$/.exec(label);
+    if (withDuration) {
+        return `${tr(withDuration[1])} [${withDuration[2]} ${tr('sec')}]`;
+    }
+
+    // « Level 3 » : ce libelle est aussi celui que le catalogue fabrique pour
+    // les niveaux que jocly ne nomme pas.
+    const numbered = /^Level\s+(\d+)$/.exec(label);
+    if (numbered) return tr('Level {n}').replace('{n}', numbered[1]);
+
+    return label;
+}
+
 export function getLocale() {
     return current;
 }
