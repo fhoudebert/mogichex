@@ -24,7 +24,7 @@ can't turn off feels like a bug.
 **Rules for every game**, illustrated, in the app — before you play and during the game.
 
 **Three opponents.** The computer, another player on the same device, or **another player over the
-internet**.
+internet** — the last one can be switched off entirely, for a build that never touches the network.
 
 **Play by invitation.** Pick *another player, over the internet*, send the link, and you're in.
 Links are interchangeable with [joclymatch](https://github.com/fhoudebert/joclymatch): one of its
@@ -53,7 +53,8 @@ It then behaves like any other app: full screen, its own icon. Games you've alre
 available **offline**; ones you haven't will need a connection the first time.
 
 An **Android APK** is available : [Download apk](https://github.com/fhoudebert/mogichex/releases/download/1.0/mogichex.apk).
-It can also be built — see [android/README.md](android/README.md).
+It can also be built — see [android/README.md](android/README.md), including a fully **offline**
+variant with online play removed.
 
 ---
 

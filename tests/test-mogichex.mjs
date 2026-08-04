@@ -18,6 +18,7 @@ import { keepFile, citedVisuals, summarize } from '../tools/lib/dist-trim.mjs';
 import { pickLocalized, preferredLocale, configure, t, translateLevelLabel } from '../js/i18n.js';
 import { filterGames, groupByModule, initialCollapsed, normalize, searchableText } from '../js/catalog.js';
 import { classify } from '../js/device.js';
+import { CONFIG, allowedMode } from '../js/config.js';
 import { isAbortError, takeBackTarget, GameSession, fallbackNotice } from '../js/game.js';
 import {
     shouldApplyEnvelope,
@@ -355,6 +356,41 @@ test('buildCatalog : les niveaux sont indexes par position, avec leur libelle', 
     assert.equal(levels[1].ai, 'fairy-stockfish');
     // Aucun libelle vide, quelle que soit la declaration du jeu.
     assert.ok(levels.every((l) => typeof l.label === 'string' && l.label.length > 0));
+});
+
+// ---------------------------------------------------------------- jeu a distance desactivable
+
+test('allowedMode : « remote » est refuse quand le jeu a distance est coupe', () => {
+    // Une preference memorisee peut valoir « remote » alors que la
+    // fonctionnalite vient d'etre retiree : sans ce garde-fou, l'application
+    // chercherait un relai qui n'existe pas et l'ecran resterait bloque.
+    const avant = CONFIG.remotePlay;
+    try {
+        CONFIG.remotePlay = true;
+        assert.equal(allowedMode('remote'), 'remote');
+        assert.equal(allowedMode('human'), 'human');
+        assert.equal(allowedMode('ai'), 'ai');
+
+        CONFIG.remotePlay = false;
+        assert.equal(allowedMode('remote'), 'ai', 'retombe sur l\'ordinateur');
+        // Les deux autres adversaires ne sont pas concernes.
+        assert.equal(allowedMode('human'), 'human');
+        assert.equal(allowedMode('ai'), 'ai');
+    } finally {
+        CONFIG.remotePlay = avant;
+    }
+});
+
+test('allowedMode : une valeur inconnue retombe sur l\'ordinateur', () => {
+    assert.equal(allowedMode('n\'importe quoi'), 'ai');
+    assert.equal(allowedMode(undefined), 'ai');
+    assert.equal(allowedMode(null), 'ai');
+});
+
+test('remotePlay est actif par defaut', () => {
+    // Retirer le jeu a distance doit rester un choix EXPLICITE : personne ne
+    // doit perdre la fonctionnalite par accident de configuration.
+    assert.equal(CONFIG.remotePlay, true);
 });
 
 // ---------------------------------------------------------------- dist
@@ -1133,7 +1169,7 @@ test('tous les libelles de niveaux du catalogue sont traduits en francais', () =
     const fr = JSON.parse(readFileSync(path.join(root, 'lang', 'fr.json'), 'utf8'));
     const tr = (x) => (fr[x] !== undefined ? fr[x] : x);
     // Ceux-la s'ecrivent pareil dans les deux langues : c'est voulu.
-    const identiques = new Set(['Expert', 'Padawan', 'Papa']);
+    const identiques = new Set(['Expert', 'Padawan', 'Papa','Champion']);
     const labels = [...new Set(cat.games.flatMap((g) => g.levels.map((l) => l.label)))];
     const manquants = labels.filter(
         (l) => translateLevelLabel(l, tr) === l && !identiques.has(l)
