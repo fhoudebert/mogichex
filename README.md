@@ -123,7 +123,7 @@ relay works, what was measured, and the traps worth knowing before changing anyt
 
 ## Credits
 
-Games, engines and artwork come from **Jocly**, created by Michel Gutierrez, Jérôme Choain. 
+Mogichex is based on **Jocly**, created by M. Gutierrez / J. Choain. 
 The original project is no longer maintained; it lives on as **[jocly2](https://github.com/fhoudebert/jocly2)**.
 
 The Expert level uses [Fairy-Stockfish](https://github.com/fairy-stockfish/Fairy-Stockfish) by
@@ -136,7 +136,6 @@ Game artwork under `chessbase/res` is **CC BY-SA 3.0**.
 
 **mogichex is free software under the [GNU Affero General Public License v3](LICENSE) or later.**
 
-It is not a program that merely talks to Jocly: it loads the library into its own page and ships
-it alongside — or inside, for the Android build. The two form a single work, so the whole is
+It loads the Jocly library into its own page and ships it alongside — or inside, for the Android build. The two form a single work, so the whole is
 AGPL-3.0. Fairy-Stockfish is GPL-3.0, which combines with AGPL-3.0 under both licenses' terms.
 
