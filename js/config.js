@@ -40,6 +40,12 @@ export const CONFIG = Object.assign(
         // c'est ce qu'il faudra faire dans une coquille NATIVE, dont l'origine
         // n'est pas celle du site et pour qui « . » ne veut rien dire.
         relayUrl: null,
+        // Jeu a distance. Le passer a false retire l'adversaire « un autre
+        // joueur par Internet » : plus de choix dans la liste, plus de
+        // recherche de relai, plus une seule requete sortante. C'est ce qu'il
+        // faut pour une application Android qui doit rester HORS LIGNE —
+        // tools/build-android.mjs --offline le pose pour vous.
+        remotePlay: true,
         // Emplacements ou chercher le relai, avant ceux par defaut.
         // Defauts : « . » (le relai chez mogichex, meme origine donc aucun
         // CORS) puis « ../joclymatch ».
@@ -48,6 +54,17 @@ export const CONFIG = Object.assign(
     },
     overrides
 );
+
+/**
+ * Ramene un mode de jeu a ce que la configuration autorise.
+ * Une preference memorisee peut valoir « remote » alors que le jeu a
+ * distance vient d'etre desactive : sans ce garde-fou, l'application
+ * chercherait un relai qui n'existe pas et l'ecran resterait bloque.
+ */
+export function allowedMode(mode) {
+    if (mode === 'remote' && !CONFIG.remotePlay) return 'ai';
+    return mode === 'human' || mode === 'remote' ? mode : 'ai';
+}
 
 export function setRelayUrl(url) {
     CONFIG.relayUrl = url;

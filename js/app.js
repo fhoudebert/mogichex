@@ -1,7 +1,7 @@
 // Amorcage : catalogue -> detail -> partie, plus les panneaux regles/reglages.
 // Mono-fenetre : on ne fait qu'echanger la classe .is-active.
 
-import { CONFIG, gameAssetUrl, setDistBase, distBaseIsForced, setRelayUrl, relayUrlIsForced } from './config.js';
+import { CONFIG, gameAssetUrl, setDistBase, distBaseIsForced, setRelayUrl, relayUrlIsForced, allowedMode } from './config.js';
 import { locateDist, expandCandidates, DIST_ROOTS } from './dist-locator.js';
 import { initLocales, setLocale, applyTranslations, availableLocales, getLocale, t, pickLocalized, translateLevelLabel } from './i18n.js';
 import { detectTier } from './device.js';
@@ -108,7 +108,7 @@ function openDetail(entry) {
         String(typeof storedLevel === 'number' ? storedLevel : defaultLevel >= 0 ? defaultLevel : 0)
     );
 
-    $('#sel-mode').value = pref('mode', 'ai');
+    $('#sel-mode').value = allowedMode(pref('mode', 'ai'));
     $('#sel-side').value = pref('side.' + entry.name, 'a');
     syncModeRows();
 
@@ -329,6 +329,9 @@ function wireGameOptions() {
  * ne joue que contre l'ordinateur ne paie jamais cette requete.
  */
 async function ensureRelay() {
+    // Desactive : pas une seule requete sortante. C'est ce qui rend
+    // l'application reellement hors ligne, pas seulement silencieuse.
+    if (!CONFIG.remotePlay) return null;
     if (CONFIG.relayUrl || relayUrlIsForced()) return CONFIG.relayUrl;
     const remembered = pref('relayUrl', null);
     const roots = (CONFIG.relayRoots || []).concat(RELAY_ROOTS);
@@ -523,7 +526,7 @@ async function main() {
     });
 
     $('#btn-play').addEventListener('click', () => {
-        if ($('#sel-mode').value === 'remote') return openInvite(state.entry);
+        if (CONFIG.remotePlay && $('#sel-mode').value === 'remote') return openInvite(state.entry);
         state.remote = null;
         startMatch();
     });
@@ -562,6 +565,13 @@ async function main() {
                 showScreen('screen-detail');
             } else showScreen('screen-catalog');
         });
+    }
+
+    // Jeu a distance desactive : l'option disparait de la liste plutot que
+    // d'y rester grisee — une option qu'on ne peut pas choisir n'apprend rien.
+    if (!CONFIG.remotePlay) {
+        const opt = $('#sel-mode').querySelector('option[value="remote"]');
+        if (opt) opt.remove();
     }
 
     wireGameOptions();
@@ -608,7 +618,7 @@ async function main() {
         const entry = state.catalog.games.find((g) => g.name === invite.game);
         if (entry) {
             openDetail(entry);
-            if (invite.side) {
+            if (invite.side && CONFIG.remotePlay) {
                 await ensureRelay();
                 if (CONFIG.relayUrl) {
                     state.remote = { matchId: invite.matchId, side: invite.side };

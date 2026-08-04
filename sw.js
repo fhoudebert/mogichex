@@ -19,7 +19,7 @@
 // SHELL_VERSION doit changer a chaque livraison — tools/stamp-sw.mjs s'en
 // charge au build pour eviter l'oubli.
 
-const SHELL_VERSION = '202608021137-b5dc8ae';
+const SHELL_VERSION = '202608040621-9aeda8b';
 const SHELL_CACHE = 'mogichex-shell-' + SHELL_VERSION;
 const DIST_CACHE = 'mogichex-dist-' + SHELL_VERSION;
 

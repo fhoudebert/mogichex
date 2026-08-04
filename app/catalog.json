@@ -2,8 +2,8 @@
  "catalogVersion": 1,
  "source": {
   "repo": "jocly2",
-  "commit": "74262718d3e8702d1c063b715377bea1daed3967",
-  "builtAt": "2026-08-02T11:37:00.874Z"
+  "commit": "038919cfc37b7a74b1e47f8e658894e4c91e1216",
+  "builtAt": "2026-08-04T06:21:56.656Z"
  },
  "counts": {
   "games": 127,
@@ -444,6 +444,11 @@
      "label": "Expert",
      "isDefault": false,
      "ai": "uct"
+    },
+    {
+     "label": "Champion",
+     "isDefault": false,
+     "ai": "scan"
     }
    ],
    "obsolete": false,

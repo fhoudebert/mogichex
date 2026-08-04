@@ -18,7 +18,8 @@
     "build": "npm run catalog && npm run stamp && npm test",
     "serve": "node tools/serve.mjs",
     "android": "node tools/build-android.mjs --jocly ../jocly2",
-    "android:light": "node tools/build-android.mjs --jocly ../jocly2 --no-3d"
+    "android:light": "node tools/build-android.mjs --jocly ../jocly2 --no-3d",
+    "android:offline": "node tools/build-android.mjs --jocly ../jocly2 --no-3d --offline"
   },
   "devDependencies": {
     "@capacitor/android": "^8.5.0",

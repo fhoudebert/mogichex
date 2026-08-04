@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Prepare le contenu web d'une application Android (Capacitor).
 //
-//   node tools/build-android.mjs --jocly ../jocly2 [--out android/www] [--no-3d]
+//   node tools/build-android.mjs --jocly ../jocly2 [--out android/www] [--no-3d] [--offline]
 //   node tools/build-android.mjs --jocly ../jocly2 --skip-jocly-build
 //
 // Ce script ne fabrique PAS l'APK : il produit le dossier `www` que Capacitor
@@ -46,6 +46,9 @@ const flag = (n) => argv.includes('--' + n);
 const joclyPath = path.resolve(arg('jocly', '../jocly2'));
 const outDir = path.resolve(root, arg('out', 'android/www'));
 const keep3d = !flag('no-3d');
+// --offline : application qui ne sort jamais sur le reseau. Le jeu a distance
+// disparait de la liste des adversaires, et aucun relai n'est cherche.
+const offline = flag('offline');
 const MODULE = 'chessbase';
 
 if (!existsSync(path.join(joclyPath, 'gulpfile.js'))) {
@@ -167,17 +170,26 @@ writeFileSync(
 // Sous capacitor:// ou https://localhost, « . » ne designe pas le site : la
 // recherche du relai n'aurait aucun sens. Le dist, lui, est embarque a cote
 // de index.html, donc un chemin relatif suffit et reste juste.
-writeFileSync(
-    path.join(outDir, 'config-android.js'),
-    `// Genere par tools/build-android.mjs — ne pas editer a la main.
-// L'origine d'une application native n'est ni le site ni GitHub Pages : le
+const configLines = offline
+    ? `// Application HORS LIGNE : le jeu a distance est retire. L'adversaire
+// « un autre joueur par Internet » n'apparait plus dans la liste, aucun relai
+// n'est cherche, et l'application n'emet aucune requete sortante.
+window.MOGICHEX_CONFIG = {
+    distBase: 'dist/',
+    remotePlay: false,
+};
+`
+    : `// L'origine d'une application native n'est ni le site ni GitHub Pages : le
 // relai doit etre nomme en absolu, et son origine autorisee dans
 // signalconf.php (capacitor://localhost, https://localhost y figurent deja).
 window.MOGICHEX_CONFIG = {
     distBase: 'dist/',
     relayUrl: 'https://biscandine.fr/variantes/mogichex',
 };
-`
+`;
+writeFileSync(
+    path.join(outDir, 'config-android.js'),
+    '// Genere par tools/build-android.mjs — ne pas editer a la main.\n' + configLines
 );
 const indexPath = path.join(outDir, 'index.html');
 const html = readFileSync(indexPath, 'utf8');
@@ -203,4 +215,5 @@ for (const [reason, v] of Object.entries(s.byReason)) {
 console.log(`  visuels conserves car cites par les regles : ${referencedVisuals.size}`);
 console.log(`  jeux au catalogue : ${games.length}`);
 console.log(`  3D : ${keep3d ? 'conservee' : 'retiree (--no-3d)'}`);
+console.log(`  jeu a distance : ${offline ? 'RETIRE (--offline)' : 'actif'}`);
 console.log(`\nEtape suivante : voir android/README.md (npx cap sync android, puis Gradle).`);

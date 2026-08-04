@@ -11,7 +11,17 @@ la génération et la signature de l'APK restent indépendantes, par Gradle ou A
 # depuis la racine de mogichex
 npm run android            # dist chessbase + application → android/www
 npm run android:light      # idem, sans les ressources 3D
+npm run android:offline    # idem, et SANS le jeu à distance
 ```
+
+`--offline` retire l'adversaire **« un autre joueur par Internet »** : l'option disparaît de la
+liste, aucun relai n'est cherché, et l'application n'émet **aucune requête sortante**. C'est ce
+qu'il faut pour une application qui doit rester hors ligne — et cela évite d'avoir à expliquer
+une fonctionnalité qui échouerait faute de réseau.
+
+Vérifié sur le paquet produit : deux adversaires au lieu de trois, partie jouable, zéro requête
+externe. Une préférence déjà mémorisée sur « par Internet » retombe sur l'ordinateur au lieu de
+bloquer l'écran.
 
 Le script (`tools/build-android.mjs`) :
 
