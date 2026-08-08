@@ -1125,6 +1125,32 @@ test('keepFile : three.js reste embarque MEME sans 3D', () => {
     assert.equal(keep('three.js', { keep3d: false }).keep, true);
 });
 
+test('keepFile : les textures 3D de chessbase partent avec --no-3d', () => {
+    // Elles ne sont referencees que depuis des blocs mesh + materials des
+    // fichiers *-view.js — des definitions de pieces TRIDIMENSIONNELLES.
+    // 302 fichiers, 15,4 Mo mesures sur le dist chessbase.
+    const off = { keep3d: false };
+    assert.equal(keep('games/chessbase/res/staunton/king-normalmap.jpg', off).keep, false);
+    assert.equal(keep('games/chessbase/res/staunton/king-diffusemap.jpg', off).keep, false);
+    assert.equal(keep('games/chessbase/res/xiangqi/board-normal.jpg', off).keep, false);
+    assert.equal(keep('games/chessbase/res/xiangqi/board-diffuse.jpg', off).keep, false);
+    // Repertoires entiers de faces de pieces.
+    assert.equal(keep('games/chessbase/res/shogi/chu-diffusemaps/copper-b.jpg', off).keep, false);
+    assert.equal(keep('games/chessbase/res/counters/diffusemaps/x.jpg', off).keep, false);
+    // Sans l'option, tout reste.
+    assert.equal(keep('games/chessbase/res/shogi/chu-diffusemaps/copper-b.jpg').keep, true);
+});
+
+test('keepFile : le filtre de textures ne deborde PAS hors de chessbase/res', () => {
+    // Le res/ de la racine du dist sert a tout autre chose ; et un nom qui
+    // se termine par « diffuse.jpg » ailleurs n'est pas concerne.
+    const off = { keep3d: false };
+    assert.equal(keep('res/textures/bois-diffuse.jpg', off).keep, true);
+    assert.equal(keep('games/chessbase/res/rules/mini/mini-thumb.png', off).keep, true);
+    // « diffusemaps » doit etre un SEGMENT de chemin, pas un fragment de nom.
+    assert.equal(keep('games/chessbase/res/shogi/diffusemapsource.jpg', off).keep, true);
+});
+
 test('keepFile : la 3D se filtre par EXTENSION, jamais par dossier', () => {
     // res/fairy melange modeles .gltf et planches de sprites 2D. Retirer le
     // dossier faisait disparaitre wikipedia-fairy-sprites.png, dont les skins

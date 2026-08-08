@@ -47,6 +47,29 @@ export const DROP_DIRS = ['scan', 'res/vr'];
  */
 export const EXT_3D = ['.gltf', '.bin', '.obj', '.mtl'];
 
+/**
+ * TEXTURES 3D de chessbase, retirees avec --no-3d.
+ *
+ * Elles ne sont referencees que depuis des blocs `mesh` + `materials` des
+ * fichiers *-view.js — c'est-a-dire des definitions de pieces
+ * TRIDIMENSIONNELLES (canaux diffuse/normal, specular, shininess). Aucun skin
+ * 2D ne les demande, ce qui a ete verifie au navigateur et pas seulement par
+ * lecture : une partie de shogi en 2D avec ce filtre actif n'emet aucune
+ * requete en echec.
+ *
+ * Le filtrage est limite a games/chessbase/res : le `res/` de la racine du
+ * dist sert a tout autre chose.
+ */
+export const TEXTURE_3D_ROOT = 'games/chessbase/res';
+export const TEXTURE_3D_SUFFIXES = [
+    'normalmap.jpg',
+    'diffusemap.jpg',
+    'normal.jpg',
+    'diffuse.jpg',
+];
+/** Repertoires entiers de faces de pieces 3D : shogi/chu-diffusemaps, etc. */
+export const TEXTURE_3D_DIR_RE = /(^|\/)[A-Za-z0-9._-]*diffusemaps(\/|$)/;
+
 /** Dossier des captures promotionnelles, filtre au cas par cas. */
 export const VISUALS_DIR = 'games/chessbase/res/visuals';
 
@@ -82,6 +105,14 @@ export function keepFile(relPath, opts) {
     if (!keep3d) {
         for (const ext of EXT_3D) {
             if (relPath.endsWith(ext)) return { keep: false, reason: 'ressource-3d' };
+        }
+        if (underDir(relPath, TEXTURE_3D_ROOT)) {
+            if (TEXTURE_3D_DIR_RE.test(relPath)) {
+                return { keep: false, reason: 'texture-3d' };
+            }
+            for (const suffix of TEXTURE_3D_SUFFIXES) {
+                if (relPath.endsWith(suffix)) return { keep: false, reason: 'texture-3d' };
+            }
         }
         // three.js reste EMBARQUE meme sans 3D : jocly le charge sans
         // condition, y compris pour un skin 2D. Le retirer casse toute

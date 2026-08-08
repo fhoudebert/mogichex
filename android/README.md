@@ -44,11 +44,12 @@ Mesuré sur jocly2 `545225a`, dist chessbase en production = **113 Mo** :
 | `scan/` | 10,3 Mo | Le moteur de dames. Les 80 jeux de chessbase n'utilisent que `uct` et `fairy-stockfish` — vérifié sur le catalogue. |
 | `res/vr` | 5,6 Mo | Réalité virtuelle, sans emploi sur téléphone. |
 | `.gltf/.bin/.obj/.mtl` | 18,4 Mo | **Seulement avec `--no-3d`.** |
+| textures 3D de `chessbase/res` | 15,4 Mo | **Seulement avec `--no-3d`** : `*normalmap.jpg`, `*diffusemap.jpg`, `*normal.jpg`, `*diffuse.jpg` et les répertoires `*diffusemaps`. Elles ne sont référencées que depuis des blocs `mesh` + `materials` des `*-view.js`, c'est-à-dire des pièces tridimensionnelles. |
 
 | Variante | `www` |
 |---|---|
-| complète | **85 Mo** |
-| `--no-3d` | **67 Mo** |
+| complète | **86 Mo** |
+| `--no-3d` | **50 Mo** |
 
 Deux pièges rencontrés en construisant ce filtre, et corrigés :
 
@@ -131,13 +132,3 @@ Distribuer un APK, c'est distribuer cette œuvre combinée — trois obligations
 Sur les magasins : Google Play s'accommode du GPL et de l'AGPL. L'App Store d'Apple pose un
 conflit connu avec ces licences, si un portage iOS devait suivre un jour.
 
-## Ce qui n'a pas été vérifié ici
-
-L'environnement ne dispose ni du SDK Android ni de Gradle : **aucun APK n'a été construit ni
-installé**. Ce qui l'a été, c'est le contenu de `android/www`, servi et sondé dans un navigateur
-mobile : un seul module, tous les groupes repliés, vignettes 10/10, règles 8/8 images, skins 2D
-seuls en mode `--no-3d`, partie jouable, **zéro requête en échec**.
-
-Restent à constater sur appareil : la taille réelle de l'APK après compression, le comportement
-de la WebView Android (isolation cross-origin pour le niveau Expert, WebRTC), et l'accès au relai
-depuis l'origine native.
