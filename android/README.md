@@ -5,11 +5,40 @@ la génération et la signature de l'APK restent indépendantes, par Gradle ou A
 
 ---
 
-## 1. Préparer le contenu web
+> **L'ordre compte, et les commandes Capacitor se lancent depuis la RACINE du projet.**
+> Voir *Pièges* en fin de document si `npx cap sync android` répond
+> « android platform has not been added yet ».
+
+## 1. Créer le projet Capacitor (une seule fois, EN PREMIER)
+
+```sh
+npm install --save-dev @capacitor/cli @capacitor/core @capacitor/android
+npx cap init mogichex fr.biscandine.mogichex --web-dir www
+npx cap add android
+```
+
+`capacitor.config.json` :
+
+```json
+{
+  "appId": "fr.biscandine.mogichex",
+  "appName": "mogichex",
+  "webDir": "www",
+  "android": { "allowMixedContent": false }
+}
+```
+
+**L'origine de l'application native n'est ni le site ni GitHub Pages.** Le relai doit donc
+autoriser `https://localhost` (Android) en CORS — c'est déjà le cas dans
+`deploy/signalconf.php.example`. `config-android.js` fixe l'URL absolue du relai ; le dist, lui,
+est embarqué à côté de `index.html` et reste en relatif. Avec `--offline`, aucun relai n'est
+utilisé du tout.
+
+## 2. Préparer le contenu web
 
 ```sh
 # depuis la racine de mogichex
-npm run android            # dist chessbase + application → android/www
+npm run android            # dist chessbase + application → www
 npm run android:light      # idem, sans les ressources 3D
 npm run android:offline    # idem, et SANS le jeu à distance
 ```
@@ -65,38 +94,15 @@ retrouvait sans aucun skin 2D.
 
 ---
 
-## 2. Créer le projet Capacitor (une seule fois)
-
-```sh
-npm install --save-dev @capacitor/cli @capacitor/core @capacitor/android
-npx cap init mogichex fr.biscandine.mogichex --web-dir android/www
-npx cap add android
-```
-
-`capacitor.config.json` doit contenir :
-
-```json
-{
-  "appId": "fr.biscandine.mogichex",
-  "appName": "mogichex",
-  "webDir": "android/www",
-  "android": { "allowMixedContent": false }
-}
-```
-
-**L'origine de l'application native n'est ni le site ni GitHub Pages.** Le relai doit donc
-autoriser `https://localhost` (Android) en CORS — c'est déjà le cas dans
-`deploy/signalconf.php.example`. `config-android.js` fixe l'URL absolue du relai ; le dist, lui,
-est embarqué à côté de `index.html` et reste en relatif.
-
----
-
 ## 3. Synchroniser puis construire
 
+**Depuis la racine du projet**, jamais depuis `android/` :
+
 ```sh
-npm run android          # régénère android/www
+npm run android          # régénère www
 npx cap sync android     # copie www dans le projet natif
 cd android && ./gradlew assembleDebug
+cd ..                    # ← revenir à la racine avant la prochaine variante
 ```
 
 APK de debug : `android/app/build/outputs/apk/debug/app-debug.apk`.
@@ -106,7 +112,6 @@ APK de debug : `android/app/build/outputs/apk/debug/app-debug.apk`.
 ```sh
 keytool -genkey -v -keystore mogichex.keystore -alias mogichex \
         -keyalg RSA -keysize 2048 -validity 10000
-
 cd android && ./gradlew assembleRelease
 ```
 
@@ -116,6 +121,33 @@ avec, dans `android/app/build.gradle`, un bloc `signingConfigs` renseigné par u
 Android Studio fait la même chose par *Build → Generate Signed Bundle / APK*.
 
 ---
+
+## Pièges
+
+**« android platform has not been added yet » alors que la plateforme existe.**
+Les commandes `npx cap` se lancent **depuis la racine du projet**. Depuis `android/`, Capacitor
+cherche `android/android/` et ne trouve rien. Le message ne dit pas cela, d'où la confusion —
+d'autant que `npm run …` fonctionne, lui, depuis n'importe quel sous-répertoire : npm remonte
+jusqu'au `package.json` et s'exécute depuis la racine. Reproduit et vérifié.
+
+```sh
+cd ..                    # revenir à la racine
+npx cap sync android
+```
+
+Le cas typique : la ligne `cd android && ./gradlew assembleRelease` laisse le terminal dans
+`android/`. La variante suivante échoue alors sur `cap sync`, sans que rien n'ait changé au
+projet.
+
+**`npx cap add android` répond « android platform already exists ».**
+La plateforme se crée **avant** la première génération du contenu web, et le `webDir` ne doit pas
+être un sous-dossier de `android/` : Capacitor refuse d'ajouter la plateforme si `android/`
+existe déjà, et propose de supprimer `./android` — ce qui détruirait le projet natif. D'où
+`webDir: "www"` à la racine.
+
+**Le script refuse d'écrire dans un projet natif.** `tools/build-android.mjs` efface son dossier
+de sortie avant de le remplir. Si on le pointe sur `android/`, il s'arrête au lieu d'emporter la
+configuration Gradle et la signature.
 
 ## Licence : ce que l'APK doit embarquer
 

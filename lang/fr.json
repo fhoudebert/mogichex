@@ -80,6 +80,8 @@
   "Samurai": "Samouraï",
   "Ronin": "Rōnin",
   "Damyo": "Daimyō",
+  "10 min": "10 min",
+  "20 min": "20 min",
   "Baby": "Bébé",
   "Papa": "Papa",
   "Mama": "Maman",
@@ -88,4 +90,7 @@
   "Officer": "Officier",
   "Captain": "Capitaine",
   "Admiral": "Amiral"
+
+
+
 }

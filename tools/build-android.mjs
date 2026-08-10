@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Prepare le contenu web d'une application Android (Capacitor).
 //
-//   node tools/build-android.mjs --jocly ../jocly2 [--out android/www] [--no-3d] [--offline]
+//   node tools/build-android.mjs --jocly ../jocly2 [--out www] [--no-3d] [--offline]
 //   node tools/build-android.mjs --jocly ../jocly2 --skip-jocly-build
 //
 // Ce script ne fabrique PAS l'APK : il produit le dossier `www` que Capacitor
@@ -44,7 +44,7 @@ const arg = (n, d) => {
 const flag = (n) => argv.includes('--' + n);
 
 const joclyPath = path.resolve(arg('jocly', '../jocly2'));
-const outDir = path.resolve(root, arg('out', 'android/www'));
+const outDir = path.resolve(root, arg('out', 'www'));
 const keep3d = !flag('no-3d');
 // --offline : application qui ne sort jamais sur le reseau. Le jeu a distance
 // disparait de la liste des adversaires, et aucun relai n'est cherche.
@@ -92,6 +92,20 @@ function walk(dir, rel = '') {
         else out.push(r);
     }
     return out;
+}
+
+// GARDE-FOU. Ce script efface son repertoire de sortie avant de le remplir.
+// Si quelqu'un le pointe sur le projet natif — `--out android`, ou un webDir
+// mal choisi — il detruirait des heures de configuration Gradle et la
+// configuration de signature. On refuse plutot que de le decouvrir apres.
+const NATIVE_MARKERS = ['build.gradle', 'gradlew', 'settings.gradle', 'app'];
+if (existsSync(outDir) && NATIVE_MARKERS.some((m) => existsSync(path.join(outDir, m)))) {
+    console.error(
+        `Refus d'ecrire dans ${outDir} : ce repertoire contient un projet Android natif.\n` +
+        `Ce script efface sa sortie avant de la remplir — il detruirait votre projet.\n` +
+        `Indiquer un autre dossier avec --out (par defaut : www).`
+    );
+    process.exit(2);
 }
 
 const distOut = path.join(outDir, 'dist');
@@ -216,4 +230,9 @@ console.log(`  visuels conserves car cites par les regles : ${referencedVisuals.
 console.log(`  jeux au catalogue : ${games.length}`);
 console.log(`  3D : ${keep3d ? 'conservee' : 'retiree (--no-3d)'}`);
 console.log(`  jeu a distance : ${offline ? 'RETIRE (--offline)' : 'actif'}`);
-console.log(`\nEtape suivante : voir android/README.md (npx cap sync android, puis Gradle).`);
+console.log(
+    `\nEtape suivante, DEPUIS LA RACINE du projet (pas depuis android/) :\n` +
+    `  npx cap sync android\n` +
+    `  cd android && ./gradlew assembleRelease\n` +
+    `Voir android/README.md.`
+);

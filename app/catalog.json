@@ -2,18 +2,18 @@
  "catalogVersion": 1,
  "source": {
   "repo": "jocly2",
-  "commit": "038919cfc37b7a74b1e47f8e658894e4c91e1216",
-  "builtAt": "2026-08-04T06:21:56.656Z"
+  "commit": "e94e9a552efae0831067fb356b5b6ec7e47a23a3",
+  "builtAt": "2026-08-10T05:18:21.963Z"
  },
  "counts": {
-  "games": 127,
+  "games": 128,
   "modules": 12,
-  "phone": 116,
+  "phone": 117,
   "tablet": 11,
   "obsolete": 0,
   "byModule": {
    "checkers": 11,
-   "chessbase": 80,
+   "chessbase": 81,
    "fourinarow": 5,
    "hunt": 1,
    "mana": 1,
@@ -1641,7 +1641,8 @@
    },
    "thumbnail": "res/rules/shogi/chu-seireigi-thumb.png",
    "rules": {
-    "en": "res/rules/shogi/chu-seireigi-shogi-rules.html"
+    "en": "res/rules/shogi/chu-seireigi-shogi-rules.html",
+    "fr": "res/rules/shogi/chu-seireigi-shogi-rules_fr.html"
    },
    "credits": {
     "en": "res/rules/shogi/seireigi-credits.html"
@@ -1699,7 +1700,8 @@
    },
    "thumbnail": "res/rules/shogi/chu-shogi-thumb.png",
    "rules": {
-    "en": "res/rules/shogi/chu-shogi-rules.html"
+    "en": "res/rules/shogi/chu-shogi-rules.html",
+    "fr": "res/rules/shogi/chu-shogi-rules_fr.html"
    },
    "credits": {
     "en": "res/rules/shogi/shogi-credits.html"
@@ -5190,7 +5192,7 @@
    "thumbnail": "res/rules/team-mate/team-mate-thumb.png",
    "rules": {
     "en": "res/rules/team-mate/team-mate-rules.html",
-    "fr": "res/rules/metamachy/team-mate-rules_fr.html"
+    "fr": "res/rules/team-mate/team-mate-rules_fr.html"
    },
    "credits": {
     "en": "res/rules/team-mate/team-mate-credits.html"
@@ -5229,6 +5231,75 @@
     },
     {
      "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
+   ],
+   "obsolete": false,
+   "tier": "phone"
+  },
+  {
+   "name": "tenjiku-shogi",
+   "module": "chessbase",
+   "title": {
+    "en": "Tenjiku Shogi"
+   },
+   "summary": {
+    "en": "The 'exotic' shogi derived from Chu Shogi is the most extravagant and original of all historical variants.",
+    "fr": "Le shogi 'exotique' issu du chu shogi est la plus originale et extravagante des variantes historiques."
+   },
+   "thumbnail": "res/rules/shogi/tenjiku-thumb.png",
+   "rules": {
+    "en": "res/rules/shogi/tenjiku-rules.html",
+    "fr": "res/rules/shogi/tenjiku-rules_fr.html"
+   },
+   "credits": {
+    "en": "res/rules/shogi/shogi-credits.html"
+   },
+   "skins": [
+    {
+     "name": "skin2d",
+     "title": "2D Classic",
+     "is3d": false
+    },
+    {
+     "name": "skin2dmnemonic",
+     "title": "2D Mnemonic",
+     "is3d": false
+    }
+   ],
+   "defaultSkin": "skin2d",
+   "defaultSkinIs2d": true,
+   "ratio": 1,
+   "switchable": true,
+   "levels": [
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [5sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "10 min",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "20 min",
      "isDefault": false,
      "ai": "uct"
     }
@@ -5365,7 +5436,8 @@
    },
    "thumbnail": "res/rules/shogi/tori-shogi-thumb.png",
    "rules": {
-    "en": "res/rules/shogi/tori-shogi-rules.html"
+    "en": "res/rules/shogi/tori-shogi-rules.html",
+    "fr": "res/rules/shogi/tori-shogi-rules_fr.html"
    },
    "credits": {
     "en": "res/rules/shogi/shogi-credits.html"
