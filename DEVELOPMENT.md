@@ -33,7 +33,7 @@ Sonde Playwright, viewport 390×844, pointeur grossier, dist jocly2 réel :
 
 - liste correcte (12 modules, `chessbase` seul replié), cibles tactiles à **64 px**,
   `touch-action: none` sur le plateau ;
-- « afficher tous les jeux » fait passer de **115 à 126** entrées ;
+- « afficher tous les jeux » fait passer de **118 à 129** entrées ;
 - règles chargées, **25 images sur 25** résolues via `{GAME}` ;
 - partie lancée : plateau 2D `skin2dfull` rendu (33 canvas), statut « Your turn »,
   **aucune erreur de console** ;
@@ -143,17 +143,23 @@ permettent d'y accéder sans instancier chaque jeu — inenvisageable au démarr
 pas un seul :
 
 1. le filtrage par appareil devient possible ;
-2. **~128 appels `getGameConfig()` disparaissent du démarrage** ;
+2. **~129 appels `getGameConfig()` disparaissent du démarrage** ;
 3. le tri module + alphabétique est gratuit, sans charger le moteur.
 
-Mesure sur jocly2 `4d6d1ce` : **128 jeux, 12 modules — 117 téléphone, 11 réservés aux grands
-écrans, 2 obsolètes.**
+Mesure sur jocly2 `c50c12d` (2.8) : **129 jeux, 13 modules — 118 téléphone, 11 réservés aux
+grands écrans, aucun obsolète.**
 
 ### Qui est écarté du téléphone
 
 `data/phone-ineligible.json` — une liste explicite, pas une heuristique. Un plateau
 `13×13` peut très bien passer alors qu'un `12×12` très dense ne passe pas : c'est un
 jugement, il est donc écrit à la main et assumé.
+
+**Question ouverte depuis jocly 2.8 :** le scan signale `tenjiku-shogi`, un **16×16**, comme
+absent de la liste alors que `sweet16-chess`, de même taille, y figure. Ce n'est pas une erreur
+du scan, c'est un arbitrage qui n'a pas encore été rendu : soit le jeu rejoint la liste, soit la
+décision de l'y laisser est écrite dans le `_comment`, comme l'ont été `fantasticXIII-chess` et
+les trois cylindriques. Le laisser sans mention, c'est le réexaminer à chaque build.
 
 `node tools/scan-geometry.mjs` aide à **réexaminer** cette liste quand jocly2 gagne des jeux :
 il lit les constructeurs de géométrie et signale les désaccords avec la liste. Ce n'est
@@ -181,7 +187,7 @@ redimensionnée.
 
 Chaque jeu déclare ses skins avec un drapeau `"3d": true` explicite. On retient **le premier
 skin non-3D** — plus fiable que le préfixe du nom, puisque des skins 2D s'appellent
-`alquerque2d` ou `draughts2d`. Mesure : **les 128 jeux ont au moins un skin non-3D**, donc
+`alquerque2d` ou `draughts2d`. Mesure : **les 129 jeux ont au moins un skin non-3D**, donc
 aucun n'est laissé de côté.
 
 Ce n'est pas qu'une affaire de performance : la 2D **évite tout three.js**, et donc toute la
@@ -207,7 +213,8 @@ Deux mécanismes distincts, à ne pas confondre :
   **toujours une chaîne** : un objet qui fuit jusqu'à l'affichage casse les filtres
   (`.toLowerCase()` sur un objet), panne déjà rencontrée sur Tabulon.
 
-Mesure : 107 jeux sur 128 ont déjà un résumé français dans jocly2.
+Mesure : **les 129 jeux** ont désormais un résumé français dans jocly2 — c'étaient 107 sur 128
+avant la 2.8.
 
 Le tri alphabétique suit la **langue affichée**, pas l'anglais.
 
@@ -285,7 +292,7 @@ pas chez celui qui avait ouvert la partie. C'est aussi l'ordre de `RunMatch()` d
 
 ## Le niveau « Expert » et l'isolation cross-origin
 
-34 jeux sur 128 proposent un niveau **Expert** confié à Fairy-Stockfish. Son moteur WebAssembly
+45 jeux sur 129 proposent un niveau **Expert** confié à Fairy-Stockfish. Son moteur WebAssembly
 est multi-thread : il exige `SharedArrayBuffer`, que les navigateurs ne donnent qu'aux pages
 **cross-origin isolated**.
 
@@ -321,7 +328,7 @@ dès le premier coup. Bandeau présent sans isolation, absent avec.
 
 ## La liste des jeux
 
-**Tous les modules sont repliés par défaut.** Douze modules et jusqu'à 116 jeux : déroulée, la
+**Tous les modules sont repliés par défaut.** Treize modules et jusqu'à 118 jeux : déroulée, la
 liste enterre `checkers`, `tafl` ou `margo` sous `chessbase`. Repliée, elle donne d'emblée la
 carte des familles disponibles, et un module s'ouvre d'un doigt. Une recherche déroule tout —
 afficher des sections fermées sur des résultats qu'on vient de demander n'aurait pas de sens.
@@ -341,7 +348,7 @@ expose les six, `english-draughts` n'expose pas *compléter les coups*.
 
 **« Voir en tant que joueur A » est le défaut**, pour que le joueur voie d'emblée le plateau
 de son côté. Jocly n'accepte `viewAs` que pour les jeux qui se déclarent `switchable`
-(107 sur 128) — ailleurs la ligne est masquée et le réglage n'est pas envoyé.
+(108 sur 129) — ailleurs la ligne est masquée et le réglage n'est pas envoyé.
 
 Les choix sont mémorisés par jeu, sous une clé unique (`view.<jeu>`), et rechargés au
 lancement suivant.
@@ -658,7 +665,7 @@ Le dist jocly n'est pas versionné : **l'écran de jeu n'a pas de plateau**. La
 sonde mesure donc la mise en page, pas le jeu, et les éléments de partie sont
 révélés à la main. C'est dit, ce n'est pas masqué par des tests factices.
 
-- 12 modules, **toutes sections repliées** au départ ;
+- 13 modules, **toutes sections repliées** au départ ;
 - étoile : cible **44×64 px**, section favoris créée, en tête, déroulée, et
   **conservée après rechargement** ; sections ouvertes non refermées ;
 - favori **masqué par une recherche sans résultat** ;
@@ -757,6 +764,11 @@ tests/                       Node pur + PHP réel
   au chargement. `loadJocly()` redresse donc la base explicitement.
 - **Reculer / recommencer devront rester désactivés** dès qu'un côté est distant — sinon
   désynchronisation garantie (leçon Tabulon).
+- **Un 404 de son vient de jocly, pas d'ici.** `src/core/jocly.game.js` déclare
+  `win: "winblues"` parmi ses sons par défaut, mais le dist livre `win.ogg` / `win.mp3` :
+  `res/sounds/winblues.ogg` n'existe pas. Conséquence visible : une requête en échec par
+  partie, et aucun son de victoire. Corriger en amont (`win: "win"`) ; ne pas chercher la
+  cause dans mogichex, qui ne fait que charger la page du moteur.
 - **Les clés de traduction sont les textes anglais.** Deux usages différents du même
   libellé partagent donc la même entrée : le message rapide « Your turn » a écrasé le
   statut de partie « À vous de jouer », sans avertissement. Vérifier `lang/fr.json`

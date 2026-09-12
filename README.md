@@ -1,6 +1,6 @@
 # mogichex
 
-**mo**bile · shō**gi** · **chex** — **127 board games, playable with a thumb.**
+**mo**bile · shō**gi** · **chex** — **129 board games, playable with a thumb.**
 
 A small, installable web app that puts the whole [Jocly](https://github.com/fhoudebert/jocly2) game
 library on a phone: chess and its eighty-odd variants, shogi, xiangqi, draughts, go-like games,
@@ -12,7 +12,7 @@ tafl, mills, and more.
 
 ## What you get
 
-**127 games in 12 families.** Everything from `classic-chess` to Tafl, Margo and Yohoho. Families
+**129 games in 13 families.** Everything from `classic-chess` to Tafl, Margo, Go and Yohoho. Families
 are collapsed by default so the list stays readable; open one with a tap, or search — accents and
 languages don't matter, typing `echecs` finds *Chess*.
 
@@ -31,7 +31,7 @@ Links are interchangeable with [joclymatch](https://github.com/fhoudebert/joclym
 links opens here on the right game and the right side.
 
 **Three to six strength levels** depending on the game, up to **Expert** — the
-[Fairy-Stockfish](https://github.com/fairy-stockfish/Fairy-Stockfish) engine, on 33 games. If your
+[Fairy-Stockfish](https://github.com/fairy-stockfish/Fairy-Stockfish) engine, on 45 games. If your
 server isn't configured for it, the app *tells you* instead of quietly playing weaker.
 
 **English and French.** Adding a language means dropping one file in `lang/` — no code to touch.

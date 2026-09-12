@@ -1195,7 +1195,10 @@ test('tous les libelles de niveaux du catalogue sont traduits en francais', () =
     const fr = JSON.parse(readFileSync(path.join(root, 'lang', 'fr.json'), 'utf8'));
     const tr = (x) => (fr[x] !== undefined ? fr[x] : x);
     // Ceux-la s'ecrivent pareil dans les deux langues : c'est voulu.
-    const identiques = new Set(['Expert', 'Padawan', 'Papa','Champion','10 min','20 min']);
+    // « Novice » s'ecrit pareil en francais, comme « Expert » ou « Champion ».
+    // Arrive avec jocly 2.8, a cote de « Beginner » (traduit, lui, par
+    // « Debutant ») : ce sont deux niveaux distincts, pas un doublon.
+    const identiques = new Set(['Expert', 'Padawan', 'Papa', 'Champion', 'Novice', '10 min', '20 min']);
     const labels = [...new Set(cat.games.flatMap((g) => g.levels.map((l) => l.label)))];
     const manquants = labels.filter(
         (l) => translateLevelLabel(l, tr) === l && !identiques.has(l)
