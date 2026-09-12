@@ -10,6 +10,8 @@ package-lock.json
 # Le contenu web Android est genere par tools/build-android.mjs, et le projet
 # natif par « npx cap add android » : ni l'un ni l'autre n'a sa place ici.
 # android/README.md, lui, est versionne.
+# Le contenu web genere par tools/build-android.mjs (webDir de Capacitor).
+/www
 /android/www
 /android/app
 /android/build.gradle
@@ -22,6 +24,7 @@ package-lock.json
 /capacitor.config.json
 # Signature : jamais dans le depot.
 *.keystore
+*.patch
 keystore.properties
 /android/mogichex.keystore
 /android/keystore.properties
