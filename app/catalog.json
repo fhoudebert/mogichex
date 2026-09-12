@@ -3,13 +3,13 @@
  "source": {
   "repo": "jocly2",
   "commit": "c50c12d501c4e8b92196314bba8af7f3934294ff",
-  "builtAt": "2026-09-12T19:39:20.007Z"
+  "builtAt": "2026-09-12T21:25:09.333Z"
  },
  "counts": {
   "games": 129,
   "modules": 13,
-  "phone": 118,
-  "tablet": 11,
+  "phone": 116,
+  "tablet": 13,
   "obsolete": 0,
   "byModule": {
    "checkers": 8,
@@ -5194,7 +5194,7 @@
     }
    ],
    "obsolete": false,
-   "tier": "phone"
+   "tier": "tablet"
   },
   {
    "name": "tera-chess",
@@ -6291,7 +6291,7 @@
     }
    ],
    "obsolete": false,
-   "tier": "phone"
+   "tier": "tablet"
   },
   {
    "name": "go9",

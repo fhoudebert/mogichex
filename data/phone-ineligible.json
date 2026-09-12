@@ -11,21 +11,31 @@
     "Decisions explicites (ne PAS reintroduire au vu du seul scan de geometrie) :",
     "  - fantasticXIII-chess (13x13) : accepte sur telephone.",
     "  - circular-chess, byzantine-chess, cylinder-chess (cylindriques) : acceptes.",
+    "  - go9 (9x9) et go13 (13x13) : acceptes ; seul go19 est exclu.",
+    "",
+    "Arrives avec jocly 2.8 :",
+    "  - tenjiku-shogi (16x16) : exclu, comme sweet16-chess de meme taille.",
+    "  - go19 (19x19) : exclu. Le scan de geometrie NE LE VOIT PAS — le module go",
+    "    construit sa taille par parametre (Go('go19', 19, ...)) au lieu d'appeler",
+    "    cbBoardGeometryGrid, et le scan lit des litteraux. C'est le cas de la",
+    "    moitie du catalogue : voir 'couverture' dans la sortie du scan.",
     "",
     "Pour reexaminer cette liste quand jocly2 gagne des jeux :",
-    "  node tools/scan-geometry.mjs --jocly ../jocly2"
+    "  node tools/scan-geometry.mjs --jocly ../jocly2 [--illisibles]"
   ],
   "ineligible": [
+    "3dchess",
     "bigorra-chess",
+    "cubic-chess",
+    "dukerutland-chess",
     "giga-chess",
     "giga-chessII",
-    "tera-chess",
-    "sweet16-chess",
+    "go19",
     "makromachy",
-    "dukerutland-chess",
+    "raumschach",
     "space-spartan",
-    "3dchess",
-    "cubic-chess",
-    "raumschach"
+    "sweet16-chess",
+    "tenjiku-shogi",
+    "tera-chess"
   ]
 }
