@@ -40,6 +40,21 @@ server isn't configured for it, the app *tells you* instead of quietly playing w
 and restart are hidden in online games: replaying a move your opponent already has would desync
 both boards.
 
+**Favourites.** Star a game and it gets its own section, pinned at the top of the list and open by
+default — the twelve families stay exactly where they were.
+
+**A clock, if you want one.** Three time controls with Fischer increment, or none at all. Local
+games only: two devices don't see the same instant, and two pendulums showing two truths is worse
+than no pendulum.
+
+**The move list, and a way back.** Tap any move to return to that position. Reading the list works
+in online games; going back doesn't, for the same reason take back doesn't.
+
+**A word to your opponent.** In online games, a handful of one-tap messages and presence states —
+*well played*, *your turn*, *stepping away*. They travel as identifiers and are shown in each
+player's own language, so two people with no language in common still understand each other, and
+nothing personal ever reaches the relay. Free text will come with encryption, not before.
+
 ---
 
 ## Install it
@@ -112,7 +127,7 @@ cd - && ln -s ../jocly2/dist/browser dist
 
 npm run build      # catalogue + service worker stamp + tests
 npm run serve      # http://localhost:8080
-npm test           # 83 assertions
+npm test           # 118 assertions
 npm run test:php   # 28 assertions (requires php-cli)
 ```
 

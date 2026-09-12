@@ -12,9 +12,26 @@ import { newMatchId, buildInviteLink, parseInviteLink, buildEnvelope, makeId } f
 import { RelayChannel } from './remote/relay-channel.js';
 import { locateRelay, RELAY_ROOTS } from './remote/relay-locator.js';
 import { PeerChannel } from './remote/peer-channel.js';
+import { FAV_KEY, sanitizeFavorites, toggleFavorite } from './favorites.js';
+import { CLOCK_PRESETS, presetById, formatClock, Clock } from './clock.js';
+import { moveRows, canRollback } from './history.js';
+import { ChatChannel } from './remote/chat-channel.js';
+import { KIND, PRESENCE, countUnread } from './remote/chat-protocol.js';
 
 const $ = (sel) => document.querySelector(sel);
-const state = { catalog: null, tier: 'phone', showAll: false, entry: null, session: null };
+const state = {
+    catalog: null,
+    tier: 'phone',
+    showAll: false,
+    entry: null,
+    session: null,
+    favorites: [],
+    clock: null,
+    clockTimer: null,
+    chat: null,
+    chatSeenId: null,
+    chatUnread: 0,
+};
 
 function pref(key, def) {
     try {
@@ -76,9 +93,14 @@ function fillSelect(select, options, selected) {
  * le camp et le niveau ne concernent que le jeu contre l'ordinateur.
  */
 function syncModeRows() {
-    const ai = $('#sel-mode').value === 'ai';
+    const mode = $('#sel-mode').value;
+    const ai = mode === 'ai';
     $('#row-side').hidden = !ai;
     $('#row-level').hidden = !ai || !state.entry || state.entry.levels.length === 0;
+    // La cadence disparait en partie a distance : les deux appareils ne voient
+    // pas le meme instant, et une pendule approximative est pire qu'une
+    // pendule absente (voir l'en-tete de js/clock.js).
+    $('#row-clock').hidden = mode === 'remote';
 }
 
 function openDetail(entry) {
@@ -110,6 +132,14 @@ function openDetail(entry) {
 
     $('#sel-mode').value = allowedMode(pref('mode', 'ai'));
     $('#sel-side').value = pref('side.' + entry.name, 'a');
+    // La cadence est memorisee GLOBALEMENT et non par jeu : qui joue au blitz
+    // y joue a tous les jeux, et retrouver « pas d'horloge » sur chaque
+    // nouveau jeu serait un reglage a refaire 127 fois.
+    fillSelect(
+        $('#sel-clock'),
+        CLOCK_PRESETS.map((p) => ({ value: p.id, label: t(p.label) })),
+        presetById(pref('clock', 'none')).id
+    );
     syncModeRows();
 
     // Sons et notation : affiches par defaut. Tant qu'on n'a pas attache une
@@ -149,6 +179,7 @@ async function startMatch() {
     setPref('mode', mode);
     setPref('side.' + entry.name, $('#sel-side').value);
     if ($('#sel-level').value !== '') setPref('level.' + entry.name, parseInt($('#sel-level').value, 10));
+    if (!state.remote) setPref('clock', $('#sel-clock').value);
     setPref(
         'view.' + entry.name,
         Object.assign(pref('view.' + entry.name, {}) || {}, {
@@ -158,8 +189,11 @@ async function startMatch() {
         })
     );
 
+    startClock();
+
     const session = new GameSession(board, entry, {
         onTurn: (player, isHuman) => {
+            clockSwitch(player);
             $('#status').textContent = isHuman
                 ? session.isTwoHumans
                     ? t(player === session.Jocly.PLAYER_A ? 'Player A to move' : 'Player B to move')
@@ -176,6 +210,7 @@ async function startMatch() {
         },
         onFinished: (result, Jocly) => {
             $('#status').textContent = winnerLabel(result, Jocly);
+            clockPause();
             syncTakeBack();
         },
         onFallback: (fb) => {
@@ -207,6 +242,7 @@ async function startMatch() {
             notation: vo.notation !== undefined,
         });
         syncTakeBack();
+        syncBarButtons();
     } catch (err) {
         console.error(err);
         $('#status').textContent = t('The game engine could not be loaded.');
@@ -281,6 +317,150 @@ async function syncTakeBack() {
     }
 }
 
+/**
+ * Qui occupe la quatrieme icone de la barre.
+ *
+ * Historique et discussion ne coexistent jamais : a 390 px, une cinquieme
+ * icone mange le titre du jeu. Le partage est net — le retour arriere n'a de
+ * sens qu'en partie locale, la discussion n'existe qu'en partie a distance.
+ * En distant, la liste des coups reste atteignable depuis les options.
+ */
+function syncBarButtons() {
+    const playing = !!(state.session && state.session.match);
+    $('#btn-history').hidden = !playing || !!state.remote;
+    $('#btn-chat').hidden = !(playing && state.remote && state.chat);
+    $('#btn-open-history').hidden = !(playing && state.remote);
+}
+
+// ---------------------------------------------------------------- horloge
+
+/**
+ * Arme la pendule si une cadence est choisie, et seulement en partie locale.
+ * L'affichage est rafraichi par un intervalle court : c'est la seule boucle
+ * de l'application qui tourne en continu, d'ou l'arret systematique en
+ * quittant la partie.
+ */
+function startClock() {
+    stopClock();
+    if (state.remote) return;
+    const preset = presetById($('#sel-clock').value);
+    if (!preset.initial) return;
+    state.clock = new Clock({ initial: preset.initial, increment: preset.increment });
+    $('#clock').hidden = false;
+    $('#clock').setAttribute('aria-hidden', 'false');
+    // 200 ms : assez pour que les dixiemes de la derniere minute defilent sans
+    // saccade visible, assez peu pour ne pas reveiller l'appareil sans cesse.
+    state.clockTimer = setInterval(renderClock, 200);
+    renderClock();
+}
+
+function stopClock() {
+    if (state.clockTimer) clearInterval(state.clockTimer);
+    state.clockTimer = null;
+    state.clock = null;
+    state.flagged = false;
+    $('#clock').hidden = true;
+    $('#clock').setAttribute('aria-hidden', 'true');
+}
+
+function clockSwitch(player) {
+    if (state.clock) state.clock.switchTo(player);
+}
+
+function clockPause() {
+    if (state.clock) state.clock.pause();
+}
+
+function renderClock() {
+    const c = state.clock;
+    if (!c) return;
+    const now = Date.now();
+    const Jocly = state.session && state.session.Jocly;
+    for (const [side, box, time] of [
+        [1, '#clock-a', '#clock-a-time'],
+        [-1, '#clock-b', '#clock-b-time'],
+    ]) {
+        const left = c.remaining(side, now);
+        $(time).textContent = formatClock(left);
+        $(box).classList.toggle('is-running', c.running === side);
+        $(box).classList.toggle('is-low', left < 30000);
+    }
+    const flag = c.flagOf(now);
+    if (flag !== null && !state.flagged) {
+        state.flagged = true;
+        c.pause(now);
+        // On ANNONCE la chute, on ne l'impose pas a jocly : le moteur ignore
+        // tout de l'horloge, et lui faire croire a une fin de partie casserait
+        // la sauvegarde et la reprise. Le tour en cours est simplement
+        // interrompu pour que le plateau cesse d'accepter des coups.
+        $('#status').textContent = t(flag === (Jocly ? Jocly.PLAYER_A : 1)
+            ? 'Player A ran out of time'
+            : 'Player B ran out of time');
+        if (state.session && state.session.match) {
+            state.session.aborting = true;
+            Promise.resolve(state.session.match.abortUserTurn()).catch(() => {});
+        }
+    }
+}
+
+// ---------------------------------------------------------------- historique
+
+/**
+ * Remplit le panneau des coups.
+ *
+ * Le retour arriere est interdit des qu'un camp est distant — rejouer une
+ * position que l'adversaire a deja depassee desynchroniserait les deux
+ * plateaux. On le dit plutot que de laisser des boutons inertes.
+ */
+async function fillHistory() {
+    const list = $('#history-list');
+    const hint = $('#history-hint');
+    list.textContent = '';
+    const s = state.session;
+    if (!s || !s.match) {
+        hint.textContent = '';
+        return;
+    }
+    const moves = await s.playedMoveStrings();
+    const allowed = canRollback({ remote: !!state.remote, moves: moves.length });
+    $('#btn-take-back').hidden = !allowed;
+    hint.textContent = !moves.length
+        ? t('No move played yet.')
+        : allowed
+          ? t('Tap a move to go back to that position.')
+          : t('Going back is unavailable in an online game.');
+
+    for (const row of moveRows(moves)) {
+        const li = document.createElement('li');
+        for (const cell of row.cells) li.appendChild(moveButton(cell, moves.length, allowed));
+        if (row.cells.length === 1) {
+            const filler = document.createElement('span');
+            filler.className = 'move-spacer';
+            li.appendChild(filler);
+        }
+        list.appendChild(li);
+    }
+}
+
+function moveButton(cell, total, allowed) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'move-btn' + (cell.n === total ? ' is-current' : '');
+    btn.innerHTML = '<span class="move-n"></span><span class="move-text"></span>';
+    btn.querySelector('.move-n').textContent = String(cell.n);
+    btn.querySelector('.move-text').textContent = cell.text;
+    // Le dernier coup est la position courante : il n'y a rien a defaire, et
+    // un bouton qui ne fait rien est pire qu'un bouton absent.
+    btn.disabled = !allowed || cell.n === total;
+    btn.addEventListener('click', async () => {
+        if (!state.session) return;
+        closePanels();
+        await state.session.rollbackTo(cell.n);
+        syncTakeBack();
+    });
+    return btn;
+}
+
 function wireGameOptions() {
     const apply = (key, read) => async () => {
         if (!state.session) return;
@@ -312,8 +492,16 @@ function wireGameOptions() {
         if (!state.session || state.remote) return;
         closePanels();
         $('#status').textContent = t('Loading…');
+        // Une nouvelle partie sur une pendule deja entamee n'aurait aucun sens.
+        if (state.clock) state.clock.reset();
+        state.flagged = false;
         await state.session.restart();
         syncTakeBack();
+    });
+    $('#btn-open-history').addEventListener('click', async () => {
+        closePanels();
+        openPanel('#panel-history');
+        await fillHistory();
     });
 }
 
@@ -421,10 +609,15 @@ function attachRelay(session, { matchId, side }) {
         },
         onStateChange: (st) => {
             channel.setLongPolling(st !== 'open');
+            // La discussion suit la meme regle, et c'est ce qui empeche un
+            // joueur en attente d'immobiliser DEUX processus PHP au lieu d'un.
+            if (state.chat) state.chat.setLongPolling(st !== 'open');
             console.info('canal pair-a-pair :', st);
         },
     });
     state.peer = peer;
+
+    attachChat(session, { matchId, side, peer });
 
     session.hooks.onLocalMove = async () => {
         const { matchdata, nbTurns } = await session.exportState();
@@ -442,8 +635,139 @@ function attachRelay(session, { matchId, side }) {
     peer.start().catch((err) => console.warn('negociation pair-a-pair abandonnee', err));
 }
 
+// ---------------------------------------------------------------- discussion
+
+/**
+ * Ouvre le fil de la partie.
+ *
+ * Le fil vit ICI, dans la page, et non dans le panneau : le panneau peut etre
+ * ferme et rouvert sans que la partie s'en apercoive, et les messages recus
+ * pendant qu'il est ferme doivent quand meme faire monter la pastille.
+ */
+function attachChat(session, { matchId, side, peer }) {
+    const Jocly = session.Jocly;
+    const chat = new ChatChannel({
+        relayUrl: CONFIG.relayUrl,
+        matchId,
+        side: side === 'b' ? Jocly.PLAYER_B : Jocly.PLAYER_A,
+        peer,
+        onConversation: (conv) => {
+            state.chatUnread = countUnread(conv, state.chatSeenId, chat.side);
+            updateChatBadge();
+            if ($('#panel-chat').classList.contains('is-open')) renderChat(conv);
+        },
+        onError: (err) => console.warn('discussion :', err.message || err),
+    });
+    state.chat = chat;
+    state.chatSeenId = null;
+    state.chatUnread = 0;
+    chat.start().catch((err) => console.warn('discussion indisponible :', err.message || err));
+    syncBarButtons();
+}
+
+function updateChatBadge() {
+    const btn = $('#btn-chat');
+    btn.classList.toggle('has-unread', state.chatUnread > 0);
+    btn.dataset.unread = state.chatUnread > 9 ? '9+' : String(state.chatUnread || '');
+}
+
+/**
+ * Le texte d'un message.
+ *
+ * Un message rapide voyage comme IDENTIFIANT et se traduit ICI : c'est ce qui
+ * permet a deux joueurs sans langue commune de se comprendre. Un message
+ * verrouille reste VISIBLE — un trou silencieux dans une conversation est pire
+ * qu'un cadenas.
+ */
+const QUICK_LABEL = {
+    wellPlayed: 'Well played',
+    yourTurn: 'Your turn!',
+    backSoon: 'Back in a few minutes',
+    rematch: 'Another game?',
+    unreadable: 'Unreadable — change key!',
+};
+const PRESENCE_LABEL = {
+    thinking: 'is thinking',
+    paused: 'stepped away',
+    back: 'is back',
+    leaving: 'is done for today',
+};
+
+function messageText(m) {
+    if (m.locked) return t('A message you cannot read.');
+    if (m.quick) return t(QUICK_LABEL[m.quick] || m.quick);
+    return m.body || '';
+}
+
+function renderChat(conversation) {
+    const box = $('#chat-thread');
+    box.textContent = '';
+    $('#chat-empty').hidden = conversation.length > 0;
+    for (const m of conversation) {
+        const mine = state.chat && m.side === state.chat.side;
+        const line = document.createElement('div');
+        if (m.kind === KIND.PRESENCE) {
+            line.className = 'chat-line is-presence';
+            line.textContent =
+                t(mine ? 'You' : 'Your opponent') + ' ' + t(PRESENCE_LABEL[m.state] || m.state);
+        } else if (m.kind === KIND.NUDGE) {
+            line.className = 'chat-line is-presence';
+            line.textContent = t(mine ? 'You nudged' : 'Your opponent nudged you');
+        } else {
+            line.className = 'chat-line' + (mine ? ' is-mine' : '') + (m.locked ? ' locked' : '');
+            line.textContent = messageText(m);
+            const when = document.createElement('span');
+            when.className = 'chat-when';
+            when.textContent = new Date(m.at).toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+            });
+            line.appendChild(when);
+        }
+        box.appendChild(line);
+    }
+    box.scrollTop = box.scrollHeight;
+    // Tout ce qui est a l'ecran est lu. Le signaler ici et non a la reception
+    // est la seule verite disponible : un message arrive panneau ferme n'a ete
+    // vu par personne.
+    if (conversation.length) state.chatSeenId = conversation[conversation.length - 1].id;
+    state.chatUnread = 0;
+    updateChatBadge();
+}
+
+async function sendChat(payload) {
+    if (!state.chat) return;
+    try {
+        await state.chat.send(payload);
+    } catch (err) {
+        console.warn('message non envoye :', err.message || err);
+    }
+}
+
+function wireChat() {
+    $('#btn-chat').addEventListener('click', () => {
+        openPanel('#panel-chat');
+        renderChat(state.chat ? state.chat.conversation : []);
+    });
+    for (const btn of document.querySelectorAll('#chat-quick [data-quick]')) {
+        btn.addEventListener('click', () => sendChat({ kind: KIND.CHAT, quick: btn.dataset.quick }));
+    }
+    for (const btn of document.querySelectorAll('#chat-presence [data-presence]')) {
+        btn.addEventListener('click', () =>
+            sendChat({ kind: KIND.PRESENCE, state: PRESENCE[btn.dataset.presence.toUpperCase()] })
+        );
+    }
+}
+
 async function leaveMatch() {
     $('#btn-take-back').hidden = true;
+    stopClock();
+    if (state.chat) {
+        state.chat.stop();
+        state.chat = null;
+        state.chatUnread = 0;
+        updateChatBadge();
+    }
     if (state.peer) {
         state.peer.stop();
         state.peer = null;
@@ -458,6 +782,7 @@ async function leaveMatch() {
         state.session = null;
     }
     $('#board').textContent = '';
+    syncBarButtons();
 }
 
 // ---------------------------------------------------------------- demarrage
@@ -498,9 +823,18 @@ async function main() {
     const res = await fetch(CONFIG.catalogUrl);
     state.catalog = await res.json();
 
-    const view = new CatalogView($('#catalog'), { onSelect: openDetail });
+    state.favorites = sanitizeFavorites(pref(FAV_KEY, []));
+    const view = new CatalogView($('#catalog'), {
+        onSelect: openDetail,
+        onToggleFavorite: (name) => {
+            state.favorites = toggleFavorite(state.favorites, name);
+            setPref(FAV_KEY, state.favorites);
+            view.setFavorites(state.favorites);
+        },
+    });
     view.setTier(state.tier);
     view.setShowAll(state.showAll);
+    view.setFavorites(state.favorites);
     view.setGames(state.catalog.games);
     updateCount();
 
@@ -577,6 +911,10 @@ async function main() {
     wireGameOptions();
 
     $('#sel-mode').addEventListener('change', syncModeRows);
+    $('#btn-history').addEventListener('click', async () => {
+        openPanel('#panel-history');
+        await fillHistory();
+    });
     $('#btn-take-back').addEventListener('click', async () => {
         const s = state.session;
         if (!s) return;
@@ -586,8 +924,10 @@ async function main() {
         } finally {
             $('#btn-take-back').disabled = false;
             syncTakeBack();
+            closePanels();
         }
     });
+    wireChat();
 
     $('#btn-settings').addEventListener('click', () => openPanel('#panel-settings'));
     fillSelect(

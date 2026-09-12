@@ -3,17 +3,30 @@
 
 import { t, pickLocalized, getLocale } from './i18n.js';
 import { filterGames, groupByModule, initialCollapsed } from './catalog.js';
+import { favoriteGroup, isFavorite } from './favorites.js';
 import { gameAssetUrl } from './config.js';
 
 export class CatalogView {
-    constructor(root, { onSelect }) {
+    constructor(root, { onSelect, onToggleFavorite = null }) {
         this.root = root;
         this.onSelect = onSelect;
+        this.onToggleFavorite = onToggleFavorite;
         this.games = [];
+        this.favorites = [];
         this.query = '';
         this.tier = 'phone';
         this.showAll = false;
         this.collapsed = null;
+    }
+
+    /**
+     * La liste des favoris a change. On NE REMET PAS `collapsed` a null :
+     * marquer un jeu refermerait alors toutes les sections ouvertes, et on
+     * marque justement ses favoris en parcourant les modules.
+     */
+    setFavorites(list) {
+        this.favorites = Array.isArray(list) ? list : [];
+        this.render();
     }
 
     setGames(games) {
@@ -48,6 +61,8 @@ export class CatalogView {
             locale,
         });
         const groups = groupByModule(selected, locale);
+        const fav = favoriteGroup(selected, this.favorites);
+        if (fav) groups.unshift(fav);
         if (this.collapsed === null) this.collapsed = initialCollapsed(groups, { searching });
 
         this.root.textContent = '';
@@ -63,7 +78,7 @@ export class CatalogView {
 
     renderGroup(group, locale) {
         const section = document.createElement('section');
-        section.className = 'module';
+        section.className = 'module' + (group.favorite ? ' is-favorites' : '');
         const collapsed = this.collapsed.has(group.module);
 
         const head = document.createElement('button');
@@ -74,7 +89,9 @@ export class CatalogView {
             `<span class="module-name"></span>` +
             `<span class="module-count">${group.games.length}</span>` +
             `<span class="chevron" aria-hidden="true"></span>`;
-        head.querySelector('.module-name').textContent = group.module;
+        head.querySelector('.module-name').textContent = group.favorite
+            ? '\u2605 ' + t('Favorites')
+            : group.module;
         head.addEventListener('click', () => {
             if (this.collapsed.has(group.module)) this.collapsed.delete(group.module);
             else this.collapsed.add(group.module);
@@ -126,6 +143,24 @@ export class CatalogView {
 
         btn.addEventListener('click', () => this.onSelect(game));
         li.appendChild(btn);
+
+        // L'etoile est un bouton A PART, avec sa propre cible tactile :
+        // ouvrir la fiche et marquer un favori sont deux gestes differents,
+        // et les superposer ferait rater l'un ou l'autre.
+        if (this.onToggleFavorite) {
+            const star = document.createElement('button');
+            star.type = 'button';
+            star.className = 'fav-btn';
+            const on = isFavorite(this.favorites, game.name);
+            star.setAttribute('aria-pressed', String(on));
+            star.setAttribute('aria-label', t(on ? 'Remove from favorites' : 'Add to favorites'));
+            star.textContent = on ? '\u2605' : '\u2606';
+            star.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.onToggleFavorite(game.name);
+            });
+            li.appendChild(star);
+        }
         return li;
     }
 }

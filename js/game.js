@@ -238,8 +238,29 @@ export class GameSession {
     async takeBack() {
         if (!this.match) return false;
         const moves = await this.match.getPlayedMoves();
-        let target = takeBackTarget(moves.length, this.humanSides.length);
+        const target = takeBackTarget(moves.length, this.humanSides.length);
         if (target === null) return false;
+        return this.rollbackTo(target);
+    }
+
+    /**
+     * Revient a la position ou `target` coups ont ete joues.
+     *
+     * MEME AJUSTEMENT QUE takeBack(), et c'est pour cela qu'il est ici plutot
+     * que duplique dans l'historique : tous les jeux n'alternent pas
+     * strictement les camps, et getPlayedMoves() ne rend que des coups bruts
+     * sans indication de camp. Une cible calculee peut donc tomber sur un tour
+     * de l'ordinateur — auquel cas il rejouerait aussitot et la position
+     * demandee ne serait jamais visible. On verifie a qui c'est le tour APRES
+     * le rollback, seul moyen sur, et on recule d'un cran de plus si besoin.
+     *
+     * Rien a craindre du cote du moteur : fairy-stockfish recoit une FEN
+     * complete a chaque recherche, sans historique de coups — il n'a aucun
+     * etat a defaire.
+     */
+    async rollbackTo(target) {
+        if (!this.match) return false;
+        if (!(target >= 0)) return false;
         await this.match.rollback(target);
         if (!this.isHuman(await this.match.getTurn()) && target > 0) {
             await this.match.rollback(target - 1);
@@ -258,6 +279,24 @@ export class GameSession {
         await this.match.load(matchdata);
         await this.rearm();
         return true;
+    }
+
+    /**
+     * Les coups joues, en notation lisible.
+     *
+     * getMoveString() accepte un TABLEAU et rend un tableau de chaines — c'est
+     * la seule facon d'obtenir la notation sans rejouer la partie. Tous les
+     * jeux ne l'implementent pas : le repli affiche la forme brute du coup,
+     * moins lisible mais jamais vide. Un historique qui refuse de s'ouvrir sur
+     * certains jeux serait pire qu'un historique un peu aride.
+     */
+    async playedMoveStrings() {
+        if (!this.match) return [];
+        const moves = await this.match.getPlayedMoves().catch(() => []);
+        if (!moves.length) return [];
+        const strings = await this.match.getMoveString(moves).catch(() => null);
+        if (Array.isArray(strings) && strings.length === moves.length) return strings.map(String);
+        return moves.map((m) => (typeof m === 'string' ? m : JSON.stringify(m)));
     }
 
     /** Etat complet a publier apres un coup local. */

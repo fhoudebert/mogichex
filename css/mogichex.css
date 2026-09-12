@@ -177,6 +177,102 @@ button.wide { width: 100%; margin-top: 1.25rem; }
 }
 .fatal { color: #ff8686; padding: 1rem; white-space: pre-wrap; }
 
+/* ---- favoris ----
+   L'etoile est un bouton A PART de la ligne du jeu, pas une zone de celle-ci :
+   les deux gestes sont differents (ouvrir / marquer) et doivent avoir chacun
+   leur cible de 44 px, sinon marquer un favori ouvre la fiche une fois sur
+   trois. */
+.game-btn { min-width: 0; }
+.game { display: flex; align-items: stretch; }
+.fav-btn {
+    flex: 0 0 auto; width: var(--tap); border: 0; background: none;
+    /* Ni la couleur des filets (invisible, donc l'affordance disparait) ni
+       celle du texte (elle ferait concurrence au titre du jeu, alors que
+       marquer un favori est un geste rare). */
+    color: #5c5f6a; font-size: 1.25rem; line-height: 1;
+}
+.fav-btn[aria-pressed="true"] { color: #e2b53c; }
+.fav-btn:active { background: #ffffff10; }
+.module.is-favorites .module-name { text-transform: none; }
+
+/* ---- horloge ----
+   Deux compteurs cote a cote, en chiffres tabulaires : sans cela le libelle
+   se decale a chaque seconde et la bande entiere semble vibrer. */
+.clock {
+    display: flex; gap: .5rem; padding: .35rem .5rem; flex: 0 0 auto;
+    border-bottom: 1px solid var(--line);
+}
+.clock-side {
+    flex: 1; display: flex; align-items: baseline; justify-content: space-between;
+    gap: .5rem; padding: .2rem .55rem; border-radius: .45rem;
+    background: var(--bg-soft); color: var(--fg-dim); font-size: .85rem;
+}
+.clock-side time {
+    font-variant-numeric: tabular-nums; font-size: 1.05rem; font-weight: 600;
+    color: var(--fg);
+}
+.clock-side.is-running { background: #26332a; color: var(--fg); }
+.clock-side.is-low time { color: #ff8686; }
+
+/* ---- historique ----
+   Deux colonnes, chaque cellule numerotee : les jeux de jocly n'alternent pas
+   tous les camps, une grille « blancs / noirs » mentirait. */
+.history { list-style: none; margin: 1rem 0 0; padding: 0; }
+.history li { display: flex; gap: .5rem; }
+.history li + li { margin-top: .25rem; }
+.move-btn {
+    flex: 1; min-height: var(--tap); border: 1px solid var(--line);
+    border-radius: .5rem; background: var(--bg-soft); color: var(--fg);
+    font-size: .95rem; text-align: left; padding: 0 .6rem;
+    display: flex; align-items: center; gap: .5rem;
+}
+.move-btn:active { background: #ffffff10; }
+.move-btn[disabled] { opacity: 1; border-style: dashed; }
+.move-n { color: var(--fg-dim); font-size: .8rem; min-width: 1.8rem; }
+.move-btn.is-current { border-color: var(--accent); }
+.move-spacer { flex: 1; }
+
+/* ---- discussion ---- */
+.chat-body { display: flex; flex-direction: column; }
+/* Le fil pousse vers le BAS : une conversation de trois messages collee en
+   haut d'un ecran vide a l'air cassee, et c'est l'etat normal d'une partie par
+   correspondance. `margin-top: auto` sur le premier message plutot que
+   `justify-content: flex-end`, qui rend le debut du fil inatteignable des que
+   ca deborde. */
+.chat-thread {
+    flex: 1 1 auto; min-height: 4rem; overflow-y: auto;
+    display: flex; flex-direction: column;
+}
+.chat-thread > :first-child { margin-top: auto; }
+.chat-line {
+    margin: .3rem 0; padding: .4rem .6rem; border-radius: .6rem;
+    background: var(--bg-soft); max-width: 85%; font-size: .95rem;
+}
+.chat-line.is-mine { margin-left: auto; background: #26364f; }
+.chat-line.is-presence { background: none; color: var(--fg-dim); font-size: .85rem;
+    max-width: 100%; text-align: center; padding: .2rem; }
+.chat-line.locked { color: var(--fg-dim); font-style: italic; }
+.chat-when { color: var(--fg-dim); font-size: .7rem; margin-left: .4rem; }
+.chat-quick { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .75rem; }
+/* Trois poids, trois intentions : un message rapide se DIT (contour accentue),
+   un etat de presence se CONSTATE (sourd). Quatre aplats pleins cote a cote
+   donnaient a « bien joue » le poids d'un bouton « jouer ». */
+.chat-quick button { flex: 1 1 45%; font-size: .9rem; padding: 0 .4rem; }
+#chat-quick button {
+    background: var(--bg-soft); color: var(--fg);
+    border: 1px solid var(--accent-2);
+}
+#chat-presence button {
+    background: var(--bg-soft); color: var(--fg-dim); font-weight: 400;
+    border: 1px solid var(--line);
+}
+.icon-btn.has-unread { position: relative; }
+.icon-btn.has-unread::after {
+    content: attr(data-unread); position: absolute; top: .35rem; right: .05rem;
+    min-width: 1.05rem; padding: 0 .18rem; border-radius: .6rem;
+    background: var(--accent); color: #fff; font-size: .62rem; line-height: 1.05rem;
+}
+
 @media (prefers-reduced-motion: reduce) {
     .panel { transition: none; }
 }

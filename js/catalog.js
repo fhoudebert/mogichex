@@ -80,6 +80,10 @@ export function groupByModule(games, locale = 'en') {
 export function initialCollapsed(groups, { searching = false } = {}) {
     const set = new Set();
     if (searching) return set;
-    for (const g of groups) set.add(g.module);
+    // Les favoris font exception, et c'est tout leur interet : les modules
+    // sont replies pour donner la carte des familles, les favoris sont ouverts
+    // pour donner les jeux. Une section de favoris repliee ne ferait gagner
+    // aucun geste par rapport a chercher le jeu dans son module.
+    for (const g of groups) if (!g.favorite) set.add(g.module);
     return set;
 }

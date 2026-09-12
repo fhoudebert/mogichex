@@ -23,6 +23,9 @@ mono-fenêtre, et de [Tabulon](https://github.com/fhoudebert/tabulon) pour les a
 | 5b | Multijoueur côté client : invitation, transport HTTP, garde reculer | **fait** — échange prouvé entre deux navigateurs |
 | 5c | Canal pair-à-pair WebRTC par-dessus `signal.php` | **fait** — canal ouvert des deux côtés, attente longue supprimée |
 | 6 | COOP/COEP + fairy-stockfish multi-thread | **fait** — activé, mesuré, repli signalé à l'utilisateur |
+| 7 | Favoris + horloge (1er tour) | **fait** — mesuré à la sonde, non vérifié au doigt |
+| 8 | Historique et retour à une position (1er tour) | **fait** — mesuré à la sonde, non vérifié au doigt |
+| 9 | Messages rapides + présence (1er tour) | **fait** — protocole et transport testés, jamais joué à deux |
 
 ### Ce qui a été mesuré au navigateur
 
@@ -503,6 +506,187 @@ appelle le relai. C'est ce qui rend l'embarquement possible sans réécriture.
 
 ---
 
+## Premier tour : ce que Tabulon a donné, et à quel prix
+
+Quatre fonctions reprises de [Tabulon](https://github.com/fhoudebert/tabulon)
+(branche 0.8.x), choisies pour **mesurer les changements d'interface** avant
+d'engager quoi que ce soit de lourd : favoris, horloge, historique, et la part
+de la discussion qui ne demande aucun chiffrement.
+
+Ce qui rend le portage possible est déjà là et n'a pas été touché : le lien
+d'invitation, l'enveloppe de partie et le motif d'identifiant accepté par le
+relai sont **les mêmes des deux côtés**. Un fil de discussion déposé par
+mogichex est relisible par Tabulon, et réciproquement.
+
+### Le budget de la barre de jeu, mesuré
+
+La barre ne porte **jamais plus de quatre icônes**. Mesure à 390 px, titre
+`Chess with different armies` :
+
+| Icônes | Largeur restante pour le titre |
+|---|---|
+| quatre | **166 px** |
+| cinq | **114 px** |
+
+Historique et discussion se partagent donc la quatrième place, et le partage
+tombe juste : le retour arrière n'a de sens qu'en partie locale, la discussion
+n'existe qu'en partie à distance. En distant, la **liste des coups reste
+atteignable depuis les options** — la *lire* ne change aucune position, c'est y
+*revenir* qui est interdit.
+
+« Reprendre le coup » a quitté la barre pour le haut du panneau des coups : il
+suit la fonction dont il n'est qu'un cas particulier (`rollbackTo()`), et la
+barre reste à quatre.
+
+### Favoris
+
+Une **section épinglée**, pas un filtre : un filtre « favoris seulement »
+remplacerait la liste, donc obligerait à le désactiver pour retrouver le reste.
+
+Elle est la **seule section déroulée par défaut**, et c'est tout son intérêt —
+les modules sont repliés pour donner la carte des familles, les favoris sont
+ouverts pour donner les jeux.
+
+Elle part des jeux **déjà filtrés** : sans cela, une recherche sans résultat
+afficherait quand même les favoris, et « adaptés à cet écran » se retrouverait
+contredit par sa propre section épinglée. Mesuré : une recherche qui ne rend
+rien fait disparaître la section.
+
+L'étoile est un **bouton à part**, avec sa propre cible de 44×64 px : ouvrir la
+fiche et marquer un favori sont deux gestes différents, et les superposer
+ferait rater l'un ou l'autre. Marquer un jeu ne **referme pas** les sections
+ouvertes (on marque ses favoris en parcourant les modules) — vérifié à la
+sonde.
+
+### Horloge
+
+Modèle JoclyBoard, incrément Fischer crédité à celui qui vient de jouer.
+Cadence mémorisée **globalement** et non par jeu : qui joue au blitz y joue à
+tous les jeux, et la régler 127 fois serait une punition.
+
+**Coût mesuré sur le plateau : 43 px, soit 5,7 %** de la hauteur disponible à
+390×844 (758 px sans horloge, 715 px avec). C'est le seul des quatre lots qui
+prend de la place à la seule chose qu'on regarde ; c'est pour cela qu'il passe
+en premier sur un vrai téléphone.
+
+**Masquée dès qu'un camp est distant.** Les deux appareils ne voient pas le
+même instant : le coup de l'adversaire est daté de son *arrivée*, pas de son
+départ. Le retard du réseau, une page mise en veille, un rechargement —
+chacun déduirait du temps à l'autre, et deux pendules afficheraient deux
+vérités. Une horloge à distance demande que le temps voyage dans l'enveloppe et
+soit arbitré d'un seul côté : autre format, autre chantier.
+
+**La chute du drapeau est annoncée, pas imposée à jocly.** Le moteur ignore
+tout de l'horloge ; lui faire croire à une fin de partie demanderait de mentir
+à `getFinished()`, ce qui casserait la sauvegarde et la reprise. Le tour en
+cours est simplement interrompu. Le drapeau ne tombe **qu'une fois** : sans
+cela, reprendre un coup après la chute relancerait un compteur à zéro sur une
+partie déjà close.
+
+### Historique et retour à une position
+
+`takeBack()` devient un cas particulier de `rollbackTo(n)`, qui garde
+l'ajustement déjà payé : tous les jeux n'alternent pas strictement les camps et
+`getPlayedMoves()` ne rend que des coups bruts, donc on vérifie **après** le
+rollback à qui c'est le tour et on recule d'un cran de plus si la position
+visée n'est pas observable (l'ordinateur rejouerait aussitôt).
+
+La notation vient de `getMoveString(moves)`, qui accepte un tableau. Tous les
+jeux ne l'implémentent pas : le repli affiche la forme brute du coup. Un
+historique qui refuserait de s'ouvrir sur certains jeux serait pire qu'un
+historique aride.
+
+**Deux colonnes, chaque cellule numérotée.** Une grille « blancs / noirs »
+mentirait dès qu'on sort des échecs (prise multiple aux dames, coups doubles) :
+la deuxième colonne n'est pas « le camp adverse », c'est « le coup suivant ».
+Mesuré : cible de 175×44 px, **26 coups visibles sans défiler** sur une partie
+de 80.
+
+### Messages rapides et présence
+
+Porté de `remote-chat-protocol.js` de Tabulon, **au format près**.
+
+**Deux clés, un seul écrivain chacune.** `match.php` stocke une clé → une
+valeur en dernier-écrit-gagne ; écrire une discussion à deux dans la même clé
+serait une lecture-modification-écriture concurrente. Chacun dépose son fil
+sous `matchId-ca` / `-cb`, n'écrit que dans le sien et ne lit que celui d'en
+face. Plus aucune concurrence. Vérifié : un identifiant mogichex fait 28
+caractères, le suffixe reste dans le `{6,64}` du serveur et ne contient ni
+point ni barre.
+
+**Le fil part en entier à chaque message**, faute de quoi le deuxième
+effacerait le premier.
+
+**Un message rapide voyage comme identifiant**, traduit chez celui qui le lit :
+deux joueurs sans langue commune se disent l'essentiel, et rien de personnel ne
+circule — donc rien à chiffrer, donc ils fonctionnent dans une partie sans clé.
+C'est aussi la seule forme de discussion praticable au pouce.
+
+**Le texte libre est refusé par construction.** `encodeThread()` lève tant
+qu'aucun scelleur ne lui est fourni : on ne peut pas ajouter un champ de saisie
+sans avoir ajouté le chiffrement. C'est le garde-fou du lot suivant, et il est
+testé.
+
+**Transport : le pair-à-pair quand il est ouvert, le relai toujours en
+écriture.** Le canal de données porte déjà les enveloppes de partie ;
+l'aiguillage se fait sur l'**absence** de champ `kind` (une enveloppe
+joclymatch n'en a pas), et non sur un champ ajouté aux enveloppes, qui
+casserait le format. Dès que le pair est ouvert, l'attente longue de la
+discussion s'arrête comme celle de la partie : sans cela, chaque joueur
+immobiliserait **deux** processus PHP pendant 20 s au lieu d'un.
+
+La conversation n'est **republiée que si elle a changé** : le fil d'en face est
+relu en entier à chaque tour, et prévenir à chaque fois ferait clignoter une
+pastille de « nouveau message » qui n'en est pas un.
+
+**Hors ligne (`--offline`) :** `remotePlay:false` ⇒ `attachRelay()` n'est jamais
+appelé ⇒ `state.chat` reste nul ⇒ le bouton reste masqué et aucune requête ne
+sort. Un test tient l'invariant qui rend cela vrai : `attachChat()` n'est appelé
+que depuis `attachRelay()`.
+
+### Un piège nouveau, propre à ce dépôt
+
+**Les clés de traduction sont les textes anglais** — deux usages différents du
+même libellé se marchent dessus. Le message rapide « Your turn » a écrasé le
+statut de partie du même nom (« À vous de jouer ») sans que rien ne le
+signale. Le bouton dit désormais `Your turn!`. À surveiller à chaque ajout de
+chaîne.
+
+### Ce qui a été mesuré (sonde Playwright, 390×844, pointeur grossier)
+
+Le dist jocly n'est pas versionné : **l'écran de jeu n'a pas de plateau**. La
+sonde mesure donc la mise en page, pas le jeu, et les éléments de partie sont
+révélés à la main. C'est dit, ce n'est pas masqué par des tests factices.
+
+- 12 modules, **toutes sections repliées** au départ ;
+- étoile : cible **44×64 px**, section favoris créée, en tête, déroulée, et
+  **conservée après rechargement** ; sections ouvertes non refermées ;
+- favori **masqué par une recherche sans résultat** ;
+- quatre cadences, `none` par défaut, ligne **masquée en mode distant** et
+  revenue en local ;
+- horloge : **43 px**, plateau de 758 → 715 px ;
+- barre : **4 icônes**, titre à 166 px (114 px à cinq) ;
+- coups : cible **175×44 px**, 26 visibles sans défiler sur 80 ;
+- discussion : 4 messages rapides + 4 états de présence, **aucun libellé
+  tronqué**, pastille de non-lus lisible ;
+- **zéro erreur de console** hors les 404 de vignettes (dist absent).
+
+Tests : **118 assertions**, Node pur.
+
+### Ce qui reste à voir au doigt
+
+- **jouer un coup**, toujours : la sonde n'y arrive pas dans l'iframe jocly,
+  limite déjà rencontrée sur Tabulon ;
+- l'horloge qui tourne pendant une vraie recherche machine — 200 ms de
+  rafraîchissement, sur batterie ;
+- un retour à une position **en milieu de partie**, et le ré-armement qui suit ;
+- une discussion **réellement à deux**, sur deux appareils : c'est la seule
+  chose que ni les tests ni la sonde ne peuvent approcher ;
+- le retour d'arrière-plan : l'application est suspendue dès qu'on change
+  d'écran, et le fil est relu en entier au réveil.
+
+---
+
 ## Structure
 
 ```
@@ -520,6 +704,11 @@ js/i18n.js              t(), pickLocalized(), chargement des langues
 js/device.js            classe d'appareil par capacité
 js/catalog.js           filtrage, groupement (pur, testé)
 js/catalog-view.js      rendu de la liste
+js/favorites.js         liste des favoris, section épinglée (pur, testé)
+js/clock.js             pendule : compteurs, incrément, drapeau (pur, testé)
+js/history.js           mise en lignes des coups, cible d'un retour (pur, testé)
+js/remote/chat-protocol.js  messages, présence, fils (pur, testé — format Tabulon)
+js/remote/chat-channel.js   transport de la discussion (relai + pair-à-pair)
 js/game.js              chargement Jocly, session, boucle de jeu, règles
 js/app.js               navigation entre écrans
 sw.js                   service worker
@@ -568,13 +757,23 @@ tests/                       Node pur + PHP réel
   au chargement. `loadJocly()` redresse donc la base explicitement.
 - **Reculer / recommencer devront rester désactivés** dès qu'un côté est distant — sinon
   désynchronisation garantie (leçon Tabulon).
+- **Les clés de traduction sont les textes anglais.** Deux usages différents du même
+  libellé partagent donc la même entrée : le message rapide « Your turn » a écrasé le
+  statut de partie « À vous de jouer », sans avertissement. Vérifier `lang/fr.json`
+  avant d'ajouter une chaîne dont le texte existe peut-être déjà ailleurs.
+- **Une capture d'écran prise trop tôt ment.** Les panneaux glissent en 180 ms ; une
+  sonde qui attend 100 ms photographie un panneau à mi-course et fait croire à un
+  défaut de mise en page. Attendre la fin de la transition, ou la désactiver.
+- **Le canal pair-à-pair porte maintenant deux sortes d'objets.** L'aiguillage se fait
+  sur l'ABSENCE de `kind` (une enveloppe joclymatch n'en a pas) : ajouter un `kind` aux
+  enveloppes de partie casserait la compatibilité du format avec joclymatch et Tabulon.
 
 ---
 
 ## Tests
 
 ```sh
-npm test                      # 18 assertions, Node pur
+npm test                      # 118 assertions, Node pur
 ```
 
 Ce qui est testable l'est : construction du catalogue, champs localisés, filtrage,

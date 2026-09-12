@@ -32,6 +32,10 @@ export class PeerChannel {
         this.matchId = o.matchId;
         this.side = o.side;
         this.onEnvelope = o.onEnvelope;
+        // Pose par ChatChannel quand il y en a un. Laisse a null, les messages
+        // de discussion recus sont ignores en silence — ce qui est le bon
+        // comportement pour une version construite sans la discussion.
+        this.onMessage = o.onMessage || null;
         this.onStateChange = o.onStateChange || (() => {});
         this.fetchImpl = o.fetchImpl || ((u, i) => fetch(u, i));
         this.rtcFactory =
@@ -101,7 +105,18 @@ export class PeerChannel {
             ch.onclose = () => this.setState('closed');
             ch.onmessage = (e) => {
                 try {
-                    this.onEnvelope(JSON.parse(e.data));
+                    const data = JSON.parse(e.data);
+                    // Le canal porte DEUX sortes d'objets. Une enveloppe de
+                    // partie n'a pas de `kind` (son format est celui de
+                    // joclymatch : matchDetails/matchdata/time/key) ; un
+                    // message de discussion en a toujours un. Le discriminant
+                    // est donc l'absence de champ, et non un champ ajoute aux
+                    // enveloppes — qui casserait la compatibilite du format.
+                    if (data && typeof data === 'object' && data.kind !== undefined) {
+                        if (this.onMessage) this.onMessage(data);
+                        return;
+                    }
+                    this.onEnvelope(data);
                 } catch (err) {
                     console.warn('message pair illisible', err);
                 }

@@ -1269,3 +1269,302 @@ test('sw.js : la coquille pre-cachee existe reellement sur le disque', () => {
         assert.ok(existsSync(path.join(root, m[1])), 'pre-cache inexistant : ' + m[1]);
     }
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Premier tour : favoris, horloge, historique, discussion.
+// ─────────────────────────────────────────────────────────────────────────────
+
+import { sanitizeFavorites, toggleFavorite, isFavorite, favoriteGroup, FAV_MODULE } from '../js/favorites.js';
+import { CLOCK_PRESETS, presetById, formatClock, Clock } from '../js/clock.js';
+import { moveRows, rollbackTarget, canRollback } from '../js/history.js';
+import {
+    KIND,
+    PRESENCE,
+    chatMidFor,
+    newMessage,
+    encodeThread,
+    decodeThread,
+    mergeThreads,
+    presenceOf,
+    countUnread,
+    canNudge,
+    requiresSeal,
+    NUDGE_MIN_INTERVAL_MS,
+} from '../js/remote/chat-protocol.js';
+import { ChatChannel } from '../js/remote/chat-channel.js';
+
+// ---- favoris ---------------------------------------------------------------
+
+test('favoris : ajout, retrait, pas de doublon', () => {
+    let list = [];
+    list = toggleFavorite(list, 'classic-chess');
+    assert.deepEqual(list, ['classic-chess']);
+    list = toggleFavorite(list, 'classic-chess');
+    assert.deepEqual(list, []);
+    list = toggleFavorite(toggleFavorite(list, 'shogi'), 'shogi');
+    assert.deepEqual(list, []);
+    assert.deepEqual(sanitizeFavorites(['a', 'a', '', null, 'b']), ['a', 'b']);
+    assert.deepEqual(sanitizeFavorites('pas une liste'), []);
+});
+
+test('favoris : la section suit le filtre, elle ne le contredit pas', () => {
+    // Un favori ecarte par la recherche ou par le filtre d'appareil ne doit
+    // PAS reapparaitre par la bande : sinon « adaptes a cet ecran » afficherait
+    // quand meme un 16x16, et une recherche sans resultat en montrerait.
+    const filtered = [{ name: 'shogi' }, { name: 'xiangqi' }];
+    const group = favoriteGroup(filtered, ['tera-chess', 'xiangqi']);
+    assert.equal(group.module, FAV_MODULE);
+    assert.deepEqual(group.games.map((g) => g.name), ['xiangqi']);
+    assert.equal(favoriteGroup(filtered, ['tera-chess']), null);
+    assert.equal(favoriteGroup(filtered, []), null);
+});
+
+test('favoris : l ordre est celui du marquage, pas l alphabet', () => {
+    const filtered = [{ name: 'a' }, { name: 'b' }, { name: 'z' }];
+    const group = favoriteGroup(filtered, ['z', 'a']);
+    assert.deepEqual(group.games.map((g) => g.name), ['z', 'a']);
+});
+
+test('favoris : la section n est jamais repliee par defaut', () => {
+    const groups = [{ module: FAV_MODULE, favorite: true, games: [] }, { module: 'chessbase', games: [] }];
+    const collapsed = initialCollapsed(groups, { searching: false });
+    assert.equal(collapsed.has(FAV_MODULE), false);
+    assert.equal(collapsed.has('chessbase'), true);
+});
+
+// ---- horloge ---------------------------------------------------------------
+
+test('horloge : format, dixiemes sous la minute, jamais de negatif', () => {
+    assert.equal(formatClock(600000), '10:00');
+    assert.equal(formatClock(65000), '1:05');
+    assert.equal(formatClock(3600000), '1:00:00');
+    assert.equal(formatClock(4300), '0:04.3');
+    assert.equal(formatClock(-5000), '0:00.0');
+});
+
+test('horloge : l increment va a celui qui vient de jouer', () => {
+    const c = new Clock({ initial: 60000, increment: 5000, at: 0 });
+    c.switchTo(1, 0); // A demarre
+    c.switchTo(-1, 10000); // A a joue apres 10 s : il recupere 5 s
+    assert.equal(c.left[1], 55000);
+    assert.equal(c.remaining(-1, 10000), 60000);
+    c.switchTo(1, 13000); // B a joue apres 3 s
+    assert.equal(c.left[-1], 62000);
+});
+
+test('horloge : le drapeau tombe une fois et arrete tout', () => {
+    const c = new Clock({ initial: 1000, increment: 5000, at: 0 });
+    c.switchTo(1, 0);
+    assert.equal(c.flagOf(500), null);
+    assert.equal(c.flagOf(1500), 1);
+    // Meme apres coup, on ne credite plus et l'autre compteur ne repart pas :
+    // sans cela, reprendre un coup relancerait une partie deja close.
+    c.switchTo(-1, 1600);
+    assert.equal(c.running, null);
+    assert.equal(c.flagOf(9999), 1);
+    assert.equal(c.remaining(-1, 9999), 1000);
+});
+
+test('horloge : le premier tour ne credite rien', () => {
+    const c = new Clock({ initial: 60000, increment: 5000, at: 0 });
+    c.switchTo(1, 0);
+    assert.equal(c.left[1], 60000);
+    assert.equal(c.left[-1], 60000);
+});
+
+test('horloge : « sans horloge » est la cadence par defaut et ne demarre rien', () => {
+    assert.equal(CLOCK_PRESETS[0].id, 'none');
+    assert.equal(presetById('inconnu').id, 'none');
+    assert.equal(presetById('none').initial, 0);
+});
+
+// ---- historique ------------------------------------------------------------
+
+test('historique : deux colonnes, chaque cellule numerotee', () => {
+    const rows = moveRows(['e4', 'e5', 'Cf3']);
+    assert.equal(rows.length, 2);
+    assert.deepEqual(rows[0].cells.map((c) => c.n), [1, 2]);
+    assert.deepEqual(rows[1].cells.map((c) => c.n), [3]);
+    assert.equal(rows[1].cells[0].text, 'Cf3');
+    assert.deepEqual(moveRows([]), []);
+    assert.deepEqual(moveRows(null), []);
+});
+
+test('historique : revenir au dernier coup ne defait rien', () => {
+    assert.equal(rollbackTarget(3, 3, 2), null);
+    assert.equal(rollbackTarget(1, 3, 2), 1);
+    assert.equal(rollbackTarget(0, 3, 1), 0);
+    assert.equal(rollbackTarget(2, 0, 2), null);
+});
+
+test('historique : le retour arriere est interdit des qu un camp est distant', () => {
+    assert.equal(canRollback({ remote: false, moves: 4 }), true);
+    assert.equal(canRollback({ remote: true, moves: 4 }), false);
+    assert.equal(canRollback({ remote: false, moves: 0 }), false);
+});
+
+// ---- discussion ------------------------------------------------------------
+
+const rand = (bytes) => bytes.fill(7);
+
+test('discussion : deux cles distinctes, acceptees par match.php', () => {
+    const mid = '1748100000000-AbCdEfGhIjKlMn';
+    assert.equal(chatMidFor(mid, 1), mid + '-ca');
+    assert.equal(chatMidFor(mid, -1), mid + '-cb');
+    // Le motif du serveur, verifie cote client pour ne pas produire un echec
+    // reseau opaque la ou une erreur lisible est possible.
+    for (const side of [1, -1]) assert.match(chatMidFor(mid, side), /^[A-Za-z0-9_-]{6,64}$/);
+    assert.throws(() => chatMidFor(mid, 0));
+    assert.throws(() => chatMidFor('x'.repeat(70), 1));
+});
+
+test('discussion : un message rapide voyage comme identifiant, pas comme texte', () => {
+    const m = newMessage({ kind: KIND.CHAT, side: 1, quick: 'wellPlayed', at: 10, rand });
+    assert.equal(m.quick, 'wellPlayed');
+    assert.equal(m.body, undefined);
+    assert.equal(requiresSeal(m), false);
+    assert.throws(() => newMessage({ kind: KIND.CHAT, side: 1, quick: 'pas valide !', rand }));
+    assert.throws(() => newMessage({ kind: KIND.CHAT, side: 1, rand }));
+    assert.throws(() => newMessage({ kind: KIND.PRESENCE, side: 1, state: 'inconnu', rand }));
+});
+
+test('discussion : le texte libre est REFUSE tant qu il n y a pas de scelleur', async () => {
+    // C'est le garde-fou du lot suivant : on ne peut pas ajouter un champ de
+    // saisie sans avoir ajoute le chiffrement, l'encodage echouerait.
+    const free = { v: 1, kind: KIND.CHAT, side: 1, at: 1, id: 'ab', body: 'bonjour' };
+    await assert.rejects(() => encodeThread([free]));
+    const quick = newMessage({ kind: KIND.CHAT, side: 1, quick: 'rematch', at: 1, rand });
+    const presence = newMessage({ kind: KIND.PRESENCE, side: 1, state: PRESENCE.PAUSED, at: 2, rand });
+    assert.ok(await encodeThread([quick, presence]));
+});
+
+test('discussion : un fil illisible rend une liste vide, jamais une exception', async () => {
+    for (const bad of ['', '{}', 'pas du json', '<html>erreur</html>', JSON.stringify({ msgs: 3 })]) {
+        assert.deepEqual(await decodeThread(bad), []);
+    }
+});
+
+test('discussion : un corps en clair est conserve, verrouille', async () => {
+    const text = JSON.stringify({
+        v: 1,
+        msgs: [{ v: 1, kind: KIND.CHAT, side: -1, at: 5, id: 'ff', body: 'en clair' }],
+    });
+    const [m] = await decodeThread(text);
+    // Ni affiche tel quel (cela laisserait croire que le canal protege quelque
+    // chose), ni efface (un trou silencieux est pire qu'un cadenas).
+    assert.equal(m.locked, true);
+    assert.equal(m.reason, 'unsealed');
+    assert.equal(m.body, null);
+});
+
+test('discussion : les fils fusionnent, dedupliquent et se trient stablement', () => {
+    const a = { id: 'b2', at: 10, kind: KIND.CHAT, side: 1, quick: 'rematch' };
+    const b = { id: 'a1', at: 10, kind: KIND.CHAT, side: -1, quick: 'yourTurn' };
+    const c = { id: 'c3', at: 5, kind: KIND.CHAT, side: 1, quick: 'wellPlayed' };
+    const conv = mergeThreads([a, c], [b, a]);
+    assert.deepEqual(conv.map((m) => m.id), ['c3', 'a1', 'b2']);
+    assert.equal(mergeThreads([a], [a]).length, 1);
+});
+
+test('discussion : presence et non-lus', () => {
+    const conv = [
+        { id: '1', at: 1, kind: KIND.PRESENCE, side: -1, state: PRESENCE.THINKING },
+        { id: '2', at: 2, kind: KIND.PRESENCE, side: -1, state: PRESENCE.PAUSED },
+        { id: '3', at: 3, kind: KIND.CHAT, side: 1, quick: 'yourTurn' },
+        { id: '4', at: 4, kind: KIND.CHAT, side: -1, quick: 'backSoon' },
+    ];
+    assert.equal(presenceOf(conv, -1).state, PRESENCE.PAUSED);
+    assert.equal(presenceOf(conv, 1), null);
+    // Ses propres messages ne comptent jamais : on n'a pas a se relire. La
+    // presence, elle, COMPTE — « votre adversaire s'est absente » vaut une
+    // pastille autant qu'un message rapide.
+    assert.equal(countUnread(conv, null, 1), 3);
+    assert.equal(countUnread(conv, '2', 1), 1);
+    assert.equal(countUnread(conv, '4', 1), 0);
+});
+
+test('discussion : la relance est bornee dans le temps', () => {
+    const now = 1000000;
+    assert.equal(canNudge([], 1, now), true);
+    const recent = [{ id: 'n', at: now - 1000, kind: KIND.NUDGE, side: 1 }];
+    assert.equal(canNudge(recent, 1, now), false);
+    assert.equal(canNudge(recent, -1, now), true);
+    const old = [{ id: 'n', at: now - NUDGE_MIN_INTERVAL_MS - 1, kind: KIND.NUDGE, side: 1 }];
+    assert.equal(canNudge(old, 1, now), true);
+});
+
+test('discussion : un seul ecrivain par fil — on ecrit chez soi, on lit en face', async () => {
+    const calls = [];
+    const files = new Map();
+    const fakeFetch = async (url, init) => {
+        const f = Object.fromEntries(new URLSearchParams(init.body));
+        calls.push(f);
+        if (f.action === 'save') files.set(f.mid, f.data);
+        return {
+            ok: true,
+            headers: { get: () => '0' },
+            text: async () => files.get(f.mid) || '',
+        };
+    };
+    const mid = '1748100000000-AbCdEfGhIjKlMn';
+    const chan = new ChatChannel({ relayUrl: '.', matchId: mid, side: 1, fetchImpl: fakeFetch });
+    await chan.send({ kind: KIND.CHAT, quick: 'wellPlayed' });
+    const saves = calls.filter((c) => c.action === 'save');
+    assert.equal(saves.length, 1);
+    assert.equal(saves[0].mid, mid + '-ca', 'on n ecrit que dans SON fil');
+    assert.equal(chan.theirsMid, mid + '-cb');
+    assert.equal(chan.conversation.length, 1);
+
+    // Le fil part en ENTIER : sans cela, le deuxieme message effacerait le
+    // premier, puisque le relai est en dernier-ecrit-gagne.
+    await chan.send({ kind: KIND.PRESENCE, state: PRESENCE.PAUSED });
+    const last = calls.filter((c) => c.action === 'save').pop();
+    assert.equal(JSON.parse(last.data).msgs.length, 2);
+});
+
+test('discussion : un message du pair entre, le sien est ignore', async () => {
+    const chan = new ChatChannel({
+        relayUrl: '.',
+        matchId: '1748100000000-AbCdEfGhIjKlMn',
+        side: 1,
+        fetchImpl: async () => ({ ok: true, headers: { get: () => '0' }, text: async () => '' }),
+    });
+    await chan.acceptFromPeer({ v: 1, kind: KIND.CHAT, side: -1, at: 3, id: 'aa', quick: 'rematch' });
+    assert.equal(chan.conversation.length, 1);
+    await chan.acceptFromPeer({ v: 1, kind: KIND.CHAT, side: 1, at: 4, id: 'bb', quick: 'rematch' });
+    assert.equal(chan.conversation.length, 1, 'son propre message ne revient pas');
+    await chan.acceptFromPeer({ n_importe: 'quoi' });
+    assert.equal(chan.conversation.length, 1);
+});
+
+test('discussion : la conversation n est publiee que si elle a change', async () => {
+    let pushes = 0;
+    const chan = new ChatChannel({
+        relayUrl: '.',
+        matchId: '1748100000000-AbCdEfGhIjKlMn',
+        side: 1,
+        onConversation: () => pushes++,
+        fetchImpl: async () => ({ ok: true, headers: { get: () => '0' }, text: async () => '' }),
+    });
+    const msg = { v: 1, kind: KIND.CHAT, side: -1, at: 3, id: 'aa', quick: 'rematch' };
+    await chan.acceptFromPeer(msg);
+    await chan.acceptFromPeer(msg);
+    await chan.acceptFromPeer(msg);
+    assert.equal(pushes, 1, 'relire le meme fil ne doit pas faire clignoter la pastille');
+});
+
+test('hors ligne : la discussion ne peut pas se brancher sans le jeu a distance', () => {
+    // `--offline` pose remotePlay:false, donc attachRelay() n'est jamais
+    // appele, donc state.chat reste nul et le bouton reste masque. Ce test
+    // garde l'invariant qui le rend vrai : la discussion n'est branchee QUE
+    // depuis attachRelay. La brancher ailleurs — au demarrage d'une partie,
+    // par exemple — ferait sortir une requete d'une application censee ne
+    // jamais en emettre.
+    const src = readFileSync(path.join(root, 'js/app.js'), 'utf8');
+    const calls = src.match(/^\s*attachChat\(/gm) || [];
+    assert.equal(calls.length, 1, 'attachChat doit etre appele une seule fois');
+    const relayStart = src.indexOf('function attachRelay(');
+    const relayEnd = src.indexOf('\nasync function leaveMatch', relayStart);
+    const call = src.indexOf('    attachChat(');
+    assert.ok(call > relayStart && call < relayEnd, 'attachChat doit vivre dans attachRelay');
+});
