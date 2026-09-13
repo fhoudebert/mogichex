@@ -1129,6 +1129,12 @@ tests/                       Node pur + PHP réel
   j'avais relancés. Seul un build qui RÉUSSIT révélait le problème. Un test lance désormais le
   script avec un chemin jocly inexistant : voir s'afficher « jocly2 introuvable » prouve que le flot
   dépasse le bloc `--site`, et coûte deux cents millisecondes.
+- **`flex: 1` sur un bouton ne veut pas dire la même chose selon le conteneur.** La règle
+  `button.primary, button.secondary { flex: 1 }` sert aux paires côte à côte de
+  `.detail-actions`, une **rangée**. Dans une **colonne** — le panneau de discussion —
+  le même `flex-grow` étire le bouton sur toute la hauteur libre : « Relancer votre
+  adversaire » occupait 180 px. `button.wide` pose donc `flex: 0 0 auto` : un bouton
+  pleine largeur n'a jamais besoin de grandir sur l'axe principal.
 - **Les clés de traduction sont les textes anglais.** Deux usages différents du même
   libellé partagent donc la même entrée : le message rapide « Your turn » a écrasé le
   statut de partie « À vous de jouer », sans avertissement. Vérifier `lang/fr.json`

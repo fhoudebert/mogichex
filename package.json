@@ -1,6 +1,6 @@
 {
   "name": "mogichex",
-  "version": "0.1.0",
+  "version": "1.01.0",
   "description": "Board games (Jocly) playable with a thumb — installable web app.",
   "type": "module",
   "private": true,

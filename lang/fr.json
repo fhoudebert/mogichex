@@ -132,7 +132,6 @@
   "Nudge your opponent": "Relancer votre adversaire",
   "Your opponent is waiting": "Votre adversaire vous attend",
   "New message": "Nouveau message",
-  "Notify me when I'm away": "Me prévenir quand je suis ailleurs",
   "Only while the app is still running in the background.": "Seulement tant que l'application tourne encore en arrière-plan.",
   "Notifications are blocked for this site. Change it in your browser settings.": "Les notifications sont bloquées pour ce site. Cela se change dans les réglages du navigateur.",
   "This browser cannot show notifications.": "Ce navigateur ne sait pas afficher de notifications.",
@@ -146,5 +145,6 @@
   "Relay": "Relai",
   "Invitation links": "Liens d'invitation",
   "not looked up yet": "pas encore cherché",
-  "none — this build has no public address": "aucun — cette version n'a pas d'adresse publique"
+  "none — this build has no public address": "aucun — cette version n'a pas d'adresse publique",
+  "Notifications outside the app": "Notifications hors de l'application"
 }

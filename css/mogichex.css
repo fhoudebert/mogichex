@@ -127,7 +127,12 @@ button[disabled] { opacity: .45; }
 .field label { flex: 0 0 8rem; color: var(--fg-dim); font-size: .9rem; }
 .switch.row { justify-content: flex-start; padding: 0 0 0 .1rem; gap: .6rem; }
 .switch.row span { font-size: .95rem; }
-button.wide { width: 100%; margin-top: 1.25rem; }
+/* `flex: 1` sur .primary/.secondary sert aux paires de boutons cote a cote
+   (.detail-actions, une RANGEE). Dans une colonne — le panneau de discussion —
+   le meme flex-grow etire le bouton sur toute la hauteur libre : « Relancer
+   votre adversaire » occupait 180 px. Un bouton pleine largeur n'a jamais
+   besoin de grandir sur l'axe principal. */
+button.wide { width: 100%; margin-top: 1.25rem; flex: 0 0 auto; }
 [hidden] { display: none !important; }
 
 .field select {
