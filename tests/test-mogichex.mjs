@@ -2103,9 +2103,10 @@ test('android : la configuration generee porte une adresse publique', () => {
     // Sans `inviteBase`, l'APK reconstruit referait exactement le meme lien
     // mort. Ce test tient la ligne qui l'en empeche.
     const src = readFileSync(path.join(root, 'tools', 'build-android.mjs'), 'utf8');
-    const m = src.match(/const SITE = '([^']+)'/);
-    assert.ok(m, 'build-android.mjs doit definir SITE');
-    assert.equal(isShareableBase(m[1]), true, 'SITE doit etre une adresse publique');
+    const m = src.match(/const DEFAULT_SITE = '([^']+)'/);
+    assert.ok(m, 'build-android.mjs doit definir DEFAULT_SITE');
+    assert.equal(isShareableBase(m[1]), true, 'DEFAULT_SITE doit etre une adresse publique');
+    assert.ok(src.includes("arg('site'"), 'et --site doit permettre de la changer');
     assert.ok(src.includes('inviteBase:'), 'la configuration native doit poser inviteBase');
     assert.ok(src.includes('relayUrl:'), 'et relayUrl');
 });
@@ -2142,4 +2143,62 @@ test('invitation : la base suit les trois etages, du configure au deduit', () =>
     assert.equal(inviteBaseFrom({ page: 'https://localhost/index.html', relay: '.' }), null);
     assert.equal(inviteBaseFrom({ page: 'https://localhost/index.html' }), null);
     assert.equal(inviteBaseFrom({}), null);
+});
+
+test('invitation : une origine de coquille est refusee quel que soit le schema', () => {
+    // Capacitor sert `http://localhost` par defaut sur Android, et
+    // `https://localhost` quand androidScheme est pose. Les deux sont aussi
+    // inutilisables chez le destinataire : c'est l'ABSENCE DE PORT qui les
+    // distingue d'un serveur de developpement, pas le schema.
+    for (const url of ['http://localhost/', 'http://localhost/index.html', 'https://localhost/', 'http://127.0.0.1/']) {
+        assert.equal(isShareableBase(url), false, url);
+    }
+    for (const url of ['http://localhost:8080/', 'https://localhost:8443/', 'http://127.0.0.1:8090/x']) {
+        assert.equal(isShareableBase(url), true, url);
+    }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// build-android.mjs : le script doit s'EXECUTER, pas seulement se parser.
+// ─────────────────────────────────────────────────────────────────────────────
+
+import { spawnSync } from 'node:child_process';
+
+/** Lance le script avec des arguments qui le font sortir tot, sans build. */
+function android(...args) {
+    const r = spawnSync(process.execPath, [path.join(root, 'tools', 'build-android.mjs'), ...args], {
+        encoding: 'utf8',
+        timeout: 20000,
+    });
+    return { code: r.status, out: (r.stdout || '') + (r.stderr || '') };
+}
+
+test('android : le script depasse la verification de --site', () => {
+    // CE QUE CE TEST AURAIT ATTRAPE. En deplacant le bloc --site vers le haut
+    // du script, l'accolade fermante du premier `if` est restee 130 lignes
+    // plus bas : TOUT le build s'est retrouve a l'interieur d'un
+    // `if (adresse invalide) { … }`, donc saute des que l'adresse etait bonne.
+    // Le script se parsait, les deux chemins d'ERREUR marchaient — seul un
+    // build reussi revelait le probleme, et c'est justement celui que je
+    // n'avais pas relance.
+    //
+    // On passe un chemin jocly inexistant : la verification qui le refuse vit
+    // APRES le bloc --site, donc la voir s'executer prouve que le flot y
+    // parvient.
+    const r = android('--jocly', '/chemin/qui/n/existe/pas', '--out', '/tmp/mogichex-test-android');
+    assert.match(r.out, /jocly2 introuvable/, 'le flot doit atteindre la verification de --jocly');
+    assert.equal(r.code, 2);
+});
+
+test('android : --site refuse ce qui ne designe rien chez le destinataire', () => {
+    for (const mauvais of ['pasuneurl', './mogichex', 'ftp://exemple.fr/x']) {
+        const r = android('--site', mauvais);
+        assert.match(r.out, /adresse absolue/, mauvais);
+        assert.equal(r.code, 2, mauvais);
+    }
+    for (const local of ['http://localhost:8080', 'https://localhost', 'http://127.0.0.1:8090/x']) {
+        const r = android('--site', local);
+        assert.match(r.out, /sortir de l'appareil/, local);
+        assert.equal(r.code, 2, local);
+    }
 });

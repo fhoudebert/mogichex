@@ -45,16 +45,11 @@ export const CONFIG = Object.assign(
         //
         // INDISPENSABLE DANS UNE COQUILLE NATIVE : sous Capacitor la page est
         // servie depuis https://localhost, une origine valide qui ne designe
-        // rien chez le destinataire — le lien produit n'ouvre rien. Voir
-        // buildInviteBase() dans js/app.js pour la chaine de repli.
-        inviteBase: null,
-        // Adresse PUBLIQUE de cette application, celle qui part dans les liens
-        // d'invitation. null = celle de la page, ce qui est juste sur le web.
+        // rien chez le destinataire — le lien produit n'ouvre rien.
         //
-        // INDISPENSABLE DANS UNE COQUILLE NATIVE : sous Capacitor la page est
-        // servie depuis https://localhost, une origine valide qui ne designe
-        // rien chez le destinataire — le lien produit n'ouvre rien. Voir
-        // buildInviteBase() dans js/app.js pour la chaine de repli.
+        // C'est ce que pose tools/build-android.mjs, depuis son option
+        // --site. Voir inviteBaseFrom() dans js/remote/invite.js pour la
+        // chaine de repli quand elle n'est pas renseignee.
         inviteBase: null,
         // Jeu a distance. Le passer a false retire l'adversaire « un autre
         // joueur par Internet » : plus de choix dans la liste, plus de

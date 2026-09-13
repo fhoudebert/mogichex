@@ -284,7 +284,7 @@ il s'envoie : c'est l'invité qui découvre qu'il n'ouvre rien.
 `inviteBaseFrom()` (dans `js/remote/invite.js`, **pure et testée**) descend trois étages :
 
 1. **`CONFIG.inviteBase`**, si elle est configurée — autorité absolue, et c'est ce que pose
-   `tools/build-android.mjs` à côté de `relayUrl`, depuis la même constante `SITE` ;
+   `tools/build-android.mjs` à côté de `relayUrl`, depuis la même valeur `SITE` ;
 2. **l'adresse de la page**, si elle n'est pas celle d'une coquille empaquetée — le cas du web, et
    le comportement d'origine ;
 3. **l'adresse du relai**, si elle est absolue. Déduction, mais raisonnable : dans le déploiement
@@ -296,11 +296,43 @@ Sans rien de tout cela : **pas de lien, et un message qui le dit**. Mieux vaut p
 lien mort.
 
 **Ce qui est refusé est étroit, et volontairement.** Seules les origines d'application empaquetée :
-`capacitor:`, `file:`, `content:`, les ressources `android_asset`, et `https://localhost` **sans
-port** — exactement ce que sert Capacitor. Un `http://127.0.0.1:8090` de serveur de développement
+`capacitor:`, `file:`, `content:`, les ressources `android_asset`, et une adresse locale **sans
+port explicite**. Le schéma n'entre pas dans la décision : Capacitor sert `http://localhost` par
+défaut sur Android et `https://localhost` quand `androidScheme` est posé, et les deux sont aussi
+inutilisables chez le destinataire. Un `http://127.0.0.1:8090` de serveur de développement
 **passe** : il sert parfaitement à faire jouer deux navigateurs de la même machine, et c'est ainsi
 que les sondes de ce dépôt travaillent. Une adresse de réseau local passe pour la même raison. **Le
 port est le discriminant** : une coquille native n'en a jamais, un serveur local en a toujours un.
+
+### Où se règle l'adresse, concrètement
+
+Une seule option, au moment de fabriquer le paquet Android :
+
+```sh
+node tools/build-android.mjs --jocly ../jocly2 --site https://exemple.fr/mogichex
+```
+
+Sans elle, la valeur par défaut est celle du déploiement de référence,
+`https://www.biscandine.fr/variantes/mogichex`. L'option est **vérifiée avant le build** — une
+adresse relative ou un `localhost` est refusé tout de suite, pas après une minute de gulp — et
+l'adresse retenue est **affichée en fin de build** :
+
+```
+  relai          : https://www.biscandine.fr/variantes/mogichex
+  liens d'invitation : https://www.biscandine.fr/variantes/mogichex/index.html
+```
+
+La même valeur sert aux deux, parce que dans le déploiement de référence `match.php` vit *dans* le
+répertoire de mogichex.
+
+Et l'application les montre : **Réglages › À propos** affiche le relai employé et la base des liens.
+C'est là qu'on vérifie qu'un APK porte la bonne adresse, sans console et sans attendre d'envoyer
+une invitation pour découvrir le contraire. Sur le web, le relai s'affiche « pas encore cherché »
+tant qu'aucune partie à distance n'a été proposée — il n'est cherché qu'à ce moment-là.
+
+**Et il faut reconstruire.** Corriger `tools/build-android.mjs` ne change rien à un APK déjà
+installé : il faut refaire `node tools/build-android.mjs`, puis `npx cap sync android`, puis
+l'assemblage. Le contenu web est figé dans le paquet.
 
 Cette chaîne est pure et sans navigateur pour une raison précise : l'origine d'une coquille native
 n'est pas quelque chose qu'une page peut se donner, donc c'est le seul cas qu'aucune sonde ne peut
@@ -568,7 +600,7 @@ fausse en silence.
 | | |
 |---|---|
 | `tools/` | fabrique le catalogue, l'APK, l'estampille du service worker. Ne tourne que chez vous |
-| `tests/` | 158 assertions Node et 14 PHP. `tests/*.php` sont des **exécutables** : les téléverser, c'est offrir des points d'entrée qui écrivent sur le disque |
+| `tests/` | 161 assertions Node et 14 PHP. `tests/*.php` sont des **exécutables** : les téléverser, c'est offrir des points d'entrée qui écrivent sur le disque |
 | `data/` | `phone-ineligible.json` est lu par le **build**, jamais par le navigateur — il est déjà cuit dans `catalog.json` |
 | `android/` | projet Capacitor, 1,8 Mo, sans objet sur le web |
 | `package.json`, `DEVELOPMENT.md`, `README.md`, `.gitignore` | rien ne les lit à l'exécution |
@@ -1089,6 +1121,14 @@ tests/                       Node pur + PHP réel
   page d'erreur d'hébergeur sans créer de fichier. Il apparaît en rouge dans la
   console du navigateur ; ce n'est pas une panne, et une sonde doit le filtrer
   plutôt qu'envoyer le lecteur suivant chercher un défaut.
+- **Un script d'outillage doit être exécuté, pas seulement relu.** En déplaçant le bloc `--site`
+  vers le haut de `tools/build-android.mjs`, l'accolade fermante du premier `if` est restée cent
+  trente lignes plus bas : **tout le build s'est retrouvé à l'intérieur d'un
+  `if (adresse invalide) { … }`**, donc sauté dès que l'adresse était bonne. Le fichier se parsait,
+  `node --check` passait, et les deux chemins d'*erreur* fonctionnaient — ce sont les seuls que
+  j'avais relancés. Seul un build qui RÉUSSIT révélait le problème. Un test lance désormais le
+  script avec un chemin jocly inexistant : voir s'afficher « jocly2 introuvable » prouve que le flot
+  dépasse le bloc `--site`, et coûte deux cents millisecondes.
 - **Les clés de traduction sont les textes anglais.** Deux usages différents du même
   libellé partagent donc la même entrée : le message rapide « Your turn » a écrasé le
   statut de partie « À vous de jouer », sans avertissement. Vérifier `lang/fr.json`
@@ -1105,7 +1145,7 @@ tests/                       Node pur + PHP réel
 ## Tests
 
 ```sh
-npm test                      # 158 assertions, Node pur
+npm test                      # 161 assertions, Node pur
 ```
 
 Ce qui est testable l'est : construction du catalogue, champs localisés, filtrage,

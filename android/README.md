@@ -17,9 +17,24 @@ depuis la même constante `SITE`. **Sans elle, le lien d'invitation vaudrait
 `https://localhost/?game=…`** : l'origine du WebView Capacitor est valide et sécurisée, mais elle
 ne désigne rien chez le destinataire — le lien se copie, s'envoie, et n'ouvre rien.
 
-Un autre hébergement se change en un seul endroit, la constante `SITE` en tête de la section 5 de
-`tools/build-android.mjs`. Elle sert aux deux : le relai et la base des liens, puisque `match.php`
-vit dans le répertoire de mogichex.
+Un autre hébergement se donne **en option**, rien à éditer :
+
+```sh
+node tools/build-android.mjs --jocly ../jocly2 --site https://exemple.fr/mogichex
+```
+
+Par défaut : `https://www.biscandine.fr/variantes/mogichex`. La même valeur sert aux deux — le
+relai et la base des liens — puisque `match.php` vit dans le répertoire de mogichex. Elle est
+vérifiée avant le build et affichée à la fin :
+
+```
+  relai          : https://www.biscandine.fr/variantes/mogichex
+  liens d'invitation : https://www.biscandine.fr/variantes/mogichex/index.html
+```
+
+**Pour vérifier un APK déjà installé :** Réglages › À propos affiche le relai et la base des liens
+réellement employés. Et corriger l'outil ne suffit pas — le contenu web est figé dans le paquet,
+il faut refaire `build-android.mjs`, puis `npx cap sync android`, puis l'assemblage.
 
 ## 1. Créer le projet Capacitor (une seule fois, EN PREMIER)
 

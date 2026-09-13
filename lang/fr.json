@@ -142,5 +142,9 @@
   "Mills": "Moulin",
   "Hunt": "Chasse",
   "Penguin soccer": "Foot des manchots",
-  "This build has no public address, so no invitation link can be made.": "Cette version n'a pas d'adresse publique : aucun lien d'invitation ne peut être fabriqué."
+  "This build has no public address, so no invitation link can be made.": "Cette version n'a pas d'adresse publique : aucun lien d'invitation ne peut être fabriqué.",
+  "Relay": "Relai",
+  "Invitation links": "Liens d'invitation",
+  "not looked up yet": "pas encore cherché",
+  "none — this build has no public address": "aucun — cette version n'a pas d'adresse publique"
 }

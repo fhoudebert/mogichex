@@ -161,6 +161,9 @@ button.wide { width: 100%; margin-top: 1.25rem; }
 .rules table { max-width: 100%; }
 .rules a { color: var(--accent-2); }
 .about { color: var(--fg-dim); font-size: .8rem; margin: .4rem 0; }
+/* Les deux adresses tiennent sur deux lignes, et une URL longue doit pouvoir
+   se couper plutot que deborder du panneau. */
+#about-remote { white-space: pre-line; word-break: break-all; }
 .about-block { margin-top: 2rem; border-top: 1px solid var(--line); padding-top: 1rem; }
 .about-block h3 { font-size: .95rem; margin: 0 0 .5rem; color: var(--fg); }
 .about a { color: var(--accent-2); text-decoration: none; }

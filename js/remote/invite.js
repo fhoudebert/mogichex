@@ -132,8 +132,12 @@ export function isShareableBase(url) {
         u.hostname.endsWith('.localhost') ||
         u.hostname === '127.0.0.1' ||
         u.hostname === '[::1]';
-    // `https://localhost` sans port : la coquille Capacitor, et elle seule.
-    if (local && u.protocol === 'https:' && !u.port) return false;
+    // Une adresse locale SANS PORT EXPLICITE : c'est la coquille, et elle
+    // seule. Le schema n'entre pas dans la decision — Capacitor sert
+    // `http://localhost` par defaut sur Android et `https://localhost` quand
+    // `androidScheme` est pose, et les deux sont aussi inutilisables chez le
+    // destinataire. Un serveur de developpement, lui, porte toujours un port.
+    if (local && !u.port) return false;
     return true;
 }
 

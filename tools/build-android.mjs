@@ -49,6 +49,34 @@ const keep3d = !flag('no-3d');
 // --offline : application qui ne sort jamais sur le reseau. Le jeu a distance
 // disparait de la liste des adversaires, et aucun relai n'est cherche.
 const offline = flag('offline');
+// L'ADRESSE PUBLIQUE DU DEPLOIEMENT. Elle sert a DEUX choses :
+//
+//   - le RELAI, parce que « . » ne designe rien sous capacitor:// ;
+//   - la BASE DES LIENS D'INVITATION, parce que la page est servie depuis
+//     localhost et qu'un lien « https://localhost/?game=… » n'ouvre rien chez
+//     le destinataire.
+//
+// Les deux tiennent dans la meme valeur parce que, dans le deploiement de
+// reference, match.php vit DANS le repertoire de mogichex.
+//
+// Pour un autre hebergement, rien a editer :
+//
+//   node tools/build-android.mjs --jocly ../jocly2 --site https://exemple.fr/mogichex
+//
+// Verifie ICI, avec les autres options, et non au moment de s'en servir :
+// soixante secondes de gulp pour apprendre qu'une adresse est mal ecrite,
+// c'est soixante secondes de trop.
+const DEFAULT_SITE = 'https://www.biscandine.fr/variantes/mogichex';
+const SITE = String(arg('site', DEFAULT_SITE)).replace(/\/+$/, '');
+if (!/^https?:\/\//i.test(SITE)) {
+    console.error(`--site doit etre une adresse absolue (http:// ou https://), recu : ${SITE}`);
+    process.exit(2);
+}
+if (/^https?:\/\/(localhost|127\.0\.0\.1)([:/]|$)/i.test(SITE)) {
+    console.error(`--site doit sortir de l'appareil ; « ${SITE} » ne designe rien chez personne.`);
+    process.exit(2);
+}
+
 const MODULE = 'chessbase';
 
 if (!existsSync(path.join(joclyPath, 'gulpfile.js'))) {
@@ -181,11 +209,6 @@ writeFileSync(
 );
 
 // --- 5. configuration imposee ---------------------------------------------
-// Adresse publique du deploiement de reference : elle sert de relai ET de base
-// des liens d'invitation, puisque match.php vit dans le repertoire de
-// mogichex. Un autre hebergement se change ici, en un seul endroit.
-const SITE = 'https://biscandine.fr/variantes/mogichex';
-
 // Sous capacitor:// ou https://localhost, « . » ne designe pas le site : la
 // recherche du relai n'aurait aucun sens. Le dist, lui, est embarque a cote
 // de index.html, donc un chemin relatif suffit et reste juste.
@@ -241,6 +264,12 @@ console.log(`  visuels conserves car cites par les regles : ${referencedVisuals.
 console.log(`  jeux au catalogue : ${games.length}`);
 console.log(`  3D : ${keep3d ? 'conservee' : 'retiree (--no-3d)'}`);
 console.log(`  jeu a distance : ${offline ? 'RETIRE (--offline)' : 'actif'}`);
+if (!offline) {
+    // AFFICHE, parce que c'est le reglage qu'on oublie et qui ne se voit qu'au
+    // moment d'envoyer une invitation — trop tard, et chez l'invite.
+    console.log(`  relai          : ${SITE}`);
+    console.log(`  liens d'invitation : ${SITE}/index.html`);
+}
 console.log(
     `\nEtape suivante, DEPUIS LA RACINE du projet (pas depuis android/) :\n` +
     `  npx cap sync android\n` +

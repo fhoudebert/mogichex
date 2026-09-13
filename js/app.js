@@ -952,6 +952,36 @@ async function sendChat(payload) {
     }
 }
 
+/**
+ * Les deux adresses du jeu a distance, dans « A propos ».
+ *
+ * POURQUOI LES MONTRER. Elles sont fixees a la construction (coquille native)
+ * ou trouvees au demarrage (web), et rien a l'ecran ne les revele. Un APK
+ * construit sans `--site` ne se trahit qu'au moment d'envoyer une invitation,
+ * quand le lien commence par `https://localhost` — c'est-a-dire trop tard, et
+ * chez l'invite. Les afficher ici coute trois lignes et repond a la question
+ * « quelle adresse cette application emploie-t-elle ? » sans ouvrir de console.
+ *
+ * Le relai n'est cherche qu'au moment de proposer une partie : tant qu'il ne
+ * l'a pas ete, on le dit plutot que d'afficher un vide ambigu.
+ */
+function showRemoteAddresses() {
+    const box = $('#about-remote');
+    if (!CONFIG.remotePlay) {
+        box.hidden = true;
+        return;
+    }
+    const base = inviteBaseFrom({
+        configured: CONFIG.inviteBase,
+        page: location.href,
+        relay: CONFIG.relayUrl,
+    });
+    box.hidden = false;
+    box.textContent =
+        `${t('Relay')} : ${CONFIG.relayUrl || t('not looked up yet')}\n` +
+        `${t('Invitation links')} : ${base || t('none — this build has no public address')}`;
+}
+
 function wireChat() {
     $('#btn-chat').addEventListener('click', () => {
         openPanel('#panel-chat');
@@ -1162,7 +1192,10 @@ async function main() {
     });
     wireChat();
 
-    $('#btn-settings').addEventListener('click', () => openPanel('#panel-settings'));
+    $('#btn-settings').addEventListener('click', () => {
+        showRemoteAddresses();
+        openPanel('#panel-settings');
+    });
     fillSelect(
         $('#sel-lang'),
         availableLocales().map((l) => ({ value: l.code, label: l.label })),
