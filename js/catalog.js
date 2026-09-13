@@ -48,14 +48,70 @@ export function filterGames(games, opts = {}) {
     });
 }
 
+/**
+ * Nom d'affichage des modules.
+ *
+ * POURQUOI UNE TABLE PLUTOT QUE LE CAPITALIZE DU CSS. Les identifiants de
+ * modules sont des mots-valises — `fourinarow`, `pensoc` — que
+ * `text-transform: capitalize` rendait « Fourinarow » et « Pensoc » : lisibles
+ * par qui connait deja jocly, opaques pour les autres. Et une fois traduits,
+ * le capitalize devenait nuisible, transformant « Puissance 4 » en « Puissance
+ * 4 » mais « Four in a row » en « Four In A Row ». Les libelles sont donc
+ * ecrits ici tels qu'ils doivent apparaitre, et le CSS ne touche plus a la
+ * casse.
+ *
+ * Les valeurs sont les libelles ANGLAIS, donc les cles de traduction, comme
+ * partout ailleurs dans ce projet. Ce qui n'a pas de traduction francaise
+ * s'affiche en anglais — c'est le cas des noms propres (Tafl, Margo, Mana,
+ * Yohoho, Go), qui ne se traduisent pas.
+ */
+export const MODULE_LABELS = {
+    checkers: 'Checkers',
+    chessbase: 'Chessbase',
+    fourinarow: 'Four in a row',
+    go: 'Go',
+    hunt: 'Hunt',
+    mana: 'Mana',
+    margo: 'Margo',
+    mills: 'Mills',
+    pensoc: 'Penguin soccer',
+    reversi: 'Reversi',
+    scrum: 'Scrum',
+    tafl: 'Tafl',
+    yohoho: 'Yohoho',
+};
+
+/**
+ * Le nom a afficher pour un module.
+ *
+ * Un module inconnu — jocly en gagne — rend son identifiant avec une majuscule
+ * initiale : moche, mais jamais vide, et jamais « FOURINAROW ». C'est le meme
+ * principe que le repli des titres de jeux.
+ *
+ * @param {string} module
+ * @param {Function} [t] traduction ; sans elle, le libelle anglais
+ */
+export function moduleLabel(module, t = (x) => x) {
+    const name = String(module || '');
+    const label = MODULE_LABELS[name] || (name ? name[0].toUpperCase() + name.slice(1) : '');
+    return t(label);
+}
+
 /** Groupe par module, modules tries, jeux tries par titre localise. */
-export function groupByModule(games, locale = 'en') {
+export function groupByModule(games, locale = 'en', t = null) {
     const map = new Map();
     for (const g of games) {
         if (!map.has(g.module)) map.set(g.module, []);
         map.get(g.module).push(g);
     }
     const collator = new Intl.Collator(locale, { sensitivity: 'base' });
+    // TRI SUR LE LIBELLE AFFICHE, pas sur l'identifiant. Les jeux d'un module
+    // sont deja ranges par titre localise ; ranger les modules par identifiant
+    // donnait, en francais, « Dames, Echecs, Puissance 4, Go, Chasse… » —
+    // l'ordre alphabetique d'une langue que l'utilisateur ne voit pas. Sans
+    // `t`, le libelle anglais sert de cle, ce qui redonne l'ordre d'avant pour
+    // les modules dont le libelle est l'identifiant capitalise.
+    const cle = (module) => (t ? moduleLabel(module, t) : moduleLabel(module));
     return [...map.entries()]
         .map(([module, list]) => ({
             module,
@@ -63,7 +119,7 @@ export function groupByModule(games, locale = 'en') {
                 collator.compare(pickLocalized(a.title, locale), pickLocalized(b.title, locale))
             ),
         }))
-        .sort((a, b) => collator.compare(a.module, b.module));
+        .sort((a, b) => collator.compare(cle(a.module), cle(b.module)));
 }
 
 /**
@@ -80,6 +136,10 @@ export function groupByModule(games, locale = 'en') {
 export function initialCollapsed(groups, { searching = false } = {}) {
     const set = new Set();
     if (searching) return set;
-    for (const g of groups) set.add(g.module);
+    // Les favoris font exception, et c'est tout leur interet : les modules
+    // sont replies pour donner la carte des familles, les favoris sont ouverts
+    // pour donner les jeux. Une section de favoris repliee ne ferait gagner
+    // aucun geste par rapport a chercher le jeu dans son module.
+    for (const g of groups) if (!g.favorite) set.add(g.module);
     return set;
 }

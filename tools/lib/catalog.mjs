@@ -59,7 +59,19 @@ export function buildEntry(raw, { ineligible }) {
     return {
         name: raw.name,
         module: model.module || null,
-        title: normalizeLocalized(model['title-en']) || { en: raw.name },
+        // DEUX CONVENTIONS COEXISTENT DANS JOCLY, et n'en lire qu'une coutait
+        // cher : 103 jeux declarent `title-en`, une chaine anglaise ; 26
+        // declarent `title`, un objet localise — et ces 26-la ont TOUS une
+        // version francaise. Ne lire que `title-en` les faisait tomber sur le
+        // repli, c'est-a-dire afficher leur identifiant brut
+        // (« alquerque-arabic », « draughts8 ») dans les deux langues, alors
+        // que le titre traduit etait a cote.
+        //
+        // L'objet localise passe en PREMIER : quand un jeu porte les deux, le
+        // plus riche gagne.
+        title:
+            normalizeLocalized(model.title) ||
+            normalizeLocalized(model['title-en']) || { en: raw.name },
         summary: normalizeLocalized(model.summary),
         thumbnail: model.thumbnail || null,
         rules: normalizeLocalized(model.rules),

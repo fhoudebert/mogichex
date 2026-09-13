@@ -62,7 +62,14 @@ for (const dir of readdirSync(gamesDir).sort()) {
         const geo = inspect(dir, (g.config && g.config.model && g.config.model.js) || []);
         const big = geo.width > maxSide || geo.height > maxSide;
         const exotic = geo.kinds.some((k) => k === 'cubic' || k === 'multiplan' || k === 'cylinder');
-        rows.push({ name: g.name, module: dir, geo, suspect: big || exotic, listed: ineligible.has(g.name) });
+        // Aucun motif reconnu : le scan n'a RIEN lu de ce jeu. Ce n'est pas la
+        // meme chose qu'un petit plateau, et c'est la distinction qui manquait
+        // — go19 (19x19) passait pour eligible faute d'etre vu.
+        const muet = !geo.width && geo.kinds.length === 0;
+        rows.push({
+            name: g.name, module: dir, geo, muet,
+            suspect: big || exotic, listed: ineligible.has(g.name),
+        });
     }
 }
 
@@ -79,8 +86,30 @@ console.log(`\n— Dans la liste mais NON suspects par le scan (justifie ? geome
 const b = disagree.filter((r) => !r.suspect && r.listed);
 console.log(b.length ? b.map(fmt).join('\n') : '  (aucun)');
 console.log(`\n— Accord sur ${rows.length - disagree.length} jeux.`);
+
+// LA LIGNE LA PLUS IMPORTANTE DE CETTE SORTIE. « Accord sur N jeux » se lit
+// spontanement comme « N jeux verifies », alors que le scan ne lit que des
+// LITTERAUX : un module qui construit sa taille par parametre — Go('go19', 19)
+// — ne laisse aucune trace, et son plateau de 19x19 passe pour petit. C'est
+// exactement ainsi que go19 s'est retrouve eligible sur telephone.
+const muets = rows.filter((r) => r.muet);
+const lus = rows.length - muets.length;
 console.log(
-    `\nRappel : les desaccords ne sont pas des erreurs. fantasticXIII-chess (13x13) et\n` +
-    `les jeux cylindriques sont volontairement acceptes sur telephone ; voir le\n` +
-    `commentaire de data/phone-ineligible.json.`
+    `\n— Couverture : geometrie lue pour ${lus} jeux sur ${rows.length}. ` +
+    `${muets.length} ILLISIBLES,\n  sur lesquels le scan ne dit rien — ni « petit », ni « sûr ».`
+);
+if (muets.length) {
+    if (process.argv.includes('--illisibles')) {
+        console.log(muets.map((r) => `  ${r.name.padEnd(22)} ${r.module}`).join('\n'));
+    } else {
+        const parModule = [...new Set(muets.map((r) => r.module))].sort().join(', ');
+        console.log(`  Modules concernes : ${parModule}`);
+        console.log(`  Liste complete : --illisibles`);
+    }
+}
+
+console.log(
+    `\nRappel : les desaccords ne sont pas des erreurs. fantasticXIII-chess (13x13),\n` +
+    `les jeux cylindriques, go9 et go13 sont volontairement acceptes sur telephone ;\n` +
+    `voir le commentaire de data/phone-ineligible.json.`
 );

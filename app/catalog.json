@@ -2,23 +2,24 @@
  "catalogVersion": 1,
  "source": {
   "repo": "jocly2",
-  "commit": "038919cfc37b7a74b1e47f8e658894e4c91e1216",
-  "builtAt": "2026-08-04T06:21:56.656Z"
+  "commit": "c50c12d501c4e8b92196314bba8af7f3934294ff",
+  "builtAt": "2026-09-13T12:09:50.103Z"
  },
  "counts": {
-  "games": 127,
-  "modules": 12,
+  "games": 129,
+  "modules": 13,
   "phone": 116,
-  "tablet": 11,
+  "tablet": 13,
   "obsolete": 0,
   "byModule": {
-   "checkers": 11,
-   "chessbase": 80,
+   "checkers": 8,
+   "chessbase": 84,
    "fourinarow": 5,
+   "go": 3,
    "hunt": 1,
    "mana": 1,
    "margo": 7,
-   "mills": 6,
+   "mills": 4,
    "pensoc": 1,
    "reversi": 7,
    "scrum": 1,
@@ -31,7 +32,8 @@
    "name": "alquerque-arabic",
    "module": "checkers",
    "title": {
-    "en": "Arabic Alquerque"
+    "en": "Arabic Alquerque",
+    "fr": "Alquerque arabe"
    },
    "summary": {
     "en": "Alquerque as played in Middle-East and Spain.",
@@ -97,194 +99,20 @@
    "tier": "phone"
   },
   {
-   "name": "brazilian-draughts",
+   "name": "draughts8",
    "module": "checkers",
    "title": {
-    "en": "Brazilian Draughts"
+    "en": "Draughts 8x8",
+    "fr": "Dames en 8x8"
    },
    "summary": {
-    "en": "Same as international checkers on a 8x8 board.",
-    "fr": "Comme les dames internationales en 8x8."
+    "en": "English, Brazilian, Spanish or German draughts, chosen at the start",
+    "fr": "Dames anglaises, brésiliennes, espagnoles ou allemandes"
    },
    "thumbnail": "draughts8-thumb3d.png",
    "rules": {
-    "en": "rules-brazilian-draughts.html"
-   },
-   "credits": {
-    "en": "credits.html"
-   },
-   "skins": [
-    {
-     "name": "classic3d",
-     "title": "3D Classic",
-     "is3d": true
-    },
-    {
-     "name": "turtles3d",
-     "title": "3D Turtles",
-     "is3d": true
-    },
-    {
-     "name": "classical",
-     "title": "Classic",
-     "is3d": false
-    },
-    {
-     "name": "marble0",
-     "title": "Marble",
-     "is3d": false
-    },
-    {
-     "name": "wood0",
-     "title": "Wood",
-     "is3d": false
-    },
-    {
-     "name": "green",
-     "title": "Green",
-     "is3d": false
-    }
-   ],
-   "defaultSkin": "classical",
-   "defaultSkinIs2d": true,
-   "ratio": 1,
-   "switchable": true,
-   "levels": [
-    {
-     "label": "Fast",
-     "isDefault": true,
-     "ai": "uct"
-    },
-    {
-     "label": "Beginner",
-     "isDefault": false,
-     "ai": "uct"
-    },
-    {
-     "label": "Easy",
-     "isDefault": false,
-     "ai": "uct"
-    },
-    {
-     "label": "Medium",
-     "isDefault": false,
-     "ai": "uct"
-    },
-    {
-     "label": "Hard",
-     "isDefault": false,
-     "ai": "uct"
-    },
-    {
-     "label": "Expert",
-     "isDefault": false,
-     "ai": "uct"
-    }
-   ],
-   "obsolete": false,
-   "tier": "phone"
-  },
-  {
-   "name": "english-draughts",
-   "module": "checkers",
-   "title": {
-    "en": "English Draughts"
-   },
-   "summary": {
-    "en": "A popular version of checkers on a 8x8 board.",
-    "fr": "Une version populaire des dames en 8x8."
-   },
-   "thumbnail": "draughts8-thumb3d.png",
-   "rules": {
-    "en": "rules-brit-checkers.html"
-   },
-   "credits": {
-    "en": "credits.html"
-   },
-   "skins": [
-    {
-     "name": "classic3d",
-     "title": "3D Classic",
-     "is3d": true
-    },
-    {
-     "name": "turtles3d",
-     "title": "3D Turtles",
-     "is3d": true
-    },
-    {
-     "name": "classical",
-     "title": "Classic",
-     "is3d": false
-    },
-    {
-     "name": "marble0",
-     "title": "Marble",
-     "is3d": false
-    },
-    {
-     "name": "wood0",
-     "title": "Wood",
-     "is3d": false
-    },
-    {
-     "name": "green",
-     "title": "Green",
-     "is3d": false
-    }
-   ],
-   "defaultSkin": "classical",
-   "defaultSkinIs2d": true,
-   "ratio": 1,
-   "switchable": true,
-   "levels": [
-    {
-     "label": "Fast",
-     "isDefault": true,
-     "ai": "uct"
-    },
-    {
-     "label": "Beginner",
-     "isDefault": false,
-     "ai": "uct"
-    },
-    {
-     "label": "Easy",
-     "isDefault": false,
-     "ai": "uct"
-    },
-    {
-     "label": "Medium",
-     "isDefault": false,
-     "ai": "uct"
-    },
-    {
-     "label": "Hard",
-     "isDefault": false,
-     "ai": "uct"
-    },
-    {
-     "label": "Expert",
-     "isDefault": false,
-     "ai": "uct"
-    }
-   ],
-   "obsolete": false,
-   "tier": "phone"
-  },
-  {
-   "name": "german-draughts",
-   "module": "checkers",
-   "title": {
-    "en": "German Draughts"
-   },
-   "summary": {
-    "en": "Checkers according to German Draughts rules.",
-    "fr": "Les dames selon les règles allemandes."
-   },
-   "thumbnail": "draughts8-thumb3d.png",
-   "rules": {
-    "en": "rules-german-draughts.html"
+    "en": "rules-draughts8.html",
+    "fr": "rules-draughts8_fr.html"
    },
    "credits": {
     "en": "credits.html"
@@ -364,11 +192,12 @@
    "name": "draughts",
    "module": "checkers",
    "title": {
-    "en": "International Draughts"
+    "en": "International Draughts",
+    "fr": "Dames internationales"
    },
    "summary": {
     "en": "Rules for draughts as played in worldwide competitions.",
-    "fr": "Jeu de Dames international"
+    "fr": "Suivant les règles des compétitions à travers le monde"
    },
    "thumbnail": "draughts-thumb3d.png",
    "rules": {
@@ -526,7 +355,8 @@
    "name": "alquerque-roman",
    "module": "checkers",
    "title": {
-    "en": "Roman Alquerque"
+    "en": "Roman Alquerque",
+    "fr": "Alquerque romain"
    },
    "summary": {
     "en": "Alquerque as played in France and England.",
@@ -592,98 +422,11 @@
    "tier": "phone"
   },
   {
-   "name": "spanish-draughts",
-   "module": "checkers",
-   "title": {
-    "en": "Spanish Draughts"
-   },
-   "summary": {
-    "en": "Same as international checkers on a 8x8 board, no backward capture.",
-    "fr": "Comme les dames internationales en 8x8, sans prise en arrière."
-   },
-   "thumbnail": "draughts8-thumb3d.png",
-   "rules": {
-    "en": "rules-spanish-draughts.html"
-   },
-   "credits": {
-    "en": "credits.html"
-   },
-   "skins": [
-    {
-     "name": "classic3d",
-     "title": "3D Classic",
-     "is3d": true
-    },
-    {
-     "name": "turtles3d",
-     "title": "3D Turtles",
-     "is3d": true
-    },
-    {
-     "name": "classical",
-     "title": "Classic",
-     "is3d": false
-    },
-    {
-     "name": "marble0",
-     "title": "Marble",
-     "is3d": false
-    },
-    {
-     "name": "wood0",
-     "title": "Wood",
-     "is3d": false
-    },
-    {
-     "name": "green",
-     "title": "Green",
-     "is3d": false
-    }
-   ],
-   "defaultSkin": "classical",
-   "defaultSkinIs2d": true,
-   "ratio": 1,
-   "switchable": true,
-   "levels": [
-    {
-     "label": "Fast",
-     "isDefault": true,
-     "ai": "uct"
-    },
-    {
-     "label": "Beginner",
-     "isDefault": false,
-     "ai": "uct"
-    },
-    {
-     "label": "Easy",
-     "isDefault": false,
-     "ai": "uct"
-    },
-    {
-     "label": "Medium",
-     "isDefault": false,
-     "ai": "uct"
-    },
-    {
-     "label": "Hard",
-     "isDefault": false,
-     "ai": "uct"
-    },
-    {
-     "label": "Expert",
-     "isDefault": false,
-     "ai": "uct"
-    }
-   ],
-   "obsolete": false,
-   "tier": "phone"
-  },
-  {
    "name": "suicide-checkers",
    "module": "checkers",
    "title": {
-    "en": "Suicide checkers"
+    "en": "Suicide checkers",
+    "fr": "Anti-dames"
    },
    "summary": {
     "en": "A.k.a Giveaway checkers or Anti-checkers",
@@ -860,7 +603,8 @@
    "name": "turkish-draughts",
    "module": "checkers",
    "title": {
-    "en": "Turkish Draughts"
+    "en": "Turkish Draughts",
+    "fr": "Dames turques"
    },
    "summary": {
     "en": "A 8x8 checkers on straight lines.",
@@ -944,7 +688,8 @@
    "name": "capablanca-chess",
    "module": "chessbase",
    "title": {
-    "en": "10x8 Chess variants"
+    "en": "10x8 Chess variants",
+    "fr": "Échecs en 10x8"
    },
    "summary": {
     "en": "Capablanca, Janus, Carrera, Gothic …",
@@ -1004,14 +749,90 @@
    "tier": "phone"
   },
   {
+   "name": "three-check-chess",
+   "module": "chessbase",
+   "title": {
+    "en": "3 check",
+    "fr": "3 Échecs"
+   },
+   "summary": {
+    "en": "Orthodox chess, but checking three times also wins",
+    "fr": "Mettre trois fois échec donne la victoire"
+   },
+   "thumbnail": "res/rules/standard/3check-thumbnail.png",
+   "rules": {
+    "en": "res/rules/standard/threecheck-rules.html",
+    "fr": "res/rules/standard/threecheck-rules_fr.html"
+   },
+   "credits": {
+    "en": "famous/credits.html"
+   },
+   "skins": [
+    {
+     "name": "skin3d",
+     "title": "3D Classic",
+     "is3d": true
+    },
+    {
+     "name": "skin3dflat",
+     "title": "3D Flat",
+     "is3d": true
+    },
+    {
+     "name": "skin2dfull",
+     "title": "2D Classic",
+     "is3d": false
+    },
+    {
+     "name": "skin2dwood",
+     "title": "2D Wood",
+     "is3d": false
+    }
+   ],
+   "defaultSkin": "skin2dfull",
+   "defaultSkinIs2d": true,
+   "ratio": 1,
+   "switchable": true,
+   "levels": [
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
+    }
+   ],
+   "obsolete": false,
+   "tier": "phone"
+  },
+  {
    "name": "3dchess",
    "module": "chessbase",
    "title": {
-    "en": "3D Chess"
+    "en": "3D Chess",
+    "fr": "Échecs 3D"
    },
    "summary": {
-    "en": "Asymmetric 3D Chess (6x8x3)",
-    "fr": "Échecs 3D asymétriques (6x8x3)"
+    "en": "3D Chess (6x8x3)",
+    "fr": "Échecs 3D (6x8x3)"
    },
    "thumbnail": "res/rules/3dchess/3dchess-thumb.png",
    "rules": {
@@ -1126,69 +947,6 @@
    "tier": "phone"
   },
   {
-   "name": "baby-chess",
-   "module": "chessbase",
-   "title": {
-    "en": "Baby Chess"
-   },
-   "summary": {
-    "en": "5x5 Baby chess",
-    "fr": "Baby chess en 5x5"
-   },
-   "thumbnail": "res/rules/mini/baby-thumb.png",
-   "rules": {
-    "en": "res/rules/mini/baby-rules.html"
-   },
-   "credits": {
-    "en": "res/rules/mini/baby-credits.html"
-   },
-   "skins": [
-    {
-     "name": "skin3d",
-     "title": "3D Classic",
-     "is3d": true
-    },
-    {
-     "name": "skin2d",
-     "title": "2D Classic",
-     "is3d": false
-    }
-   ],
-   "defaultSkin": "skin2d",
-   "defaultSkinIs2d": true,
-   "ratio": 1,
-   "switchable": true,
-   "levels": [
-    {
-     "label": "Easy",
-     "isDefault": false,
-     "ai": "uct"
-    },
-    {
-     "label": "Fast [1sec]",
-     "isDefault": true,
-     "ai": "uct"
-    },
-    {
-     "label": "Medium",
-     "isDefault": false,
-     "ai": "uct"
-    },
-    {
-     "label": "Strong",
-     "isDefault": false,
-     "ai": "uct"
-    },
-    {
-     "label": "Expert",
-     "isDefault": false,
-     "ai": "fairy-stockfish"
-    }
-   ],
-   "obsolete": false,
-   "tier": "phone"
-  },
-  {
    "name": "bigorra-chess",
    "module": "chessbase",
    "title": {
@@ -1196,7 +954,7 @@
    },
    "summary": {
     "en": "FantasticXIII + Gigachess II - 16x16",
-    "fr": "FantasticXIII + Gigachess II — 16x16"
+    "fr": "FantasticXIII + Gigachess II - 16x16"
    },
    "thumbnail": "res/rules/fantasticXIII/bigorra-thumb.png",
    "rules": {
@@ -1309,7 +1067,8 @@
    "name": "byzantine-chess",
    "module": "chessbase",
    "title": {
-    "en": "Byzantine Chess"
+    "en": "Byzantine Chess",
+    "fr": "Échecs byzantins "
    },
    "summary": {
     "en": "10th century circular Chess",
@@ -1376,7 +1135,8 @@
    },
    "thumbnail": "res/rules/knighted/chancellor-thumb.png",
    "rules": {
-    "en": "res/rules/knighted/chancellor-rules.html"
+    "en": "res/rules/knighted/chancellor-rules.html",
+    "fr": "res/rules/knighted/chancellor-rules_fr.html"
    },
    "credits": {
     "en": "res/rules/knighted/chancellor-credits.html"
@@ -1431,7 +1191,8 @@
    "name": "classic-chess",
    "module": "chessbase",
    "title": {
-    "en": "Chess"
+    "en": "Chess",
+    "fr": "Échecs FIDE"
    },
    "summary": {
     "en": "Regular Orthodox Classic Western Chess",
@@ -1641,7 +1402,8 @@
    },
    "thumbnail": "res/rules/shogi/chu-seireigi-thumb.png",
    "rules": {
-    "en": "res/rules/shogi/chu-seireigi-shogi-rules.html"
+    "en": "res/rules/shogi/chu-seireigi-shogi-rules.html",
+    "fr": "res/rules/shogi/chu-seireigi-shogi-rules_fr.html"
    },
    "credits": {
     "en": "res/rules/shogi/seireigi-credits.html"
@@ -1699,7 +1461,8 @@
    },
    "thumbnail": "res/rules/shogi/chu-shogi-thumb.png",
    "rules": {
-    "en": "res/rules/shogi/chu-shogi-rules.html"
+    "en": "res/rules/shogi/chu-shogi-rules.html",
+    "fr": "res/rules/shogi/chu-shogi-rules_fr.html"
    },
    "credits": {
     "en": "res/rules/shogi/shogi-credits.html"
@@ -1754,7 +1517,8 @@
    "name": "courier-chess",
    "module": "chessbase",
    "title": {
-    "en": "Courier Chess"
+    "en": "Courier Chess",
+    "fr": "Échecs courier"
    },
    "summary": {
     "en": "12x8 chess (12th century)",
@@ -1792,6 +1556,68 @@
     },
     {
      "label": "Fast [2sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
+    }
+   ],
+   "obsolete": false,
+   "tier": "phone"
+  },
+  {
+   "name": "crazyhouse",
+   "module": "chessbase",
+   "title": {
+    "en": "Crazyhouse"
+   },
+   "summary": {
+    "en": "Chess where captured pieces change sides and are dropped back",
+    "fr": "Échecs avec parachutage de ses prisonniers."
+   },
+   "thumbnail": "res/rules/famous/crazyhouse-thumbnail.png",
+   "rules": {
+    "en": "res/rules/famous/crazyhouse-rules.html",
+    "fr": "res/rules/famous/crazyhouse-rules_fr.html"
+   },
+   "credits": null,
+   "skins": [
+    {
+     "name": "skin3d",
+     "title": "3D Classic",
+     "is3d": true
+    },
+    {
+     "name": "skin2dfull",
+     "title": "2D Classic",
+     "is3d": false
+    }
+   ],
+   "defaultSkin": "skin2dfull",
+   "defaultSkinIs2d": true,
+   "ratio": 1,
+   "switchable": true,
+   "levels": [
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
      "isDefault": true,
      "ai": "uct"
     },
@@ -1877,7 +1703,8 @@
    "name": "cylinder-chess",
    "module": "chessbase",
    "title": {
-    "en": "Cylinder Chess"
+    "en": "Cylinder Chess",
+    "fr": "Échecs cylindriques"
    },
    "summary": {
     "en": "Cylinder Chess",
@@ -2056,7 +1883,8 @@
    "name": "dukerutland-chess",
    "module": "chessbase",
    "title": {
-    "en": "Duke of Rutland Chess"
+    "en": "Duke of Rutland Chess",
+    "fr": "Échecs du duc de Rutland"
    },
    "summary": {
     "en": "Chess on 14x10 (1747)",
@@ -2223,69 +2051,6 @@
      "label": "Strong",
      "isDefault": false,
      "ai": "uct"
-    }
-   ],
-   "obsolete": false,
-   "tier": "phone"
-  },
-  {
-   "name": "gardner-chess",
-   "module": "chessbase",
-   "title": {
-    "en": "Gardner MiniChess"
-   },
-   "summary": {
-    "en": "Gardner 5x5 minichess (1969)",
-    "fr": "Mini-échecs 5x5 de Gardner (1969)"
-   },
-   "thumbnail": "res/rules/mini/gardner-thumb.png",
-   "rules": {
-    "en": "res/rules/mini/gardner-rules.html"
-   },
-   "credits": {
-    "en": "res/rules/mini/gardner-credits.html"
-   },
-   "skins": [
-    {
-     "name": "skin3d",
-     "title": "3D Classic",
-     "is3d": true
-    },
-    {
-     "name": "skin2d",
-     "title": "2D Classic",
-     "is3d": false
-    }
-   ],
-   "defaultSkin": "skin2d",
-   "defaultSkinIs2d": true,
-   "ratio": 1,
-   "switchable": true,
-   "levels": [
-    {
-     "label": "Easy",
-     "isDefault": false,
-     "ai": "uct"
-    },
-    {
-     "label": "Fast [1sec]",
-     "isDefault": true,
-     "ai": "uct"
-    },
-    {
-     "label": "Medium",
-     "isDefault": false,
-     "ai": "uct"
-    },
-    {
-     "label": "Strong",
-     "isDefault": false,
-     "ai": "uct"
-    },
-    {
-     "label": "Expert",
-     "isDefault": false,
-     "ai": "fairy-stockfish"
     }
    ],
    "obsolete": false,
@@ -2783,7 +2548,7 @@
    },
    "summary": {
     "en": "Chess on 10x10 with champions and wizards",
-    "fr": "Échecs en 10x10 avec champions et sorciers"
+    "fr": "Échecs en 10x10 avec champions et enchanteurs"
    },
    "thumbnail": "res/rules/decimal/hectochess-thumb.png",
    "rules": {
@@ -2806,6 +2571,80 @@
     }
    ],
    "defaultSkin": "skin2d",
+   "defaultSkinIs2d": true,
+   "ratio": 1,
+   "switchable": true,
+   "levels": [
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
+    }
+   ],
+   "obsolete": false,
+   "tier": "phone"
+  },
+  {
+   "name": "horde-chess",
+   "module": "chessbase",
+   "title": {
+    "en": "Horde"
+   },
+   "summary": {
+    "en": "An army against 36 Pawns and no King",
+    "fr": "Une armée contre 36 pions et aucun roi"
+   },
+   "thumbnail": "res/rules/standard/horde-thumbnail.png",
+   "rules": {
+    "en": "res/rules/standard/horde-rules.html",
+    "fr": "res/rules/standard/horde-rules_fr.html"
+   },
+   "credits": {
+    "en": "famous/credits.html"
+   },
+   "skins": [
+    {
+     "name": "skin3d",
+     "title": "3D Classic",
+     "is3d": true
+    },
+    {
+     "name": "skin3dflat",
+     "title": "3D Flat",
+     "is3d": true
+    },
+    {
+     "name": "skin2dfull",
+     "title": "2D Classic",
+     "is3d": false
+    },
+    {
+     "name": "skin2dwood",
+     "title": "2D Wood",
+     "is3d": false
+    }
+   ],
+   "defaultSkin": "skin2dfull",
    "defaultSkinIs2d": true,
    "ratio": 1,
    "switchable": true,
@@ -2898,6 +2737,80 @@
    "tier": "phone"
   },
   {
+   "name": "janggi",
+   "module": "chessbase",
+   "title": {
+    "en": "Janggi"
+   },
+   "summary": {
+    "en": "Korean Chess",
+    "fr": "Les Échecs coréens"
+   },
+   "thumbnail": "res/rules/janggi/janggi-thumb.png",
+   "rules": {
+    "en": "res/rules/janggi/janggi-rules.html",
+    "fr": "res/rules/janggi/janggi-rules-fr.html"
+   },
+   "credits": {
+    "en": "res/rules/janggi/janggi-credits.html"
+   },
+   "skins": [
+    {
+     "name": "skin3d",
+     "title": "3D Classic",
+     "is3d": true
+    },
+    {
+     "name": "skin3dwall",
+     "title": "3D Wall",
+     "is3d": true
+    },
+    {
+     "name": "skin3dwestern",
+     "title": "3D Western",
+     "is3d": true
+    },
+    {
+     "name": "skin2d",
+     "title": "2D Classic",
+     "is3d": false
+    },
+    {
+     "name": "skin2dwestern",
+     "title": "2D Pictograms",
+     "is3d": false
+    }
+   ],
+   "defaultSkin": "skin2d",
+   "defaultSkinIs2d": true,
+   "ratio": 0.9,
+   "switchable": true,
+   "levels": [
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
+   ],
+   "obsolete": false,
+   "tier": "phone"
+  },
+  {
    "name": "kaisergame-chess",
    "module": "chessbase",
    "title": {
@@ -2956,6 +2869,68 @@
    "tier": "phone"
   },
   {
+   "name": "khans-chess",
+   "module": "chessbase",
+   "title": {
+    "en": "Khan's Chess"
+   },
+   "summary": {
+    "en": "A Mongol horde of knight-movers against the FIDE army",
+    "fr": "Une horde mongole de cavaliers contre l’armée FIDE"
+   },
+   "thumbnail": "res/rules/khans/khans-thumb.png",
+   "rules": {
+    "en": "res/rules/khans/khans-rules.html",
+    "fr": "res/rules/khans/khans-rules_fr.html"
+   },
+   "credits": null,
+   "skins": [
+    {
+     "name": "skin3d",
+     "title": "3D Classic",
+     "is3d": true
+    },
+    {
+     "name": "skin2d",
+     "title": "2D Classic",
+     "is3d": false
+    }
+   ],
+   "defaultSkin": "skin2d",
+   "defaultSkinIs2d": true,
+   "ratio": 1,
+   "switchable": true,
+   "levels": [
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
+    }
+   ],
+   "obsolete": false,
+   "tier": "phone"
+  },
+  {
    "name": "knightmate-chess",
    "module": "chessbase",
    "title": {
@@ -2967,7 +2942,8 @@
    },
    "thumbnail": "res/rules/standard/knightmate.png",
    "rules": {
-    "en": "res/rules/standard/knightmate.html"
+    "en": "res/rules/standard/knightmate.html",
+    "fr": "res/rules/standard/knightmate_fr.html"
    },
    "credits": {
     "en": "famous/credits.html"
@@ -3013,70 +2989,6 @@
      "label": "Expert",
      "isDefault": false,
      "ai": "fairy-stockfish"
-    }
-   ],
-   "obsolete": false,
-   "tier": "phone"
-  },
-  {
-   "name": "kotaishi-shogi",
-   "module": "chessbase",
-   "title": {
-    "en": "Kōtaishi Shogi"
-   },
-   "summary": {
-    "en": "Shogi with a drunk elephant",
-    "fr": "Shogi avec un éléphant ivre"
-   },
-   "thumbnail": "res/rules/shogi/shogi-thumb.png",
-   "rules": {
-    "en": "res/rules/shogi/kotaishi-rules.html",
-    "fr": "res/rules/shogi/kotaishi-rules_fr.html"
-   },
-   "credits": {
-    "en": "res/rules/shogi/kotaishi-credits.html"
-   },
-   "skins": [
-    {
-     "name": "skin3d",
-     "title": "3D Classic",
-     "is3d": true
-    },
-    {
-     "name": "skin2dmnemonic",
-     "title": "2D Mnemonic",
-     "is3d": false
-    },
-    {
-     "name": "skin2dwestern",
-     "title": "2D Pictos",
-     "is3d": false
-    }
-   ],
-   "defaultSkin": "skin2dmnemonic",
-   "defaultSkinIs2d": true,
-   "ratio": 1,
-   "switchable": true,
-   "levels": [
-    {
-     "label": "Easy",
-     "isDefault": false,
-     "ai": "uct"
-    },
-    {
-     "label": "Fast [3sec]",
-     "isDefault": true,
-     "ai": "uct"
-    },
-    {
-     "label": "Medium",
-     "isDefault": false,
-     "ai": "uct"
-    },
-    {
-     "label": "Strong",
-     "isDefault": false,
-     "ai": "uct"
     }
    ],
    "obsolete": false,
@@ -3281,7 +3193,8 @@
    "name": "losing-chess",
    "module": "chessbase",
    "title": {
-    "en": "Losing Chess"
+    "en": "Losing Chess",
+    "fr": "Qui perd gagne"
    },
    "summary": {
     "en": "Also known as Antichess, Suicide Chess, Giveaway Chess, ...",
@@ -3476,69 +3389,6 @@
    "tier": "phone"
   },
   {
-   "name": "malett-chess",
-   "module": "chessbase",
-   "title": {
-    "en": "Malett Chess"
-   },
-   "summary": {
-    "en": "5x5 chess variant by Jeff Malett",
-    "fr": "Variante d’échecs 5x5 de Jeff Malett"
-   },
-   "thumbnail": "res/rules/mini/malett-thumb.png",
-   "rules": {
-    "en": "res/rules/mini/malett-rules.html"
-   },
-   "credits": {
-    "en": "res/rules/mini/malett-credits.html"
-   },
-   "skins": [
-    {
-     "name": "skin3d",
-     "title": "3D Classic",
-     "is3d": true
-    },
-    {
-     "name": "skin2d",
-     "title": "2D Classic",
-     "is3d": false
-    }
-   ],
-   "defaultSkin": "skin2d",
-   "defaultSkinIs2d": true,
-   "ratio": 1,
-   "switchable": true,
-   "levels": [
-    {
-     "label": "Easy",
-     "isDefault": false,
-     "ai": "uct"
-    },
-    {
-     "label": "Fast [1sec]",
-     "isDefault": true,
-     "ai": "uct"
-    },
-    {
-     "label": "Medium",
-     "isDefault": false,
-     "ai": "uct"
-    },
-    {
-     "label": "Strong",
-     "isDefault": false,
-     "ai": "uct"
-    },
-    {
-     "label": "Expert",
-     "isDefault": false,
-     "ai": "fairy-stockfish"
-    }
-   ],
-   "obsolete": false,
-   "tier": "phone"
-  },
-  {
    "name": "mccooey-chess",
    "module": "chessbase",
    "title": {
@@ -3600,7 +3450,8 @@
    "name": "metamachy-chess",
    "module": "chessbase",
    "title": {
-    "en": "Metamachy"
+    "en": "Metamachy",
+    "fr": "Métamachie"
    },
    "summary": {
     "en": "Chess on 12x12 with fairy pieces",
@@ -3656,21 +3507,22 @@
    "tier": "phone"
   },
   {
-   "name": "micro4x5-chess",
+   "name": "mini-shogi",
    "module": "chessbase",
    "title": {
-    "en": "Micro Chess"
+    "en": "Mini-Shogi"
    },
    "summary": {
-    "en": "4x5 chess variant by Glimne (1997)",
-    "fr": "Variante d’échecs 4x5 de Glimne (1997)"
+    "en": "Shogi on 5x5 with 6 pieces",
+    "fr": "Shogi en 5x5 avec 6 pièces"
    },
-   "thumbnail": "res/rules/mini/micro4x5-thumb.png",
+   "thumbnail": "res/rules/shogi/mini-shogi-thumb.png",
    "rules": {
-    "en": "res/rules/mini/micro4x5-rules.html"
+    "en": "res/rules/shogi/mini-shogi-rules.html",
+    "fr": "res/rules/shogi/mini-shogi-rules_fr.html"
    },
    "credits": {
-    "en": "res/rules/mini/micro4x5-credits.html"
+    "en": "res/rules/shogi/shogi-credits.html"
    },
    "skins": [
     {
@@ -3679,12 +3531,22 @@
      "is3d": true
     },
     {
+     "name": "skin2dwestern",
+     "title": "2D Pictos",
+     "is3d": false
+    },
+    {
+     "name": "skin2dmnemonic",
+     "title": "2D Mnemonic",
+     "is3d": false
+    },
+    {
      "name": "skin2d",
      "title": "2D Classic",
      "is3d": false
     }
    ],
-   "defaultSkin": "skin2d",
+   "defaultSkin": "skin2dwestern",
    "defaultSkinIs2d": true,
    "ratio": 1,
    "switchable": true,
@@ -3695,7 +3557,7 @@
      "ai": "uct"
     },
     {
-     "label": "Fast [1sec]",
+     "label": "Fast [3sec]",
      "isDefault": true,
      "ai": "uct"
     },
@@ -3722,7 +3584,8 @@
    "name": "mini4x4-chess",
    "module": "chessbase",
    "title": {
-    "en": "Mini Chess 4x4"
+    "en": "MiniChess 4x5",
+    "fr": "Mini-échecs 4x5"
    },
    "summary": {
     "en": "4x4 mini chess variant",
@@ -3782,21 +3645,21 @@
    "tier": "phone"
   },
   {
-   "name": "mini4x5-chess",
+   "name": "minichess4x5-chess",
    "module": "chessbase",
    "title": {
-    "en": "Mini Chess 4x5"
+    "en": "MiniChess 4x5"
    },
    "summary": {
-    "en": "4x5 mini chess variant",
-    "fr": "Variante d’échecs miniature en 4x5"
+    "en": "Mini and Micro chess on 4x5",
+    "fr": "Mini et Micro échecs en 4x5"
    },
-   "thumbnail": "res/rules/mini/mini4x5-thumb.png",
+   "thumbnail": "res/rules/mini/minichess4x5-thumb.png",
    "rules": {
-    "en": "res/rules/mini/mini4x5-rules.html"
+    "en": "res/rules/mini/minichess4x5-rules.html"
    },
    "credits": {
-    "en": "res/rules/mini/mini4x5-credits.html"
+    "en": "res/rules/mini/minichess4x5-credits.html"
    },
    "skins": [
     {
@@ -3845,22 +3708,22 @@
    "tier": "phone"
   },
   {
-   "name": "mini-shogi",
+   "name": "minichess5x5-chess",
    "module": "chessbase",
    "title": {
-    "en": "Mini-Shogi"
+    "en": "MiniChess 5x5",
+    "fr": "Mini-échecs 5x5"
    },
    "summary": {
-    "en": "Shogi on 5x5 with 6 pieces",
-    "fr": "Shogi en 5x5 avec 6 pièces"
+    "en": "Gardner, Baby and Malett on 5x5",
+    "fr": "Gardner, Baby et Malett en 5x5"
    },
-   "thumbnail": "res/rules/shogi/mini-shogi-thumb.png",
+   "thumbnail": "res/rules/mini/minichess5x5-thumb.png",
    "rules": {
-    "en": "res/rules/shogi/mini-shogi-rules.html",
-    "fr": "res/rules/shogi/mini-shogi-rules_fr.html"
+    "en": "res/rules/mini/minichess5x5-rules.html"
    },
    "credits": {
-    "en": "res/rules/shogi/shogi-credits.html"
+    "en": "res/rules/mini/minichess5x5-credits.html"
    },
    "skins": [
     {
@@ -3869,22 +3732,12 @@
      "is3d": true
     },
     {
-     "name": "skin2dwestern",
-     "title": "2D Pictos",
-     "is3d": false
-    },
-    {
-     "name": "skin2dmnemonic",
-     "title": "2D Mnemonic",
-     "is3d": false
-    },
-    {
      "name": "skin2d",
      "title": "2D Classic",
      "is3d": false
     }
    ],
-   "defaultSkin": "skin2dwestern",
+   "defaultSkin": "skin2d",
    "defaultSkinIs2d": true,
    "ratio": 1,
    "switchable": true,
@@ -3895,7 +3748,7 @@
      "ai": "uct"
     },
     {
-     "label": "Fast [3sec]",
+     "label": "Fast [1sec]",
      "isDefault": true,
      "ai": "uct"
     },
@@ -3989,7 +3842,8 @@
    },
    "thumbnail": "res/rules/knighted/modern-thumb.png",
    "rules": {
-    "en": "res/rules/knighted/modern-rules.html"
+    "en": "res/rules/knighted/modern-rules.html",
+    "fr": "res/rules/knighted/modern-rules_fr.html"
    },
    "credits": {
     "en": "res/rules/knighted/modern-credits.html"
@@ -4039,11 +3893,12 @@
    "name": "circular-chess",
    "module": "chessbase",
    "title": {
-    "en": "Modern Circular Chess"
+    "en": "Modern Circular Chess",
+    "fr": "Échecs circulaires modernes"
    },
    "summary": {
     "en": "Chess on a ring",
-    "fr": "Échecs sur un anneau"
+    "fr": "Échiquier en anneau"
    },
    "thumbnail": "res/rules/circular/circular-thumb.png",
    "rules": {
@@ -4088,6 +3943,71 @@
      "label": "Strong",
      "isDefault": false,
      "ai": "uct"
+    }
+   ],
+   "obsolete": false,
+   "tier": "phone"
+  },
+  {
+   "name": "patchanka-chess",
+   "module": "chessbase",
+   "title": {
+    "en": "Patchanka"
+   },
+   "summary": {
+    "en": "10x10 chess of compound pieces",
+    "fr": "Échecs en 10x10 aux pièces composées"
+   },
+   "thumbnail": "res/rules/patchanka/patchanka-thumb.png",
+   "rules": {
+    "en": "res/rules/patchanka/patchanka-rules.html",
+    "fr": "res/rules/patchanka/patchanka-rules-fr.html"
+   },
+   "credits": {
+    "en": "res/rules/patchanka/patchanka-credits.html",
+    "fr": "res/rules/patchanka/patchanka-credits-fr.html"
+   },
+   "skins": [
+    {
+     "name": "skin3d",
+     "title": "3D Classic",
+     "is3d": true
+    },
+    {
+     "name": "skin2d",
+     "title": "2D Classic",
+     "is3d": false
+    }
+   ],
+   "defaultSkin": "skin2d",
+   "defaultSkinIs2d": true,
+   "ratio": 1,
+   "switchable": true,
+   "levels": [
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
     }
    ],
    "obsolete": false,
@@ -4220,11 +4140,12 @@
    "name": "reformed-courier-chess",
    "module": "chessbase",
    "title": {
-    "en": "Reformed Courierspiel"
+    "en": "Reformed Courierspiel",
+    "fr": "Échecs Courier Réformé"
    },
    "summary": {
-    "en": "Clément Bégnis, 2011",
-    "fr": "Clément Bégnis, 2011"
+    "en": "Modern version of courier chess (12x8)",
+    "fr": "Échecs Courier modernisé (12x8)"
    },
    "thumbnail": "res/rules/reformed-courier/reformed-courier-thumb.png",
    "rules": {
@@ -4507,11 +4428,11 @@
    },
    "thumbnail": "res/rules/scirocco/scirocco-thumb.png",
    "rules": {
-    "en": "res/rules/decimal/scirocco-rules.html",
-    "fr": "res/rules/decimal/scirocco-rules_fr.html"
+    "en": "res/rules/scirocco/scirocco-rules.html",
+    "fr": "res/rules/scirocco/scirocco-rules_fr.html"
    },
    "credits": {
-    "en": "res/rules/decimal/scirocco-credits.html"
+    "en": "res/rules/scirocco/scirocco-credits.html"
    },
    "skins": [
     {
@@ -4806,6 +4727,70 @@
    "tier": "phone"
   },
   {
+   "name": "kotaishi-shogi",
+   "module": "chessbase",
+   "title": {
+    "en": "Shō Shogi"
+   },
+   "summary": {
+    "en": "The ancestor of Shogi, with a drunk elephant - with or without drops",
+    "fr": "L'ancêtre du Shogi, avec un éléphant ivre - avec ou sans parachutage"
+   },
+   "thumbnail": "res/rules/shogi/shogi-thumb.png",
+   "rules": {
+    "en": "res/rules/shogi/kotaishi-rules.html",
+    "fr": "res/rules/shogi/kotaishi-rules_fr.html"
+   },
+   "credits": {
+    "en": "res/rules/shogi/kotaishi-credits.html"
+   },
+   "skins": [
+    {
+     "name": "skin3d",
+     "title": "3D Classic",
+     "is3d": true
+    },
+    {
+     "name": "skin2dmnemonic",
+     "title": "2D Mnemonic",
+     "is3d": false
+    },
+    {
+     "name": "skin2dwestern",
+     "title": "2D Pictos",
+     "is3d": false
+    }
+   ],
+   "defaultSkin": "skin2dmnemonic",
+   "defaultSkinIs2d": true,
+   "ratio": 1,
+   "switchable": true,
+   "levels": [
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [3sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
+   ],
+   "obsolete": false,
+   "tier": "phone"
+  },
+  {
    "name": "shogi",
    "module": "chessbase",
    "title": {
@@ -4942,11 +4927,12 @@
    "name": "space-spartan",
    "module": "chessbase",
    "title": {
-    "en": "Space Spartan"
+    "en": "Space Spartan",
+    "fr": "Spartiates de l'espace"
    },
    "summary": {
-    "en": "6x8x3 Chess",
-    "fr": "Échecs en 6x8x3"
+    "en": "Asymmetric 3D Chess (6x8x3)",
+    "fr": "Échecs 3D asymétriques (6x8x3)"
    },
    "thumbnail": "res/rules/3dchess/space-spartan.png",
    "rules": {
@@ -5190,7 +5176,7 @@
    "thumbnail": "res/rules/team-mate/team-mate-thumb.png",
    "rules": {
     "en": "res/rules/team-mate/team-mate-rules.html",
-    "fr": "res/rules/metamachy/team-mate-rules_fr.html"
+    "fr": "res/rules/team-mate/team-mate-rules_fr.html"
    },
    "credits": {
     "en": "res/rules/team-mate/team-mate-credits.html"
@@ -5235,6 +5221,75 @@
    ],
    "obsolete": false,
    "tier": "phone"
+  },
+  {
+   "name": "tenjiku-shogi",
+   "module": "chessbase",
+   "title": {
+    "en": "Tenjiku Shogi"
+   },
+   "summary": {
+    "en": "The 'exotic' shogi derived from Chu Shogi is the most extravagant of all historical variants.",
+    "fr": "Le shogi 'exotique' issu du chu shogi est la plus extravagante des variantes historiques."
+   },
+   "thumbnail": "res/rules/shogi/tenjiku-thumb.png",
+   "rules": {
+    "en": "res/rules/shogi/tenjiku-rules.html",
+    "fr": "res/rules/shogi/tenjiku-rules_fr.html"
+   },
+   "credits": {
+    "en": "res/rules/shogi/shogi-credits.html"
+   },
+   "skins": [
+    {
+     "name": "skin2d",
+     "title": "2D Classic",
+     "is3d": false
+    },
+    {
+     "name": "skin2dmnemonic",
+     "title": "2D Mnemonic",
+     "is3d": false
+    }
+   ],
+   "defaultSkin": "skin2d",
+   "defaultSkinIs2d": true,
+   "ratio": 1,
+   "switchable": true,
+   "levels": [
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [5sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "10 min",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "20 min",
+     "isDefault": false,
+     "ai": "uct"
+    }
+   ],
+   "obsolete": false,
+   "tier": "tablet"
   },
   {
    "name": "tera-chess",
@@ -5298,11 +5353,12 @@
    "name": "timurid-chess",
    "module": "chessbase",
    "title": {
-    "en": "Timurid"
+    "en": "Timurid II",
+    "fr": "Timourides II"
    },
    "summary": {
-    "en": "Tamerlan II on 12x12 with fairy pieces",
-    "fr": "Tamerlan II en 12x12 avec des pièces féeriques"
+    "en": "Tamerlan II on 12x10 with fairy pieces",
+    "fr": "Tamerlan II en 12x10 avec des pièces féeriques"
    },
    "thumbnail": "res/rules/duodecimal/timurid-thumb.png",
    "rules": {
@@ -5348,6 +5404,11 @@
      "label": "Strong",
      "isDefault": false,
      "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
     }
    ],
    "obsolete": false,
@@ -5365,7 +5426,8 @@
    },
    "thumbnail": "res/rules/shogi/tori-shogi-thumb.png",
    "rules": {
-    "en": "res/rules/shogi/tori-shogi-rules.html"
+    "en": "res/rules/shogi/tori-shogi-rules.html",
+    "fr": "res/rules/shogi/tori-shogi-rules_fr.html"
    },
    "credits": {
     "en": "res/rules/shogi/shogi-credits.html"
@@ -5803,7 +5865,7 @@
    },
    "summary": {
     "en": "Extended Metamachy - 12x12",
-    "fr": "Metamachie étendu — 12x12"
+    "fr": "Metamachie étendu - 12x12"
    },
    "thumbnail": "res/rules/metamachy/zanzibar-s-thumb.png",
    "rules": {
@@ -6124,6 +6186,192 @@
      "label": "Strong",
      "isDefault": false,
      "ai": "uct"
+    }
+   ],
+   "obsolete": false,
+   "tier": "phone"
+  },
+  {
+   "name": "go13",
+   "module": "go",
+   "title": {
+    "en": "Go 13x13"
+   },
+   "summary": {
+    "en": "The ancient game of territory, on a 13x13 board",
+    "fr": "Le jeu de go, sur un goban 13x13"
+   },
+   "thumbnail": "go-thumbnail-13.png",
+   "rules": {
+    "en": "rules.html",
+    "fr": "rules-fr.html"
+   },
+   "credits": null,
+   "skins": [
+    {
+     "name": "skin2dwood",
+     "title": "Wood",
+     "is3d": false
+    },
+    {
+     "name": "skin2d",
+     "title": "Plain",
+     "is3d": false
+    }
+   ],
+   "defaultSkin": "skin2dwood",
+   "defaultSkinIs2d": true,
+   "ratio": 1,
+   "switchable": true,
+   "levels": [
+    {
+     "label": "Beginner",
+     "isDefault": false,
+     "ai": null
+    },
+    {
+     "label": "Novice",
+     "isDefault": false,
+     "ai": null
+    },
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "kata"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "kata"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "kata"
+    }
+   ],
+   "obsolete": false,
+   "tier": "phone"
+  },
+  {
+   "name": "go19",
+   "module": "go",
+   "title": {
+    "en": "Go 19x19"
+   },
+   "summary": {
+    "en": "The ancient game of territory, on a 19x19 board",
+    "fr": "Le jeu de go, sur un goban 19x19"
+   },
+   "thumbnail": "go-thumbnail-19.png",
+   "rules": {
+    "en": "rules.html",
+    "fr": "rules-fr.html"
+   },
+   "credits": null,
+   "skins": [
+    {
+     "name": "skin2dwood",
+     "title": "Wood",
+     "is3d": false
+    },
+    {
+     "name": "skin2d",
+     "title": "Plain",
+     "is3d": false
+    }
+   ],
+   "defaultSkin": "skin2dwood",
+   "defaultSkinIs2d": true,
+   "ratio": 1,
+   "switchable": true,
+   "levels": [
+    {
+     "label": "Beginner",
+     "isDefault": false,
+     "ai": null
+    },
+    {
+     "label": "Novice",
+     "isDefault": false,
+     "ai": null
+    },
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "kata"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "kata"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "kata"
+    }
+   ],
+   "obsolete": false,
+   "tier": "tablet"
+  },
+  {
+   "name": "go9",
+   "module": "go",
+   "title": {
+    "en": "Go 9x9"
+   },
+   "summary": {
+    "en": "The ancient game of territory, on a 9x9 board",
+    "fr": "Le jeu de go, sur un goban 9x9"
+   },
+   "thumbnail": "go-thumbnail-9.png",
+   "rules": {
+    "en": "rules.html",
+    "fr": "rules-fr.html"
+   },
+   "credits": null,
+   "skins": [
+    {
+     "name": "skin2dwood",
+     "title": "Wood",
+     "is3d": false
+    },
+    {
+     "name": "skin2d",
+     "title": "Plain",
+     "is3d": false
+    }
+   ],
+   "defaultSkin": "skin2dwood",
+   "defaultSkinIs2d": true,
+   "ratio": 1,
+   "switchable": true,
+   "levels": [
+    {
+     "label": "Beginner",
+     "isDefault": false,
+     "ai": null
+    },
+    {
+     "label": "Novice",
+     "isDefault": false,
+     "ai": null
+    },
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "kata"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "kata"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "kata"
     }
    ],
    "obsolete": false,
@@ -6755,86 +7003,24 @@
    "tier": "phone"
   },
   {
-   "name": "12-men-morris",
+   "name": "morris12",
    "module": "mills",
    "title": {
-    "en": "12 Men´s Morris"
+    "en": "12 Men´s Morris",
+    "fr": "Marelle à 12"
    },
    "summary": {
-    "en": "An old board game",
-    "fr": "Jeu de marelle (x12)"
+    "en": "An old board game, plain or flying",
+    "fr": "Jeu du moulin classique ou avec saut"
    },
    "thumbnail": "mensmorris12-thumb3d.png",
    "rules": {
-    "en": "rules.html",
-    "fr": "rules-fr.html"
+    "en": "rules-morris12.html",
+    "fr": "rules-morris12-fr.html"
    },
    "credits": {
-    "en": "credits.html"
-   },
-   "skins": [
-    {
-     "name": "classic3d",
-     "title": "3D Classic",
-     "is3d": true
-    },
-    {
-     "name": "stone",
-     "title": "Stone",
-     "is3d": false
-    },
-    {
-     "name": "suede",
-     "title": "Suede",
-     "is3d": false
-    },
-    {
-     "name": "wood",
-     "title": "Wood",
-     "is3d": false
-    }
-   ],
-   "defaultSkin": "stone",
-   "defaultSkinIs2d": true,
-   "ratio": 1.2857142857143,
-   "switchable": true,
-   "levels": [
-    {
-     "label": "Easy",
-     "isDefault": true,
-     "ai": null
-    },
-    {
-     "label": "Medium",
-     "isDefault": false,
-     "ai": null
-    },
-    {
-     "label": "Hard",
-     "isDefault": false,
-     "ai": null
-    }
-   ],
-   "obsolete": false,
-   "tier": "phone"
-  },
-  {
-   "name": "12-men-morris-fly",
-   "module": "mills",
-   "title": {
-    "en": "12 Men´s Morris Fly"
-   },
-   "summary": {
-    "en": "An old board game",
-    "fr": "Jeu de marelle volante (x12)"
-   },
-   "thumbnail": "mensmorris12-thumb3d.png",
-   "rules": {
-    "en": "rules.html",
-    "fr": "rules-fr.html"
-   },
-   "credits": {
-    "en": "credits.html"
+    "en": "credits.html",
+    "fr": "credits-fr.html"
    },
    "skins": [
     {
@@ -6886,11 +7072,12 @@
    "name": "6-men-morris",
    "module": "mills",
    "title": {
-    "en": "6 Men´s Morris"
+    "en": "6 Men´s Morris",
+    "fr": "Marelle à 6"
    },
    "summary": {
-    "en": "An old board game",
-    "fr": "Jeu de marelle (x6)"
+    "en": "An old board game, plain or flying",
+    "fr": "Jeu du moulin classique ou avec saut"
    },
    "thumbnail": "mensmorris6-thumb3d.png",
    "rules": {
@@ -6898,7 +7085,8 @@
     "fr": "rules-fr.html"
    },
    "credits": {
-    "en": "credits.html"
+    "en": "credits.html",
+    "fr": "credits-fr.html"
    },
    "skins": [
     {
@@ -6950,11 +7138,12 @@
    "name": "7-men-morris",
    "module": "mills",
    "title": {
-    "en": "7 Men´s Morris"
+    "en": "7 Men´s Morris",
+    "fr": "Marelle à 7"
    },
    "summary": {
-    "en": "An old board game",
-    "fr": "Jeu de marelle (x7)"
+    "en": "An old board game, plain or flying",
+    "fr": "Jeu du moulin classique ou avec saut"
    },
    "thumbnail": "mensmorris7-thumb3d.png",
    "rules": {
@@ -6962,7 +7151,8 @@
     "fr": "rules-fr.html"
    },
    "credits": {
-    "en": "credits.html"
+    "en": "credits.html",
+    "fr": "credits-fr.html"
    },
    "skins": [
     {
@@ -7011,86 +7201,24 @@
    "tier": "phone"
   },
   {
-   "name": "9-men-morris",
+   "name": "morris9",
    "module": "mills",
    "title": {
-    "en": "9 Men´s Morris"
+    "en": "9 Men´s Morris",
+    "fr": "Marelle à 9"
    },
    "summary": {
-    "en": "An old board game",
-    "fr": "Jeu de marelle(x9)"
+    "en": "An old board game, plain or flying",
+    "fr": "Jeu du moulin classique ou avec saut"
    },
    "thumbnail": "mensmorris9-thumb3d.png",
    "rules": {
-    "en": "rules.html",
-    "fr": "rules-fr.html"
+    "en": "rules-morris9.html",
+    "fr": "rules-morris9-fr.html"
    },
    "credits": {
-    "en": "credits.html"
-   },
-   "skins": [
-    {
-     "name": "classic3d",
-     "title": "3D Classic",
-     "is3d": true
-    },
-    {
-     "name": "stone",
-     "title": "Stone",
-     "is3d": false
-    },
-    {
-     "name": "suede",
-     "title": "Suede",
-     "is3d": false
-    },
-    {
-     "name": "wood",
-     "title": "Wood",
-     "is3d": false
-    }
-   ],
-   "defaultSkin": "stone",
-   "defaultSkinIs2d": true,
-   "ratio": 1.2857142857143,
-   "switchable": true,
-   "levels": [
-    {
-     "label": "Easy",
-     "isDefault": true,
-     "ai": null
-    },
-    {
-     "label": "Medium",
-     "isDefault": false,
-     "ai": null
-    },
-    {
-     "label": "Hard",
-     "isDefault": false,
-     "ai": null
-    }
-   ],
-   "obsolete": false,
-   "tier": "phone"
-  },
-  {
-   "name": "9-men-morris-fly",
-   "module": "mills",
-   "title": {
-    "en": "9 Men´s Morris Fly"
-   },
-   "summary": {
-    "en": "An old board game",
-    "fr": "Jeu de marelle volante (x9)"
-   },
-   "thumbnail": "mensmorris9-thumb3d.png",
-   "rules": {
-    "en": "rules.html",
-    "fr": "rules-fr.html"
-   },
-   "credits": {
-    "en": "credits.html"
+    "en": "credits.html",
+    "fr": "credits-fr.html"
    },
    "skins": [
     {

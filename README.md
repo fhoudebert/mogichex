@@ -1,6 +1,6 @@
 # mogichex
 
-**mo**bile · shō**gi** · **chex** — **127 board games, playable with a thumb.**
+**mo**bile · shō**gi** · **chex** — **over 120 board games, playable with a thumb.**
 
 A small, installable web app that puts the whole [Jocly](https://github.com/fhoudebert/jocly2) game
 library on a phone: chess and its eighty-odd variants, shogi, xiangqi, draughts, go-like games,
@@ -12,14 +12,19 @@ tafl, mills, and more.
 
 ## What you get
 
-**127 games in 12 families.** Everything from `classic-chess` to Tafl, Margo and Yohoho. Families
-are collapsed by default so the list stays readable; open one with a tap, or search — accents and
-languages don't matter, typing `echecs` finds *Chess*.
+**Over 120 games, in a dozen families** — several of them with many sub-variants. Everything from
+`classic-chess` to Tafl, Margo, Go and Yohoho. Families are collapsed by default so the list stays
+readable; open one with a tap, or search — accents and languages don't matter, typing `echecs`
+finds *Chess*.
+
+How many exactly is up to you: the jocly dist is built alongside the app, so a deployment can ship
+the whole library, a single family, chess variants only, or one game. Nothing in the app assumes a
+particular catalogue — it reads whatever the dist declares.
 
 **Built for a phone, not shrunk to fit one.** Games are shown in 2D by default: it reads better on a
-small screen, and there is no 3D artwork to download. The eleven games that genuinely need a big board
-(16×16 and the like) are hidden on phones — and one switch brings them back, because a filter you
-can't turn off feels like a bug.
+small screen, and there is no 3D artwork to download. The handful of games that genuinely need a big
+board (16×16, 19×19, 3D geometries) are hidden on phones — and one switch brings them back, because
+a filter you can't turn off feels like a bug.
 
 **Rules for every game**, illustrated, in the app — before you play and during the game.
 
@@ -31,14 +36,43 @@ Links are interchangeable with [joclymatch](https://github.com/fhoudebert/joclym
 links opens here on the right game and the right side.
 
 **Three to six strength levels** depending on the game, up to **Expert** — the
-[Fairy-Stockfish](https://github.com/fairy-stockfish/Fairy-Stockfish) engine, on 33 games. If your
-server isn't configured for it, the app *tells you* instead of quietly playing weaker.
+[Fairy-Stockfish](https://github.com/fairy-stockfish/Fairy-Stockfish) engine, wherever jocly
+declares one. If your server isn't configured for it, the app *tells you* instead of quietly
+playing weaker.
 
 **English and French.** Adding a language means dropping one file in `lang/` — no code to touch.
 
 **Take back, restart, sounds, notation, move hints, board style, view from either side.** Take back
 and restart are hidden in online games: replaying a move your opponent already has would desync
 both boards.
+
+**Favourites.** Star a game and it gets its own section, pinned at the top of the list and open by
+default — the twelve families stay exactly where they were.
+
+**A clock, if you want one.** Three time controls with Fischer increment, or none at all. Local
+games only: two devices don't see the same instant, and two pendulums showing two truths is worse
+than no pendulum.
+
+**The move list, and a way back.** Tap any move to return to that position. Reading the list works
+in online games; going back doesn't, for the same reason take back doesn't.
+
+**A word to your opponent.** In online games, a handful of one-tap messages and presence states —
+*well played*, *your turn*, *stepping away*. They travel as identifiers and are shown in each
+player's own language, so two people with no language in common still understand each other, and
+nothing personal ever reaches the relay.
+
+**Nudged, not nagged.** A single "your turn" tap that can notify your opponent even when the app
+isn't on screen — with a five-minute cooldown built into the protocol, not bolted on. Permission is
+asked when you turn it on, never on first launch. Notifications say *a message arrived*, never what
+it says: the text was encrypted so the relay couldn't read it, and a lock screen is no different.
+Fine print: this works while the app is still alive in the background. Once the system kills it,
+nothing arrives until you open it again — no push server involved, by design.
+
+**And you can just type.** Free text is sealed with XChaCha20-Poly1305 before it leaves the phone;
+the relay only ever holds opaque bytes. The key rides in the invitation link's *fragment*, which
+browsers never send to any server — so the link is the secret: share it the way you'd share a door
+code, and don't expect it to outlive the game. Same format as
+[Tabulon](https://github.com/fhoudebert/tabulon), so a message written here opens there.
 
 ---
 
@@ -112,7 +146,7 @@ cd - && ln -s ../jocly2/dist/browser dist
 
 npm run build      # catalogue + service worker stamp + tests
 npm run serve      # http://localhost:8080
-npm test           # 83 assertions
+npm test           # 161 assertions
 npm run test:php   # 28 assertions (requires php-cli)
 ```
 
@@ -123,7 +157,7 @@ relay works, what was measured, and the traps worth knowing before changing anyt
 
 ## Credits
 
-Games, engines and artwork come from **Jocly**, created by Michel Gutierrez, Jérôme Choain. 
+Mogichex is based on **Jocly**, created by M. Gutierrez / J. Choain. 
 The original project is no longer maintained; it lives on as **[jocly2](https://github.com/fhoudebert/jocly2)**.
 
 The Expert level uses [Fairy-Stockfish](https://github.com/fairy-stockfish/Fairy-Stockfish) by
@@ -136,7 +170,6 @@ Game artwork under `chessbase/res` is **CC BY-SA 3.0**.
 
 **mogichex is free software under the [GNU Affero General Public License v3](LICENSE) or later.**
 
-It is not a program that merely talks to Jocly: it loads the library into its own page and ships
-it alongside — or inside, for the Android build. The two form a single work, so the whole is
+It loads the Jocly library into its own page and ships it alongside — or inside, for the Android build. The two form a single work, so the whole is
 AGPL-3.0. Fairy-Stockfish is GPL-3.0, which combines with AGPL-3.0 under both licenses' terms.
 

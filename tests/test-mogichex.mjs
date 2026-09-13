@@ -1125,6 +1125,32 @@ test('keepFile : three.js reste embarque MEME sans 3D', () => {
     assert.equal(keep('three.js', { keep3d: false }).keep, true);
 });
 
+test('keepFile : les textures 3D de chessbase partent avec --no-3d', () => {
+    // Elles ne sont referencees que depuis des blocs mesh + materials des
+    // fichiers *-view.js — des definitions de pieces TRIDIMENSIONNELLES.
+    // 302 fichiers, 15,4 Mo mesures sur le dist chessbase.
+    const off = { keep3d: false };
+    assert.equal(keep('games/chessbase/res/staunton/king-normalmap.jpg', off).keep, false);
+    assert.equal(keep('games/chessbase/res/staunton/king-diffusemap.jpg', off).keep, false);
+    assert.equal(keep('games/chessbase/res/xiangqi/board-normal.jpg', off).keep, false);
+    assert.equal(keep('games/chessbase/res/xiangqi/board-diffuse.jpg', off).keep, false);
+    // Repertoires entiers de faces de pieces.
+    assert.equal(keep('games/chessbase/res/shogi/chu-diffusemaps/copper-b.jpg', off).keep, false);
+    assert.equal(keep('games/chessbase/res/counters/diffusemaps/x.jpg', off).keep, false);
+    // Sans l'option, tout reste.
+    assert.equal(keep('games/chessbase/res/shogi/chu-diffusemaps/copper-b.jpg').keep, true);
+});
+
+test('keepFile : le filtre de textures ne deborde PAS hors de chessbase/res', () => {
+    // Le res/ de la racine du dist sert a tout autre chose ; et un nom qui
+    // se termine par « diffuse.jpg » ailleurs n'est pas concerne.
+    const off = { keep3d: false };
+    assert.equal(keep('res/textures/bois-diffuse.jpg', off).keep, true);
+    assert.equal(keep('games/chessbase/res/rules/mini/mini-thumb.png', off).keep, true);
+    // « diffusemaps » doit etre un SEGMENT de chemin, pas un fragment de nom.
+    assert.equal(keep('games/chessbase/res/shogi/diffusemapsource.jpg', off).keep, true);
+});
+
 test('keepFile : la 3D se filtre par EXTENSION, jamais par dossier', () => {
     // res/fairy melange modeles .gltf et planches de sprites 2D. Retirer le
     // dossier faisait disparaitre wikipedia-fairy-sprites.png, dont les skins
@@ -1169,7 +1195,10 @@ test('tous les libelles de niveaux du catalogue sont traduits en francais', () =
     const fr = JSON.parse(readFileSync(path.join(root, 'lang', 'fr.json'), 'utf8'));
     const tr = (x) => (fr[x] !== undefined ? fr[x] : x);
     // Ceux-la s'ecrivent pareil dans les deux langues : c'est voulu.
-    const identiques = new Set(['Expert', 'Padawan', 'Papa','Champion']);
+    // « Novice » s'ecrit pareil en francais, comme « Expert » ou « Champion ».
+    // Arrive avec jocly 2.8, a cote de « Beginner » (traduit, lui, par
+    // « Debutant ») : ce sont deux niveaux distincts, pas un doublon.
+    const identiques = new Set(['Expert', 'Padawan', 'Papa', 'Champion', 'Novice', '10 min', '20 min']);
     const labels = [...new Set(cat.games.flatMap((g) => g.levels.map((l) => l.label)))];
     const manquants = labels.filter(
         (l) => translateLevelLabel(l, tr) === l && !identiques.has(l)
@@ -1241,5 +1270,935 @@ test('sw.js : la coquille pre-cachee existe reellement sur le disque', () => {
     const list = src.slice(src.indexOf('const SHELL = ['), src.indexOf('];', src.indexOf('const SHELL = [')));
     for (const m of list.matchAll(/'\.\/([^']+)'/g)) {
         assert.ok(existsSync(path.join(root, m[1])), 'pre-cache inexistant : ' + m[1]);
+    }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Premier tour : favoris, horloge, historique, discussion.
+// ─────────────────────────────────────────────────────────────────────────────
+
+import { sanitizeFavorites, toggleFavorite, isFavorite, favoriteGroup, FAV_MODULE } from '../js/favorites.js';
+import { CLOCK_PRESETS, presetById, formatClock, Clock } from '../js/clock.js';
+import { moveRows, rollbackTarget, canRollback } from '../js/history.js';
+import {
+    KIND,
+    PRESENCE,
+    chatMidFor,
+    newMessage,
+    encodeThread,
+    decodeThread,
+    mergeThreads,
+    presenceOf,
+    countUnread,
+    canNudge,
+    requiresSeal,
+    NUDGE_MIN_INTERVAL_MS,
+} from '../js/remote/chat-protocol.js';
+import { ChatChannel } from '../js/remote/chat-channel.js';
+
+// ---- favoris ---------------------------------------------------------------
+
+test('favoris : ajout, retrait, pas de doublon', () => {
+    let list = [];
+    list = toggleFavorite(list, 'classic-chess');
+    assert.deepEqual(list, ['classic-chess']);
+    list = toggleFavorite(list, 'classic-chess');
+    assert.deepEqual(list, []);
+    list = toggleFavorite(toggleFavorite(list, 'shogi'), 'shogi');
+    assert.deepEqual(list, []);
+    assert.deepEqual(sanitizeFavorites(['a', 'a', '', null, 'b']), ['a', 'b']);
+    assert.deepEqual(sanitizeFavorites('pas une liste'), []);
+});
+
+test('favoris : la section suit le filtre, elle ne le contredit pas', () => {
+    // Un favori ecarte par la recherche ou par le filtre d'appareil ne doit
+    // PAS reapparaitre par la bande : sinon « adaptes a cet ecran » afficherait
+    // quand meme un 16x16, et une recherche sans resultat en montrerait.
+    const filtered = [{ name: 'shogi' }, { name: 'xiangqi' }];
+    const group = favoriteGroup(filtered, ['tera-chess', 'xiangqi']);
+    assert.equal(group.module, FAV_MODULE);
+    assert.deepEqual(group.games.map((g) => g.name), ['xiangqi']);
+    assert.equal(favoriteGroup(filtered, ['tera-chess']), null);
+    assert.equal(favoriteGroup(filtered, []), null);
+});
+
+test('favoris : l ordre est celui du marquage, pas l alphabet', () => {
+    const filtered = [{ name: 'a' }, { name: 'b' }, { name: 'z' }];
+    const group = favoriteGroup(filtered, ['z', 'a']);
+    assert.deepEqual(group.games.map((g) => g.name), ['z', 'a']);
+});
+
+test('favoris : la section n est jamais repliee par defaut', () => {
+    const groups = [{ module: FAV_MODULE, favorite: true, games: [] }, { module: 'chessbase', games: [] }];
+    const collapsed = initialCollapsed(groups, { searching: false });
+    assert.equal(collapsed.has(FAV_MODULE), false);
+    assert.equal(collapsed.has('chessbase'), true);
+});
+
+// ---- horloge ---------------------------------------------------------------
+
+test('horloge : format, dixiemes sous la minute, jamais de negatif', () => {
+    assert.equal(formatClock(600000), '10:00');
+    assert.equal(formatClock(65000), '1:05');
+    assert.equal(formatClock(3600000), '1:00:00');
+    assert.equal(formatClock(4300), '0:04.3');
+    assert.equal(formatClock(-5000), '0:00.0');
+});
+
+test('horloge : l increment va a celui qui vient de jouer', () => {
+    const c = new Clock({ initial: 60000, increment: 5000, at: 0 });
+    c.switchTo(1, 0); // A demarre
+    c.switchTo(-1, 10000); // A a joue apres 10 s : il recupere 5 s
+    assert.equal(c.left[1], 55000);
+    assert.equal(c.remaining(-1, 10000), 60000);
+    c.switchTo(1, 13000); // B a joue apres 3 s
+    assert.equal(c.left[-1], 62000);
+});
+
+test('horloge : le drapeau tombe une fois et arrete tout', () => {
+    const c = new Clock({ initial: 1000, increment: 5000, at: 0 });
+    c.switchTo(1, 0);
+    assert.equal(c.flagOf(500), null);
+    assert.equal(c.flagOf(1500), 1);
+    // Meme apres coup, on ne credite plus et l'autre compteur ne repart pas :
+    // sans cela, reprendre un coup relancerait une partie deja close.
+    c.switchTo(-1, 1600);
+    assert.equal(c.running, null);
+    assert.equal(c.flagOf(9999), 1);
+    assert.equal(c.remaining(-1, 9999), 1000);
+});
+
+test('horloge : le premier tour ne credite rien', () => {
+    const c = new Clock({ initial: 60000, increment: 5000, at: 0 });
+    c.switchTo(1, 0);
+    assert.equal(c.left[1], 60000);
+    assert.equal(c.left[-1], 60000);
+});
+
+test('horloge : « sans horloge » est la cadence par defaut et ne demarre rien', () => {
+    assert.equal(CLOCK_PRESETS[0].id, 'none');
+    assert.equal(presetById('inconnu').id, 'none');
+    assert.equal(presetById('none').initial, 0);
+});
+
+// ---- historique ------------------------------------------------------------
+
+test('historique : deux colonnes, chaque cellule numerotee', () => {
+    const rows = moveRows(['e4', 'e5', 'Cf3']);
+    assert.equal(rows.length, 2);
+    assert.deepEqual(rows[0].cells.map((c) => c.n), [1, 2]);
+    assert.deepEqual(rows[1].cells.map((c) => c.n), [3]);
+    assert.equal(rows[1].cells[0].text, 'Cf3');
+    assert.deepEqual(moveRows([]), []);
+    assert.deepEqual(moveRows(null), []);
+});
+
+test('historique : revenir au dernier coup ne defait rien', () => {
+    assert.equal(rollbackTarget(3, 3, 2), null);
+    assert.equal(rollbackTarget(1, 3, 2), 1);
+    assert.equal(rollbackTarget(0, 3, 1), 0);
+    assert.equal(rollbackTarget(2, 0, 2), null);
+});
+
+test('historique : le retour arriere est interdit des qu un camp est distant', () => {
+    assert.equal(canRollback({ remote: false, moves: 4 }), true);
+    assert.equal(canRollback({ remote: true, moves: 4 }), false);
+    assert.equal(canRollback({ remote: false, moves: 0 }), false);
+});
+
+// ---- discussion ------------------------------------------------------------
+
+const rand = (bytes) => bytes.fill(7);
+
+test('discussion : deux cles distinctes, acceptees par match.php', () => {
+    const mid = '1748100000000-AbCdEfGhIjKlMn';
+    assert.equal(chatMidFor(mid, 1), mid + '-ca');
+    assert.equal(chatMidFor(mid, -1), mid + '-cb');
+    // Le motif du serveur, verifie cote client pour ne pas produire un echec
+    // reseau opaque la ou une erreur lisible est possible.
+    for (const side of [1, -1]) assert.match(chatMidFor(mid, side), /^[A-Za-z0-9_-]{6,64}$/);
+    assert.throws(() => chatMidFor(mid, 0));
+    assert.throws(() => chatMidFor('x'.repeat(70), 1));
+});
+
+test('discussion : un message rapide voyage comme identifiant, pas comme texte', () => {
+    const m = newMessage({ kind: KIND.CHAT, side: 1, quick: 'wellPlayed', at: 10, rand });
+    assert.equal(m.quick, 'wellPlayed');
+    assert.equal(m.body, undefined);
+    assert.equal(requiresSeal(m), false);
+    assert.throws(() => newMessage({ kind: KIND.CHAT, side: 1, quick: 'pas valide !', rand }));
+    assert.throws(() => newMessage({ kind: KIND.CHAT, side: 1, rand }));
+    assert.throws(() => newMessage({ kind: KIND.PRESENCE, side: 1, state: 'inconnu', rand }));
+});
+
+test('discussion : le texte libre est REFUSE tant qu il n y a pas de scelleur', async () => {
+    // C'est le garde-fou du lot suivant : on ne peut pas ajouter un champ de
+    // saisie sans avoir ajoute le chiffrement, l'encodage echouerait.
+    const free = { v: 1, kind: KIND.CHAT, side: 1, at: 1, id: 'ab', body: 'bonjour' };
+    await assert.rejects(() => encodeThread([free]));
+    const quick = newMessage({ kind: KIND.CHAT, side: 1, quick: 'rematch', at: 1, rand });
+    const presence = newMessage({ kind: KIND.PRESENCE, side: 1, state: PRESENCE.PAUSED, at: 2, rand });
+    assert.ok(await encodeThread([quick, presence]));
+});
+
+test('discussion : un fil illisible rend une liste vide, jamais une exception', async () => {
+    for (const bad of ['', '{}', 'pas du json', '<html>erreur</html>', JSON.stringify({ msgs: 3 })]) {
+        assert.deepEqual(await decodeThread(bad), []);
+    }
+});
+
+test('discussion : un corps en clair est conserve, verrouille', async () => {
+    const text = JSON.stringify({
+        v: 1,
+        msgs: [{ v: 1, kind: KIND.CHAT, side: -1, at: 5, id: 'ff', body: 'en clair' }],
+    });
+    const [m] = await decodeThread(text);
+    // Ni affiche tel quel (cela laisserait croire que le canal protege quelque
+    // chose), ni efface (un trou silencieux est pire qu'un cadenas).
+    assert.equal(m.locked, true);
+    assert.equal(m.reason, 'unsealed');
+    assert.equal(m.body, null);
+});
+
+test('discussion : les fils fusionnent, dedupliquent et se trient stablement', () => {
+    const a = { id: 'b2', at: 10, kind: KIND.CHAT, side: 1, quick: 'rematch' };
+    const b = { id: 'a1', at: 10, kind: KIND.CHAT, side: -1, quick: 'yourTurn' };
+    const c = { id: 'c3', at: 5, kind: KIND.CHAT, side: 1, quick: 'wellPlayed' };
+    const conv = mergeThreads([a, c], [b, a]);
+    assert.deepEqual(conv.map((m) => m.id), ['c3', 'a1', 'b2']);
+    assert.equal(mergeThreads([a], [a]).length, 1);
+});
+
+test('discussion : presence et non-lus', () => {
+    const conv = [
+        { id: '1', at: 1, kind: KIND.PRESENCE, side: -1, state: PRESENCE.THINKING },
+        { id: '2', at: 2, kind: KIND.PRESENCE, side: -1, state: PRESENCE.PAUSED },
+        { id: '3', at: 3, kind: KIND.CHAT, side: 1, quick: 'yourTurn' },
+        { id: '4', at: 4, kind: KIND.CHAT, side: -1, quick: 'backSoon' },
+    ];
+    assert.equal(presenceOf(conv, -1).state, PRESENCE.PAUSED);
+    assert.equal(presenceOf(conv, 1), null);
+    // Ses propres messages ne comptent jamais : on n'a pas a se relire. La
+    // presence, elle, COMPTE — « votre adversaire s'est absente » vaut une
+    // pastille autant qu'un message rapide.
+    assert.equal(countUnread(conv, null, 1), 3);
+    assert.equal(countUnread(conv, '2', 1), 1);
+    assert.equal(countUnread(conv, '4', 1), 0);
+});
+
+test('discussion : la relance est bornee dans le temps', () => {
+    const now = 1000000;
+    assert.equal(canNudge([], 1, now), true);
+    const recent = [{ id: 'n', at: now - 1000, kind: KIND.NUDGE, side: 1 }];
+    assert.equal(canNudge(recent, 1, now), false);
+    assert.equal(canNudge(recent, -1, now), true);
+    const old = [{ id: 'n', at: now - NUDGE_MIN_INTERVAL_MS - 1, kind: KIND.NUDGE, side: 1 }];
+    assert.equal(canNudge(old, 1, now), true);
+});
+
+test('discussion : un seul ecrivain par fil — on ecrit chez soi, on lit en face', async () => {
+    const calls = [];
+    const files = new Map();
+    const fakeFetch = async (url, init) => {
+        const f = Object.fromEntries(new URLSearchParams(init.body));
+        calls.push(f);
+        if (f.action === 'save') files.set(f.mid, f.data);
+        return {
+            ok: true,
+            headers: { get: () => '0' },
+            text: async () => files.get(f.mid) || '',
+        };
+    };
+    const mid = '1748100000000-AbCdEfGhIjKlMn';
+    const chan = new ChatChannel({ relayUrl: '.', matchId: mid, side: 1, fetchImpl: fakeFetch });
+    await chan.send({ kind: KIND.CHAT, quick: 'wellPlayed' });
+    const saves = calls.filter((c) => c.action === 'save');
+    assert.equal(saves.length, 1);
+    assert.equal(saves[0].mid, mid + '-ca', 'on n ecrit que dans SON fil');
+    assert.equal(chan.theirsMid, mid + '-cb');
+    assert.equal(chan.conversation.length, 1);
+
+    // Le fil part en ENTIER : sans cela, le deuxieme message effacerait le
+    // premier, puisque le relai est en dernier-ecrit-gagne.
+    await chan.send({ kind: KIND.PRESENCE, state: PRESENCE.PAUSED });
+    const last = calls.filter((c) => c.action === 'save').pop();
+    assert.equal(JSON.parse(last.data).msgs.length, 2);
+});
+
+test('discussion : un message du pair entre, le sien est ignore', async () => {
+    const chan = new ChatChannel({
+        relayUrl: '.',
+        matchId: '1748100000000-AbCdEfGhIjKlMn',
+        side: 1,
+        fetchImpl: async () => ({ ok: true, headers: { get: () => '0' }, text: async () => '' }),
+    });
+    await chan.acceptFromPeer({ v: 1, kind: KIND.CHAT, side: -1, at: 3, id: 'aa', quick: 'rematch' });
+    assert.equal(chan.conversation.length, 1);
+    await chan.acceptFromPeer({ v: 1, kind: KIND.CHAT, side: 1, at: 4, id: 'bb', quick: 'rematch' });
+    assert.equal(chan.conversation.length, 1, 'son propre message ne revient pas');
+    await chan.acceptFromPeer({ n_importe: 'quoi' });
+    assert.equal(chan.conversation.length, 1);
+});
+
+test('discussion : la conversation n est publiee que si elle a change', async () => {
+    let pushes = 0;
+    const chan = new ChatChannel({
+        relayUrl: '.',
+        matchId: '1748100000000-AbCdEfGhIjKlMn',
+        side: 1,
+        onConversation: () => pushes++,
+        fetchImpl: async () => ({ ok: true, headers: { get: () => '0' }, text: async () => '' }),
+    });
+    const msg = { v: 1, kind: KIND.CHAT, side: -1, at: 3, id: 'aa', quick: 'rematch' };
+    await chan.acceptFromPeer(msg);
+    await chan.acceptFromPeer(msg);
+    await chan.acceptFromPeer(msg);
+    assert.equal(pushes, 1, 'relire le meme fil ne doit pas faire clignoter la pastille');
+});
+
+test('hors ligne : la discussion ne peut pas se brancher sans le jeu a distance', () => {
+    // `--offline` pose remotePlay:false, donc attachRelay() n'est jamais
+    // appele, donc state.chat reste nul et le bouton reste masque. Ce test
+    // garde l'invariant qui le rend vrai : la discussion n'est branchee QUE
+    // depuis attachRelay. La brancher ailleurs — au demarrage d'une partie,
+    // par exemple — ferait sortir une requete d'une application censee ne
+    // jamais en emettre.
+    const src = readFileSync(path.join(root, 'js/app.js'), 'utf8');
+    const calls = src.match(/^\s*attachChat\(/gm) || [];
+    assert.equal(calls.length, 1, 'attachChat doit etre appele une seule fois');
+    const relayStart = src.indexOf('function attachRelay(');
+    const relayEnd = src.indexOf('\nasync function leaveMatch', relayStart);
+    const call = src.indexOf('    attachChat(');
+    assert.ok(call > relayStart && call < relayEnd, 'attachChat doit vivre dans attachRelay');
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Texte libre et scellement (XChaCha20-Poly1305).
+// ─────────────────────────────────────────────────────────────────────────────
+
+import {
+    makeSealer,
+    generateChatKey,
+    isChatKey,
+    isChatKeyId,
+    NONCE_BYTES,
+} from '../js/remote/chat-sealer.js';
+
+const KEY = '00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff';
+const OTHER_KEY = 'ffeeddccbbaa99887766554433221100ffeeddccbbaa99887766554433221100';
+const fixedNonce = (b) => b.forEach((_, i) => (b[i] = i));
+
+test('scellement : les octets sont ceux de libsodium, pas seulement les notres', async () => {
+    // LE TEST QUI COMPTE. Un aller-retour sur cette machine ne prouve rien :
+    // deux implementations fausses de la meme facon s'accordent tres bien
+    // entre elles. Ce vecteur vient de libsodium
+    // (crypto_aead_xchacha20poly1305_ietf), que la caisse Rust de Tabulon
+    // implemente aussi — donc un message scelle ici s'ouvre la-bas.
+    const sealer = makeSealer(KEY, { rand: fixedNonce });
+    assert.equal(
+        await sealer.seal('bien joue'),
+        'AAECAwQFBgcICQoLDA0ODxAREhMUFRYX0de4kUi3xJoohcyImxxzUHjjZmZHQtaVTg=='
+    );
+});
+
+test('scellement : aller-retour, et rien du texte ne transparait', async () => {
+    const sealer = makeSealer(KEY);
+    const sealed = await sealer.seal('rendez-vous a 18h');
+    assert.equal(await sealer.open(sealed), 'rendez-vous a 18h');
+    assert.ok(!sealed.includes('rendez'));
+    assert.ok(!sealed.includes('18h'));
+});
+
+test('scellement : deux fois le meme texte donne deux sceaux differents', async () => {
+    // Sans cela, un observateur verrait qu'une phrase se repete — ce qui en
+    // dit deja beaucoup sur une conversation courte.
+    const sealer = makeSealer(KEY);
+    const a = await sealer.seal('a toi');
+    const b = await sealer.seal('a toi');
+    assert.notEqual(a, b);
+    assert.equal(await sealer.open(a), 'a toi');
+    assert.equal(await sealer.open(b), 'a toi');
+});
+
+test('scellement : une autre cle n ouvre pas', async () => {
+    const sealed = await makeSealer(KEY).seal('secret');
+    assert.equal(await makeSealer(OTHER_KEY).open(sealed), null);
+});
+
+test('scellement : un message trafique est rejete', async () => {
+    // AEAD : le sceau authentifie. N'importe qui connaissant l'identifiant de
+    // partie peut ECRIRE dans le fil sur un relai sans authentification ; ce
+    // bruit doit etre rejete a l'ouverture, pas affiche.
+    const sealer = makeSealer(KEY);
+    const raw = Buffer.from(await sealer.seal('je fais une pause'), 'base64');
+    raw[raw.length - 1] ^= 0x01;
+    assert.equal(await sealer.open(raw.toString('base64')), null);
+});
+
+test('scellement : rien ne fait lever open()', async () => {
+    const sealer = makeSealer(KEY);
+    for (const bad of ['', 'pas du base64 !!', Buffer.alloc(8).toString('base64'), 'AAAA']) {
+        assert.equal(await sealer.open(bad), null);
+    }
+    // Exactement la longueur du nonce, sans corps : refuse avant le chiffre.
+    assert.equal(await sealer.open(Buffer.alloc(NONCE_BYTES).toString('base64')), null);
+});
+
+test('scellement : une cle mal formee est refusee a la construction', () => {
+    // Elle vient d'un lien colle par l'utilisateur : echouer tot vaut mieux
+    // qu'un scelleur qui ne scelle rien.
+    for (const bad of ['', 'trop court', 'z'.repeat(64), 'aa'.repeat(8), KEY.toUpperCase()]) {
+        assert.throws(() => makeSealer(bad));
+    }
+    assert.equal(isChatKey(generateChatKey()), true);
+    assert.equal(isChatKey(KEY.toUpperCase()), false, 'hexadecimal MINUSCULE, comme Tabulon');
+    assert.equal(isChatKeyId('b'.repeat(16)), true);
+    assert.equal(isChatKeyId('b'.repeat(15)), false);
+});
+
+test('scellement : accents et emoji survivent', async () => {
+    const text = "à tout à l'heure 👋 — ça va être long";
+    const sealer = makeSealer(KEY);
+    assert.equal(await sealer.open(await sealer.seal(text)), text);
+});
+
+test('discussion : le texte libre part scelle et revient lisible', async () => {
+    const sealer = makeSealer(KEY);
+    const msg = newMessage({ kind: KIND.CHAT, side: 1, body: 'on se voit demain', at: 1, rand });
+    const wire = await encodeThread([msg], { sealer });
+    assert.ok(!wire.includes('demain'), 'rien du texte ne doit figurer dans ce qui part');
+    assert.equal(JSON.parse(wire).msgs[0].enc, 1);
+    const [back] = await decodeThread(wire, { sealer });
+    assert.equal(back.body, 'on se voit demain');
+    assert.equal(back.locked, undefined);
+});
+
+test('discussion : avec la mauvaise cle, le message reste visible et verrouille', async () => {
+    const wire = await encodeThread(
+        [newMessage({ kind: KIND.CHAT, side: 1, body: 'secret', at: 1, rand })],
+        { sealer: makeSealer(KEY) }
+    );
+    const [m] = await decodeThread(wire, { sealer: makeSealer(OTHER_KEY) });
+    assert.equal(m.locked, true);
+    assert.equal(m.reason, 'badKey');
+    const [n] = await decodeThread(wire);
+    assert.equal(n.locked, true);
+    assert.equal(n.reason, 'noKey');
+});
+
+test('invitation : la cle voyage dans le FRAGMENT, jamais dans la requete', () => {
+    // Le fragment n'est transmis a aucun serveur : ni a l'hebergeur, ni au
+    // relai, ni dans un journal d'acces. En parametre, la cle finirait dans
+    // les journaux du premier serveur venu.
+    const link = buildInviteLink({
+        game: 'shako-chess',
+        matchId: '1748100000000-AbCdEfGhIjKlMn',
+        side: 'b',
+        chatKey: 'a'.repeat(64),
+    });
+    const [query, fragment] = link.split('#');
+    assert.ok(!query.includes('a'.repeat(64)), 'la cle ne doit pas etre dans la requete');
+    assert.equal(fragment, 'k=' + 'a'.repeat(64));
+    assert.equal(parseInviteLink(link).chatKey, 'a'.repeat(64));
+});
+
+test('invitation : une cle abimee est ignoree des deux cotes', () => {
+    // Un lien qui promet une discussion protegee sans pouvoir la tenir est
+    // pire qu'un lien sans cle, ou le manque se voit.
+    const base = { game: 'x', matchId: '1748100000000-AbCdEfGhIjKlMn', side: 'b' };
+    assert.ok(!buildInviteLink({ ...base, chatKey: 'zz' }).includes('#'));
+    assert.ok(!buildInviteLink({ ...base, chatKey: 'A'.repeat(64) }).includes('#'));
+    assert.equal(parseInviteLink('index.html?game=x&mid=123456#k=zz').chatKey, null);
+    assert.equal(parseInviteLink('index.html?game=x&mid=123456').chatKey, null);
+});
+
+test('invitation : l empreinte de trousseau Tabulon est lue, pas confondue', () => {
+    // mogichex ne gere pas de trousseau, mais il doit pouvoir DIRE que cette
+    // invitation en attend un, plutot que d'afficher une discussion muette.
+    const p = parseInviteLink('index.html?game=x&mid=123456#kid=' + 'b'.repeat(16));
+    assert.equal(p.chatKeyId, 'b'.repeat(16));
+    assert.equal(p.chatKey, null);
+    assert.equal(parseInviteLink('index.html?game=x&mid=123456#kid=zz').chatKeyId, null);
+});
+
+test('invitation : un lien joclymatch sans fragment reste lisible', () => {
+    const p = parseInviteLink('https://exemple.fr/jm/index.php?game=shogi&mid=1748100000000-AAAAAAAAAAAAAA&player=a');
+    assert.equal(p.origin, 'joclymatch');
+    assert.equal(p.chatKey, null);
+    assert.equal(p.chatKeyId, null);
+});
+
+test('discussion : c est la forme SCELLEE qui part sur le canal pair-a-pair', async () => {
+    // Publier l'objet en memoire ferait voyager le texte en clair, et surtout
+    // l'autre bout le rejetterait : decodeThread verrouille tout corps sans
+    // `enc`.
+    const sent = [];
+    const peer = { isOpen: true, publish: (m) => sent.push(m) };
+    const chan = new ChatChannel({
+        relayUrl: '.',
+        matchId: '1748100000000-AbCdEfGhIjKlMn',
+        side: 1,
+        peer,
+        sealer: makeSealer(KEY),
+        fetchImpl: async () => ({ ok: true, headers: { get: () => '0' }, text: async () => '' }),
+    });
+    await chan.send({ kind: KIND.CHAT, body: 'a tout de suite' });
+    assert.equal(sent.length, 1);
+    assert.equal(sent[0].enc, 1);
+    assert.ok(!JSON.stringify(sent[0]).includes('a tout de suite'));
+
+    // Et ce que le pair recoit s'ouvre bien de l'autre cote.
+    const other = new ChatChannel({
+        relayUrl: '.',
+        matchId: '1748100000000-AbCdEfGhIjKlMn',
+        side: -1,
+        sealer: makeSealer(KEY),
+        fetchImpl: async () => ({ ok: true, headers: { get: () => '0' }, text: async () => '' }),
+    });
+    await other.acceptFromPeer(sent[0]);
+    assert.equal(other.conversation[0].body, 'a tout de suite');
+});
+
+test('discussion : sans scelleur, le texte libre est refuse et ne laisse pas de trace', async () => {
+    const chan = new ChatChannel({
+        relayUrl: '.',
+        matchId: '1748100000000-AbCdEfGhIjKlMn',
+        side: 1,
+        fetchImpl: async () => ({ ok: true, headers: { get: () => '0' }, text: async () => '' }),
+    });
+    await assert.rejects(() => chan.send({ kind: KIND.CHAT, body: 'bonjour' }));
+    assert.equal(chan.conversation.length, 0, 'un envoi refuse ne doit rien laisser dans le fil');
+    // Les messages rapides, eux, passent toujours.
+    await chan.send({ kind: KIND.CHAT, quick: 'wellPlayed' });
+    assert.equal(chan.conversation.length, 1);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Titres de jeux : deux conventions dans jocly, et il faut lire les deux.
+// ─────────────────────────────────────────────────────────────────────────────
+
+test('buildEntry : le titre localise prime sur le titre anglais', () => {
+    const make = (model) =>
+        buildEntry({ name: 'jeu-x', config: { model } }, { ineligible: new Set() }).title;
+
+    // La convention la plus riche gagne quand un jeu porte les deux.
+    assert.deepEqual(
+        make({ title: { en: 'Roman Alquerque', fr: 'Alquerque romain' }, 'title-en': 'Vieux titre' }),
+        { en: 'Roman Alquerque', fr: 'Alquerque romain' }
+    );
+    assert.deepEqual(make({ title: { en: 'Arabic Alquerque', fr: 'Alquerque arabe' } }), {
+        en: 'Arabic Alquerque',
+        fr: 'Alquerque arabe',
+    });
+    assert.deepEqual(make({ 'title-en': 'Shako' }), { en: 'Shako' });
+
+    // Sans titre du tout, le repli reste l'identifiant : moche, mais jamais
+    // vide — une ligne sans nom serait intouchable.
+    assert.deepEqual(make({}), { en: 'jeu-x' });
+});
+
+test('aucun jeu du catalogue ne s affiche sous son identifiant', () => {
+    // CE QUE CE TEST AURAIT ATTRAPE : le constructeur ne lisait que
+    // `title-en`, et les 26 jeux qui declarent un `title` localise tombaient
+    // sur le repli — ils s'affichaient « alquerque-arabic », « draughts8 »,
+    // dans les deux langues, alors que jocly portait le titre traduit juste a
+    // cote.
+    const cat = JSON.parse(readFileSync(path.join(root, 'app', 'catalog.json'), 'utf8'));
+    const bruts = cat.games.filter((g) => g.title.en === g.name).map((g) => g.name);
+    assert.deepEqual(bruts, [], 'jeux affiches sous leur identifiant faute de titre');
+});
+
+test('les titres francais de jocly arrivent bien jusqu au catalogue', () => {
+    // Ils ne sont pas ecrits ici : ils appartiennent a jocly, qui les partage
+    // avec joclymatch et Tabulon. Ce test verifie seulement qu'on les LIT —
+    // et il retombera a zero si la lecture reprend le mauvais champ.
+    const cat = JSON.parse(readFileSync(path.join(root, 'app', 'catalog.json'), 'utf8'));
+    const avecFr = cat.games.filter((g) => g.title.fr);
+    assert.ok(avecFr.length >= 20, `titres francais lus : ${avecFr.length}`);
+    for (const g of avecFr) assert.notEqual(g.title.fr, g.title.en);
+});
+
+test('sw.js : la coquille ne pioche dans aucun repertoire de fabrication', () => {
+    // DEVELOPMENT.md § « Ce qu'il faut televerser » enumere les repertoires a
+    // deposer sur un serveur. Ce test tient la promesse : si une entree de
+    // SHELL venait un jour de tools/, tests/, data/ ou android/, la page
+    // deviendrait fausse en silence — et surtout, `tests/*.php` sont des
+    // EXECUTABLES qui ecrivent des fichiers de partie. Les televerser, c'est
+    // offrir ces points d'entree au public.
+    const sw = readFileSync(path.join(root, 'sw.js'), 'utf8');
+    const shell = [...sw.matchAll(/'\.\/([^']*)'/g)].map((m) => m[1]);
+    assert.ok(shell.length > 20, 'la coquille doit bien etre lue');
+    const interdits = shell.filter((p) => /^(tools|tests|data|android)\//.test(p));
+    assert.deepEqual(interdits, [], 'entrees de SHELL hors du perimetre d hebergement');
+
+    // Et l'inverse : tout ce qui est pre-cache appartient bien au petit
+    // nombre de repertoires documentes.
+    const autorises = /^($|index\.html$|manifest\.webmanifest$|sw\.js$|(css|js|lang|app|i)\/)/;
+    const hors = shell.filter((p) => !autorises.test(p));
+    assert.deepEqual(hors, [], 'entrees de SHELL hors des repertoires documentes');
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Relance et notifications.
+// ─────────────────────────────────────────────────────────────────────────────
+
+import { shouldNotify, notificationFor, nudgeCooldown, formatCooldown } from '../js/notify.js';
+
+const msg = (o) => Object.assign({ v: 1, kind: KIND.CHAT, side: -1, at: 1, id: 'z', quick: 'wellPlayed' }, o);
+
+test('notification : seulement quand l application n est pas sous les yeux', () => {
+    const base = { visible: false, permission: 'granted', message: msg({}), selfSide: 1 };
+    assert.equal(shouldNotify(base), true);
+    assert.equal(shouldNotify({ ...base, visible: true }), false, 'a l ecran, la pastille suffit');
+    assert.equal(shouldNotify({ ...base, permission: 'default' }), false);
+    assert.equal(shouldNotify({ ...base, permission: 'denied' }), false);
+    assert.equal(shouldNotify({ ...base, message: null }), false);
+});
+
+test('notification : ni ses propres messages, ni la presence', () => {
+    const base = { visible: false, permission: 'granted', selfSide: 1 };
+    assert.equal(shouldNotify({ ...base, message: msg({ side: 1 }) }), false, 'on ne se notifie pas soi-meme');
+    // « Votre adversaire reflechit » n'appelle aucune action : le seuil d'une
+    // notification est qu'elle merite d'interrompre.
+    assert.equal(
+        shouldNotify({ ...base, message: msg({ kind: KIND.PRESENCE, state: PRESENCE.THINKING, quick: null }) }),
+        false
+    );
+    assert.equal(shouldNotify({ ...base, message: msg({ kind: KIND.NUDGE, quick: null }) }), true);
+});
+
+test('notification : le texte libre est annonce, jamais cite', () => {
+    // Il a ete chiffre pour que le relai ne le voie pas ; l'afficher sur un
+    // ecran verrouille deferait une partie de ce travail.
+    const tr = (x) => x;
+    const libre = notificationFor(msg({ quick: null, body: 'rendez-vous a 18h' }), tr, 'Shako');
+    assert.equal(libre.body, 'New message');
+    assert.ok(!JSON.stringify(libre).includes('18h'));
+    assert.equal(libre.title, 'Shako');
+
+    // Un message rapide ne porte rien de personnel : il s'affiche en toutes
+    // lettres, c'est tout son interet.
+    assert.equal(notificationFor(msg({ quick: 'yourTurn' }), tr).body, 'Your turn!');
+    assert.equal(notificationFor(msg({ kind: KIND.NUDGE, quick: null }), tr).body, 'Your opponent is waiting');
+    // Meme etiquette pour toute la partie : une notification en REMPLACE une
+    // autre au lieu d'empiler cinq bandeaux.
+    assert.equal(notificationFor(msg({}), tr).tag, notificationFor(msg({ quick: 'rematch' }), tr).tag);
+});
+
+test('relance : le delai s affiche au lieu d echouer en silence', () => {
+    const now = 1000000;
+    assert.equal(nudgeCooldown([], 1, now, NUDGE_MIN_INTERVAL_MS), 0);
+    const recent = [{ id: 'n', at: now - 60000, kind: KIND.NUDGE, side: 1 }];
+    assert.equal(nudgeCooldown(recent, 1, now, NUDGE_MIN_INTERVAL_MS), NUDGE_MIN_INTERVAL_MS - 60000);
+    assert.equal(nudgeCooldown(recent, -1, now, NUDGE_MIN_INTERVAL_MS), 0, 'le delai est par camp');
+    const vieux = [{ id: 'n', at: now - NUDGE_MIN_INTERVAL_MS - 1, kind: KIND.NUDGE, side: 1 }];
+    assert.equal(nudgeCooldown(vieux, 1, now, NUDGE_MIN_INTERVAL_MS), 0);
+});
+
+test('relance : le delai se lit en clair', () => {
+    assert.equal(formatCooldown(240000), '4 min');
+    assert.equal(formatCooldown(45000), '45 s');
+    // Juste sous la minute, on arrondit VERS LE HAUT : « 60 s » est une
+    // facon bizarre d'ecrire une minute, et mieux vaut annoncer un peu trop
+    // que promettre un bouton qui ne s'ouvrira qu'apres.
+    assert.equal(formatCooldown(59999), '1 min');
+    assert.equal(formatCooldown(59000), '59 s');
+    assert.equal(formatCooldown(0), '0 s');
+    assert.equal(formatCooldown(-5), '0 s');
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Point de vue : en partie a distance, on regarde de son cote.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const JOCLY = { PLAYER_A: 1, PLAYER_B: -1 };
+const ENTRY = { name: 'jeu-x', defaultSkin: '2d', switchable: true };
+
+/** Une session prete a repondre a initialViewOptions, sans moteur ni DOM. */
+function viewSession({ mode = 'ai', side = 'a', entry = ENTRY, stored = {} } = {}) {
+    const s = new GameSession(null, entry, {});
+    s.mode = mode;
+    s.humanSides = mode === 'human' ? [1, -1] : [side === 'b' ? -1 : 1];
+    s.storedViewOptions = () => stored;
+    s.saveViewOptions = (o) => (s.saved = o);
+    return s;
+}
+
+test('point de vue : l invite d une partie a distance regarde de son cote', () => {
+    // Le cas qui manquait : en partie a distance, personne ne choisit son
+    // camp — le createur est A, l'invite est B. Sans cela, B regardait
+    // par-dessus l'epaule de son adversaire.
+    assert.equal(viewSession({ mode: 'remote', side: 'b' }).initialViewOptions(JOCLY).viewAs, -1);
+    assert.equal(viewSession({ mode: 'remote', side: 'a' }).initialViewOptions(JOCLY).viewAs, 1);
+});
+
+test('point de vue : le camp joue l emporte sur la preference enregistree', () => {
+    // Le camp est un fait de CETTE partie ; la preference parle des parties
+    // locales, ou le joueur choisit son camp et peut le rechoisir.
+    assert.equal(
+        viewSession({ mode: 'remote', side: 'b', stored: { viewAs: 1 } }).initialViewOptions(JOCLY).viewAs,
+        -1
+    );
+    // Et le cas A est pose comme le cas B : sans quoi un « voir en tant que B »
+    // garde d'une partie precedente ferait jouer A depuis la place d'en face.
+    assert.equal(
+        viewSession({ mode: 'remote', side: 'a', stored: { viewAs: -1 } }).initialViewOptions(JOCLY).viewAs,
+        1
+    );
+});
+
+test('point de vue : les parties locales gardent la preference du joueur', () => {
+    // Rien ne change hors du jeu a distance : contre l'ordinateur, le camp se
+    // choisit, donc l'orientation aussi — et elle se retient.
+    assert.equal(viewSession({ mode: 'ai', side: 'b', stored: { viewAs: 1 } }).initialViewOptions(JOCLY).viewAs, 1);
+    assert.equal(viewSession({ mode: 'ai', side: 'a' }).initialViewOptions(JOCLY).viewAs, 1, 'defaut A');
+    assert.equal(viewSession({ mode: 'human' }).initialViewOptions(JOCLY).viewAs, 1);
+});
+
+test('point de vue : rien n est pose pour un jeu non retournable', () => {
+    // jocly ignore viewAs hors des jeux switchable ; le poser quand meme
+    // remplirait le panneau d'un reglage sans effet.
+    const fixe = { name: 'jeu-fixe', defaultSkin: '2d', switchable: false };
+    const opts = viewSession({ mode: 'remote', side: 'b', entry: fixe }).initialViewOptions(JOCLY);
+    assert.equal(opts.viewAs, undefined);
+    assert.equal(opts.skin, '2d');
+});
+
+test('point de vue : retourner le plateau a distance ne change pas le reglage local', () => {
+    // Le joueur qui retourne le plateau une seconde pour regarder ne demande
+    // pas a changer son reglage ; la partie locale suivante retrouverait
+    // sinon une orientation qu'elle n'a jamais demandee.
+    const dist = viewSession({ mode: 'remote', side: 'b', stored: { skin: '2d', viewAs: 1 } });
+    dist.match = { setViewOptions: async () => {} };
+    dist.rearm = async () => {};
+    return dist.applyViewOptions({ viewAs: -1, notation: true }).then(() => {
+        assert.equal(dist.saved.viewAs, 1, 'la preference locale reste intacte');
+        assert.equal(dist.saved.notation, true, 'le reste est bien enregistre');
+
+        // En local, au contraire, il s'enregistre : c'est un reglage.
+        const loc = viewSession({ mode: 'ai', side: 'a', stored: { skin: '2d' } });
+        loc.match = { setViewOptions: async () => {} };
+        loc.rearm = async () => {};
+        return loc.applyViewOptions({ viewAs: -1 }).then(() => {
+            assert.equal(loc.saved.viewAs, -1);
+        });
+    });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Noms de modules : lisibles, et traduits quand ça a un sens.
+// ─────────────────────────────────────────────────────────────────────────────
+
+import { MODULE_LABELS, moduleLabel } from '../js/catalog.js';
+
+test('modules : les mots-valises deviennent lisibles', () => {
+    // « Fourinarow » et « Pensoc » etaient ce que rendait le capitalize du
+    // CSS : lisibles par qui connait deja jocly, opaques pour les autres.
+    assert.equal(moduleLabel('fourinarow'), 'Four in a row');
+    assert.equal(moduleLabel('pensoc'), 'Penguin soccer');
+    assert.equal(moduleLabel('chessbase'), 'Chessbase');
+});
+
+test('modules : un module inconnu reste affichable', () => {
+    // jocly en gagne. Le repli doit etre moche, jamais vide, et jamais criard.
+    assert.equal(moduleLabel('nouveaumodule'), 'Nouveaumodule');
+    assert.equal(moduleLabel(''), '');
+    assert.equal(moduleLabel(null), '');
+});
+
+test('modules : la traduction passe par les memes cles que le reste', () => {
+    const fr = JSON.parse(readFileSync(path.join(root, 'lang', 'fr.json'), 'utf8'));
+    const t = (x) => (fr[x] !== undefined ? fr[x] : x);
+    assert.equal(moduleLabel('chessbase', t), 'Échecs');
+    assert.equal(moduleLabel('checkers', t), 'Dames');
+    assert.equal(moduleLabel('fourinarow', t), 'Puissance 4');
+    assert.equal(moduleLabel('mills', t), 'Moulin');
+    assert.equal(moduleLabel('hunt', t), 'Chasse');
+    // Les noms propres ne se traduisent pas : ils retombent sur l'anglais,
+    // ce qui est le bon resultat et non un oubli.
+    assert.equal(moduleLabel('tafl', t), 'Tafl');
+    assert.equal(moduleLabel('go', t), 'Go');
+});
+
+test('modules : tout module du catalogue a un libelle ecrit a la main', () => {
+    // Ce test attrape le module qu'une mise a jour de jocly ajouterait :
+    // sans entree, il s'afficherait sous son identifiant capitalise.
+    const cat = JSON.parse(readFileSync(path.join(root, 'app', 'catalog.json'), 'utf8'));
+    const modules = [...new Set(cat.games.map((g) => g.module))].sort();
+    const sans = modules.filter((m) => !MODULE_LABELS[m]);
+    assert.deepEqual(sans, [], 'modules sans libelle dans MODULE_LABELS');
+    assert.ok(modules.length >= 10);
+});
+
+test('modules : ranges dans l ordre de la langue affichee', () => {
+    // Ranger par identifiant donnait, en francais, « Dames, Échecs,
+    // Puissance 4, Go, Chasse… » : l'ordre alphabetique d'une langue que
+    // l'utilisateur ne voit pas.
+    const fr = JSON.parse(readFileSync(path.join(root, 'lang', 'fr.json'), 'utf8'));
+    const t = (x) => (fr[x] !== undefined ? fr[x] : x);
+    const jeux = ['chessbase', 'hunt', 'fourinarow', 'checkers'].map((m, i) => ({
+        name: 'g' + i,
+        module: m,
+        title: { en: 'G' + i },
+    }));
+    assert.deepEqual(
+        groupByModule(jeux, 'fr', t).map((g) => g.module),
+        ['hunt', 'checkers', 'chessbase', 'fourinarow'],
+        'Chasse, Dames, Échecs, Puissance 4'
+    );
+    // Sans traduction, l'ordre anglais.
+    assert.deepEqual(
+        groupByModule(jeux, 'en').map((g) => g.module),
+        ['checkers', 'chessbase', 'fourinarow', 'hunt']
+    );
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Lien d'invitation : l'adresse doit sortir de l'appareil.
+// ─────────────────────────────────────────────────────────────────────────────
+
+import { isShareableBase, inviteBaseFrom } from '../js/remote/invite.js';
+
+test('invitation : une origine de coquille native n est pas partageable', () => {
+    // LE BUG : sous Capacitor la page est servie depuis https://localhost —
+    // une origine valide, securisee, et qui ne designe RIEN chez le
+    // destinataire. Le lien « https://localhost/?game=… » se copie, s'envoie,
+    // et c'est l'invite qui decouvre qu'il n'ouvre rien.
+    for (const url of [
+        'https://localhost/index.html',
+        'https://localhost/',
+        'capacitor://localhost/index.html',
+        'file:///android_asset/public/index.html',
+        'content://com.exemple/index.html',
+    ]) {
+        assert.equal(isShareableBase(url), false, url);
+    }
+});
+
+test('invitation : un serveur local reste partageable, lui', () => {
+    // On ne refuse QUE les origines d'application empaquetee. Un serveur de
+    // developpement sert parfaitement a faire jouer deux navigateurs de la
+    // meme machine — c'est ainsi que les sondes de ce depot travaillent — et
+    // une adresse de reseau local sert entre deux appareils de la meme maison.
+    // Le PORT est le discriminant : une coquille native n'en a jamais.
+    for (const url of [
+        'http://127.0.0.1:8090/index.html',
+        'http://localhost:8080/index.html',
+        'https://localhost:8443/index.html',
+        'http://192.168.1.20:8080/index.html',
+        'https://biscandine.fr/variantes/mogichex/index.html',
+        'https://exemple.github.io/mogichex/',
+    ]) {
+        assert.equal(isShareableBase(url), true, url);
+    }
+});
+
+test('invitation : rien d exploitable ne passe pour vrai', () => {
+    for (const url of ['', null, undefined, 'index.html', './index.html', 'pas une url']) {
+        assert.equal(isShareableBase(url), false, String(url));
+    }
+});
+
+test('android : la configuration generee porte une adresse publique', () => {
+    // Sans `inviteBase`, l'APK reconstruit referait exactement le meme lien
+    // mort. Ce test tient la ligne qui l'en empeche.
+    const src = readFileSync(path.join(root, 'tools', 'build-android.mjs'), 'utf8');
+    const m = src.match(/const DEFAULT_SITE = '([^']+)'/);
+    assert.ok(m, 'build-android.mjs doit definir DEFAULT_SITE');
+    assert.equal(isShareableBase(m[1]), true, 'DEFAULT_SITE doit etre une adresse publique');
+    assert.ok(src.includes("arg('site'"), 'et --site doit permettre de la changer');
+    assert.ok(src.includes('inviteBase:'), 'la configuration native doit poser inviteBase');
+    assert.ok(src.includes('relayUrl:'), 'et relayUrl');
+});
+
+test('invitation : la base suit les trois etages, du configure au deduit', () => {
+    const SITE = 'https://biscandine.fr/variantes/mogichex';
+
+    // 1. Configure : autorite absolue, meme si la page est parfaitement bonne.
+    assert.equal(
+        inviteBaseFrom({ configured: SITE + '/index.html', page: 'https://autre.fr/', relay: '.' }),
+        SITE + '/index.html'
+    );
+
+    // 2. Sinon la page, requete et fragment retires — surtout le fragment, qui
+    //    porterait la cle de la partie PRECEDENTE dans le nouveau lien.
+    assert.equal(
+        inviteBaseFrom({ page: 'https://exemple.fr/jeux/index.html?game=x#k=' + 'a'.repeat(64) }),
+        'https://exemple.fr/jeux/index.html'
+    );
+
+    // 3. La coquille native : la page ne vaut rien, le relai sauve la mise.
+    //    C'est le cas qu'aucun navigateur de bureau ne peut simuler.
+    assert.equal(
+        inviteBaseFrom({ page: 'https://localhost/index.html', relay: SITE }),
+        SITE + '/index.html'
+    );
+    assert.equal(
+        inviteBaseFrom({ page: 'capacitor://localhost/index.html', relay: SITE + '/' }),
+        SITE + '/index.html'
+    );
+
+    // Un relai relatif ne designe rien hors de l'appareil : on prefere le
+    // silence a un lien mort.
+    assert.equal(inviteBaseFrom({ page: 'https://localhost/index.html', relay: '.' }), null);
+    assert.equal(inviteBaseFrom({ page: 'https://localhost/index.html' }), null);
+    assert.equal(inviteBaseFrom({}), null);
+});
+
+test('invitation : une origine de coquille est refusee quel que soit le schema', () => {
+    // Capacitor sert `http://localhost` par defaut sur Android, et
+    // `https://localhost` quand androidScheme est pose. Les deux sont aussi
+    // inutilisables chez le destinataire : c'est l'ABSENCE DE PORT qui les
+    // distingue d'un serveur de developpement, pas le schema.
+    for (const url of ['http://localhost/', 'http://localhost/index.html', 'https://localhost/', 'http://127.0.0.1/']) {
+        assert.equal(isShareableBase(url), false, url);
+    }
+    for (const url of ['http://localhost:8080/', 'https://localhost:8443/', 'http://127.0.0.1:8090/x']) {
+        assert.equal(isShareableBase(url), true, url);
+    }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// build-android.mjs : le script doit s'EXECUTER, pas seulement se parser.
+// ─────────────────────────────────────────────────────────────────────────────
+
+import { spawnSync } from 'node:child_process';
+
+/** Lance le script avec des arguments qui le font sortir tot, sans build. */
+function android(...args) {
+    const r = spawnSync(process.execPath, [path.join(root, 'tools', 'build-android.mjs'), ...args], {
+        encoding: 'utf8',
+        timeout: 20000,
+    });
+    return { code: r.status, out: (r.stdout || '') + (r.stderr || '') };
+}
+
+test('android : le script depasse la verification de --site', () => {
+    // CE QUE CE TEST AURAIT ATTRAPE. En deplacant le bloc --site vers le haut
+    // du script, l'accolade fermante du premier `if` est restee 130 lignes
+    // plus bas : TOUT le build s'est retrouve a l'interieur d'un
+    // `if (adresse invalide) { … }`, donc saute des que l'adresse etait bonne.
+    // Le script se parsait, les deux chemins d'ERREUR marchaient — seul un
+    // build reussi revelait le probleme, et c'est justement celui que je
+    // n'avais pas relance.
+    //
+    // On passe un chemin jocly inexistant : la verification qui le refuse vit
+    // APRES le bloc --site, donc la voir s'executer prouve que le flot y
+    // parvient.
+    const r = android('--jocly', '/chemin/qui/n/existe/pas', '--out', '/tmp/mogichex-test-android');
+    assert.match(r.out, /jocly2 introuvable/, 'le flot doit atteindre la verification de --jocly');
+    assert.equal(r.code, 2);
+});
+
+test('android : --site refuse ce qui ne designe rien chez le destinataire', () => {
+    for (const mauvais of ['pasuneurl', './mogichex', 'ftp://exemple.fr/x']) {
+        const r = android('--site', mauvais);
+        assert.match(r.out, /adresse absolue/, mauvais);
+        assert.equal(r.code, 2, mauvais);
+    }
+    for (const local of ['http://localhost:8080', 'https://localhost', 'http://127.0.0.1:8090/x']) {
+        const r = android('--site', local);
+        assert.match(r.out, /sortir de l'appareil/, local);
+        assert.equal(r.code, 2, local);
     }
 });

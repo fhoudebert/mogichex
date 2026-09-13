@@ -157,16 +157,31 @@ export class GameSession {
      * Deux defauts imposes ici, et un seul endroit pour les imposer :
      *   - le skin 2D du catalogue, tant que l'utilisateur n'en a pas choisi
      *     un autre (three.js n'est alors jamais charge) ;
-     *   - viewAs = PLAYER_A, pour que le joueur voie toujours le plateau de
-     *     SON cote au premier lancement. jocly n'accepte ce reglage que si le
-     *     jeu se declare switchable ; le poser ailleurs serait ignore, voire
-     *     source de confusion dans le panneau.
+     *   - viewAs = PLAYER_A au premier lancement. jocly n'accepte ce reglage
+     *     que si le jeu se declare switchable ; le poser ailleurs serait
+     *     ignore, voire source de confusion dans le panneau.
+     *
+     * EN PARTIE A DISTANCE, ON REGARDE DE SON COTE — et ce reglage est pose
+     * EN DERNIER, donc au-dessus de la preference enregistree pour ce jeu.
+     * Le camp qu'on joue est un fait de CETTE partie ; la preference, elle,
+     * parle des parties locales, ou le joueur a choisi son camp et peut le
+     * rechoisir. En partie a distance, personne ne choisit : le createur est
+     * A, l'invite est B, et l'invite se retrouvait a regarder par-dessus
+     * l'epaule de son adversaire.
+     *
+     * Le cas A est pose comme le cas B, sans quoi un « voir en tant que B »
+     * garde d'une partie precedente ferait jouer A depuis la place d'en face.
+     *
+     * Meme regle que Tabulon (play.js, inviteLocalSide), pour que deux joueurs
+     * des deux applications voient la meme chose.
      */
     initialViewOptions(Jocly) {
         const saved = this.storedViewOptions();
         const opts = Object.assign({}, saved);
         if (!opts.skin) opts.skin = this.entry.defaultSkin;
-        if (this.entry.switchable && opts.viewAs === undefined) opts.viewAs = Jocly.PLAYER_A;
+        if (!this.entry.switchable) return opts;
+        if (opts.viewAs === undefined) opts.viewAs = Jocly.PLAYER_A;
+        if (this.mode === 'remote' && this.humanSides.length) opts.viewAs = this.humanSides[0];
         return opts;
     }
 
@@ -205,7 +220,14 @@ export class GameSession {
      * rappelle RunMatch pour la meme raison).
      */
     async applyViewOptions(patch) {
-        const merged = Object.assign({}, this.storedViewOptions(), patch);
+        // On applique tout, on n'enregistre pas TOUT : en partie a distance,
+        // le point de vue appartient a cette partie-la. L'enregistrer ferait
+        // retrouver a la partie suivante, locale, une orientation qu'elle n'a
+        // jamais demandee — et le joueur qui a retourne le plateau une
+        // seconde pour regarder ne demande pas a changer son reglage.
+        const keep = Object.assign({}, patch);
+        if (this.mode === 'remote') delete keep.viewAs;
+        const merged = Object.assign({}, this.storedViewOptions(), keep);
         this.saveViewOptions(merged);
         await this.match.setViewOptions(patch);
         this.viewOptions = Object.assign({}, this.viewOptions, patch);
@@ -238,8 +260,29 @@ export class GameSession {
     async takeBack() {
         if (!this.match) return false;
         const moves = await this.match.getPlayedMoves();
-        let target = takeBackTarget(moves.length, this.humanSides.length);
+        const target = takeBackTarget(moves.length, this.humanSides.length);
         if (target === null) return false;
+        return this.rollbackTo(target);
+    }
+
+    /**
+     * Revient a la position ou `target` coups ont ete joues.
+     *
+     * MEME AJUSTEMENT QUE takeBack(), et c'est pour cela qu'il est ici plutot
+     * que duplique dans l'historique : tous les jeux n'alternent pas
+     * strictement les camps, et getPlayedMoves() ne rend que des coups bruts
+     * sans indication de camp. Une cible calculee peut donc tomber sur un tour
+     * de l'ordinateur — auquel cas il rejouerait aussitot et la position
+     * demandee ne serait jamais visible. On verifie a qui c'est le tour APRES
+     * le rollback, seul moyen sur, et on recule d'un cran de plus si besoin.
+     *
+     * Rien a craindre du cote du moteur : fairy-stockfish recoit une FEN
+     * complete a chaque recherche, sans historique de coups — il n'a aucun
+     * etat a defaire.
+     */
+    async rollbackTo(target) {
+        if (!this.match) return false;
+        if (!(target >= 0)) return false;
         await this.match.rollback(target);
         if (!this.isHuman(await this.match.getTurn()) && target > 0) {
             await this.match.rollback(target - 1);
@@ -258,6 +301,24 @@ export class GameSession {
         await this.match.load(matchdata);
         await this.rearm();
         return true;
+    }
+
+    /**
+     * Les coups joues, en notation lisible.
+     *
+     * getMoveString() accepte un TABLEAU et rend un tableau de chaines — c'est
+     * la seule facon d'obtenir la notation sans rejouer la partie. Tous les
+     * jeux ne l'implementent pas : le repli affiche la forme brute du coup,
+     * moins lisible mais jamais vide. Un historique qui refuse de s'ouvrir sur
+     * certains jeux serait pire qu'un historique un peu aride.
+     */
+    async playedMoveStrings() {
+        if (!this.match) return [];
+        const moves = await this.match.getPlayedMoves().catch(() => []);
+        if (!moves.length) return [];
+        const strings = await this.match.getMoveString(moves).catch(() => null);
+        if (Array.isArray(strings) && strings.length === moves.length) return strings.map(String);
+        return moves.map((m) => (typeof m === 'string' ? m : JSON.stringify(m)));
     }
 
     /** Etat complet a publier apres un coup local. */

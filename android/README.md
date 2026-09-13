@@ -5,11 +5,67 @@ la génération et la signature de l'APK restent indépendantes, par Gradle ou A
 
 ---
 
-## 1. Préparer le contenu web
+> **L'ordre compte, et les commandes Capacitor se lancent depuis la RACINE du projet.**
+> Voir *Pièges* en fin de document si `npx cap sync android` répond
+> « android platform has not been added yet ».
+
+
+## Le lien d'invitation
+
+`tools/build-android.mjs` écrit `inviteBase` dans `config-android.js`, à côté de `relayUrl` et
+depuis la même constante `SITE`. **Sans elle, le lien d'invitation vaudrait
+`https://localhost/?game=…`** : l'origine du WebView Capacitor est valide et sécurisée, mais elle
+ne désigne rien chez le destinataire — le lien se copie, s'envoie, et n'ouvre rien.
+
+Un autre hébergement se donne **en option**, rien à éditer :
+
+```sh
+node tools/build-android.mjs --jocly ../jocly2 --site https://exemple.fr/mogichex
+```
+
+Par défaut : `https://www.biscandine.fr/variantes/mogichex`. La même valeur sert aux deux — le
+relai et la base des liens — puisque `match.php` vit dans le répertoire de mogichex. Elle est
+vérifiée avant le build et affichée à la fin :
+
+```
+  relai          : https://www.biscandine.fr/variantes/mogichex
+  liens d'invitation : https://www.biscandine.fr/variantes/mogichex/index.html
+```
+
+**Pour vérifier un APK déjà installé :** Réglages › À propos affiche le relai et la base des liens
+réellement employés. Et corriger l'outil ne suffit pas — le contenu web est figé dans le paquet,
+il faut refaire `build-android.mjs`, puis `npx cap sync android`, puis l'assemblage.
+
+## 1. Créer le projet Capacitor (une seule fois, EN PREMIER)
+
+```sh
+npm install --save-dev @capacitor/cli @capacitor/core @capacitor/android
+npx cap init mogichex fr.biscandine.mogichex --web-dir www
+npx cap add android
+```
+
+`capacitor.config.json` :
+
+```json
+{
+  "appId": "fr.biscandine.mogichex",
+  "appName": "mogichex",
+  "webDir": "www",
+  "android": { "allowMixedContent": false }
+}
+```
+
+**L'origine de l'application native n'est ni le site ni GitHub Pages.** Le relai doit donc
+autoriser `https://localhost` (Android) en CORS — c'est déjà le cas dans
+`deploy/signalconf.php.example`. `config-android.js` fixe l'URL absolue du relai ; le dist, lui,
+est embarqué à côté de `index.html` et reste en relatif. Avec `--offline`, aucun relai n'est
+utilisé du tout.
+
+## 2. Préparer le contenu web
 
 ```sh
 # depuis la racine de mogichex
-npm run android            # dist chessbase + application → android/www
+npm run android            # dist chessbase + application → www
 npm run android:light      # idem, sans les ressources 3D
 npm run android:offline    # idem, et SANS le jeu à distance
 ```
@@ -44,11 +100,12 @@ Mesuré sur jocly2 `545225a`, dist chessbase en production = **113 Mo** :
 | `scan/` | 10,3 Mo | Le moteur de dames. Les 80 jeux de chessbase n'utilisent que `uct` et `fairy-stockfish` — vérifié sur le catalogue. |
 | `res/vr` | 5,6 Mo | Réalité virtuelle, sans emploi sur téléphone. |
 | `.gltf/.bin/.obj/.mtl` | 18,4 Mo | **Seulement avec `--no-3d`.** |
+| textures 3D de `chessbase/res` | 15,4 Mo | **Seulement avec `--no-3d`** : `*normalmap.jpg`, `*diffusemap.jpg`, `*normal.jpg`, `*diffuse.jpg` et les répertoires `*diffusemaps`. Elles ne sont référencées que depuis des blocs `mesh` + `materials` des `*-view.js`, c'est-à-dire des pièces tridimensionnelles. |
 
 | Variante | `www` |
 |---|---|
-| complète | **85 Mo** |
-| `--no-3d` | **67 Mo** |
+| complète | **86 Mo** |
+| `--no-3d` | **50 Mo** |
 
 Deux pièges rencontrés en construisant ce filtre, et corrigés :
 
@@ -64,38 +121,15 @@ retrouvait sans aucun skin 2D.
 
 ---
 
-## 2. Créer le projet Capacitor (une seule fois)
-
-```sh
-npm install --save-dev @capacitor/cli @capacitor/core @capacitor/android
-npx cap init mogichex fr.biscandine.mogichex --web-dir android/www
-npx cap add android
-```
-
-`capacitor.config.json` doit contenir :
-
-```json
-{
-  "appId": "fr.biscandine.mogichex",
-  "appName": "mogichex",
-  "webDir": "android/www",
-  "android": { "allowMixedContent": false }
-}
-```
-
-**L'origine de l'application native n'est ni le site ni GitHub Pages.** Le relai doit donc
-autoriser `https://localhost` (Android) en CORS — c'est déjà le cas dans
-`deploy/signalconf.php.example`. `config-android.js` fixe l'URL absolue du relai ; le dist, lui,
-est embarqué à côté de `index.html` et reste en relatif.
-
----
-
 ## 3. Synchroniser puis construire
 
+**Depuis la racine du projet**, jamais depuis `android/` :
+
 ```sh
-npm run android          # régénère android/www
+npm run android          # régénère www
 npx cap sync android     # copie www dans le projet natif
 cd android && ./gradlew assembleDebug
+cd ..                    # ← revenir à la racine avant la prochaine variante
 ```
 
 APK de debug : `android/app/build/outputs/apk/debug/app-debug.apk`.
@@ -105,7 +139,6 @@ APK de debug : `android/app/build/outputs/apk/debug/app-debug.apk`.
 ```sh
 keytool -genkey -v -keystore mogichex.keystore -alias mogichex \
         -keyalg RSA -keysize 2048 -validity 10000
-
 cd android && ./gradlew assembleRelease
 ```
 
@@ -115,6 +148,33 @@ avec, dans `android/app/build.gradle`, un bloc `signingConfigs` renseigné par u
 Android Studio fait la même chose par *Build → Generate Signed Bundle / APK*.
 
 ---
+
+## Pièges
+
+**« android platform has not been added yet » alors que la plateforme existe.**
+Les commandes `npx cap` se lancent **depuis la racine du projet**. Depuis `android/`, Capacitor
+cherche `android/android/` et ne trouve rien. Le message ne dit pas cela, d'où la confusion —
+d'autant que `npm run …` fonctionne, lui, depuis n'importe quel sous-répertoire : npm remonte
+jusqu'au `package.json` et s'exécute depuis la racine. Reproduit et vérifié.
+
+```sh
+cd ..                    # revenir à la racine
+npx cap sync android
+```
+
+Le cas typique : la ligne `cd android && ./gradlew assembleRelease` laisse le terminal dans
+`android/`. La variante suivante échoue alors sur `cap sync`, sans que rien n'ait changé au
+projet.
+
+**`npx cap add android` répond « android platform already exists ».**
+La plateforme se crée **avant** la première génération du contenu web, et le `webDir` ne doit pas
+être un sous-dossier de `android/` : Capacitor refuse d'ajouter la plateforme si `android/`
+existe déjà, et propose de supprimer `./android` — ce qui détruirait le projet natif. D'où
+`webDir: "www"` à la racine.
+
+**Le script refuse d'écrire dans un projet natif.** `tools/build-android.mjs` efface son dossier
+de sortie avant de le remplir. Si on le pointe sur `android/`, il s'arrête au lieu d'emporter la
+configuration Gradle et la signature.
 
 ## Licence : ce que l'APK doit embarquer
 
@@ -131,13 +191,3 @@ Distribuer un APK, c'est distribuer cette œuvre combinée — trois obligations
 Sur les magasins : Google Play s'accommode du GPL et de l'AGPL. L'App Store d'Apple pose un
 conflit connu avec ces licences, si un portage iOS devait suivre un jour.
 
-## Ce qui n'a pas été vérifié ici
-
-L'environnement ne dispose ni du SDK Android ni de Gradle : **aucun APK n'a été construit ni
-installé**. Ce qui l'a été, c'est le contenu de `android/www`, servi et sondé dans un navigateur
-mobile : un seul module, tous les groupes repliés, vignettes 10/10, règles 8/8 images, skins 2D
-seuls en mode `--no-3d`, partie jouable, **zéro requête en échec**.
-
-Restent à constater sur appareil : la taille réelle de l'APK après compression, le comportement
-de la WebView Android (isolation cross-origin pour le niveau Expert, WebRTC), et l'accès au relai
-depuis l'origine native.

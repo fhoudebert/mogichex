@@ -23,14 +23,18 @@ mono-fenêtre, et de [Tabulon](https://github.com/fhoudebert/tabulon) pour les a
 | 5b | Multijoueur côté client : invitation, transport HTTP, garde reculer | **fait** — échange prouvé entre deux navigateurs |
 | 5c | Canal pair-à-pair WebRTC par-dessus `signal.php` | **fait** — canal ouvert des deux côtés, attente longue supprimée |
 | 6 | COOP/COEP + fairy-stockfish multi-thread | **fait** — activé, mesuré, repli signalé à l'utilisateur |
+| 7 | Favoris + horloge (1er tour) | **fait** — mesuré à la sonde, non vérifié au doigt |
+| 8 | Historique et retour à une position (1er tour) | **fait** — mesuré à la sonde, non vérifié au doigt |
+| 9 | Messages rapides + présence (1er tour) | **fait** — protocole et transport testés, jamais joué à deux |
 
 ### Ce qui a été mesuré au navigateur
 
 Sonde Playwright, viewport 390×844, pointeur grossier, dist jocly2 réel :
 
-- liste correcte (12 modules, `chessbase` seul replié), cibles tactiles à **64 px**,
+- liste correcte, cibles tactiles à **64 px**,
   `touch-action: none` sur le plateau ;
-- « afficher tous les jeux » fait passer de **115 à 126** entrées ;
+- « afficher tous les jeux » découvre bien les jeux réservés aux grands écrans
+  (**116 → 129** sur le dist de référence) ;
 - règles chargées, **25 images sur 25** résolues via `{GAME}` ;
 - partie lancée : plateau 2D `skin2dfull` rendu (33 canvas), statut « Your turn »,
   **aucune erreur de console** ;
@@ -140,11 +144,18 @@ permettent d'y accéder sans instancier chaque jeu — inenvisageable au démarr
 pas un seul :
 
 1. le filtrage par appareil devient possible ;
-2. **~128 appels `getGameConfig()` disparaissent du démarrage** ;
+2. **un appel `getGameConfig()` par jeu disparaît du démarrage** (~130 sur le dist complet) ;
 3. le tri module + alphabétique est gratuit, sans charger le moteur.
 
-Mesure sur jocly2 `4d6d1ce` : **128 jeux, 12 modules — 117 téléphone, 11 réservés aux grands
-écrans, 2 obsolètes.**
+> **Tous les comptes de ce document portent sur le _dist de référence_** : jocly2 `c50c12d`
+> (2.8), bibliothèque complète. Ils ne décrivent pas le produit, seulement ce build-là. Le dist
+> est construit avec l'application : un déploiement peut n'embarquer qu'une famille, que les
+> variantes d'échecs, ou un seul jeu, et tous ces nombres changent. Rien dans le code ne suppose
+> un catalogue donné — il lit ce que le dist déclare. C'est pourquoi le README parle de « plus de
+> 120 jeux » et pas d'un total.
+
+Mesure sur le dist de référence : **129 jeux, 13 modules — 116 téléphone, 13 réservés aux grands
+écrans, aucun obsolète.**
 
 ### Qui est écarté du téléphone
 
@@ -152,10 +163,21 @@ Mesure sur jocly2 `4d6d1ce` : **128 jeux, 12 modules — 117 téléphone, 11 ré
 `13×13` peut très bien passer alors qu'un `12×12` très dense ne passe pas : c'est un
 jugement, il est donc écrit à la main et assumé.
 
+**Arbitrages rendus pour jocly 2.8 :** `tenjiku-shogi` (16×16) et `go19` (19×19) rejoignent la
+liste ; `go9` et `go13` restent sur téléphone, comme `fantasticXIII-chess` en 13×13.
+
 `node tools/scan-geometry.mjs` aide à **réexaminer** cette liste quand jocly2 gagne des jeux :
 il lit les constructeurs de géométrie et signale les désaccords avec la liste. Ce n'est
 qu'une aide — les désaccords actuels (`fantasticXIII-chess` en 13×13, les trois jeux
 cylindriques) sont des **décisions**, pas des oublis.
+
+**Et c'est une aide à trous, ce que le scan dit désormais lui-même.** Il ne reconnaît que des
+**littéraux** : `cbBoardGeometryGrid(16, 16)` se voit, mais un module qui construit sa taille
+par paramètre — `Go('go19', 19, …)` — ne laisse aucune trace, et son plateau de 19×19 passe
+pour petit. Sur le dist de référence, la géométrie n'est lisible que pour **74 jeux sur 129** :
+`go19` a donc été livré éligible au téléphone sans que rien ne le signale. La sortie affiche
+maintenant cette couverture et les modules concernés (`--illisibles` pour la liste complète).
+« Accord sur 124 jeux » ne veut pas dire « 124 jeux vérifiés ».
 
 Un nom inconnu dans la liste **fait échouer le build**. Sans ce garde-fou, `terachess` écrit
 au lieu de `tera-chess` n'exclurait rien et le jeu apparaîtrait sur téléphone sans que
@@ -178,8 +200,8 @@ redimensionnée.
 
 Chaque jeu déclare ses skins avec un drapeau `"3d": true` explicite. On retient **le premier
 skin non-3D** — plus fiable que le préfixe du nom, puisque des skins 2D s'appellent
-`alquerque2d` ou `draughts2d`. Mesure : **les 128 jeux ont au moins un skin non-3D**, donc
-aucun n'est laissé de côté.
+`alquerque2d` ou `draughts2d`. Mesure : sur le dist de référence, **tous les jeux ont au moins un
+skin non-3D**, donc aucun n'est laissé de côté.
 
 Ce n'est pas qu'une affaire de performance : la 2D **évite tout three.js**, et donc toute la
 surface de risque de ses montées de version (un jeu importé a déjà échoué sur
@@ -204,7 +226,34 @@ Deux mécanismes distincts, à ne pas confondre :
   **toujours une chaîne** : un objet qui fuit jusqu'à l'affichage casse les filtres
   (`.toLowerCase()` sur un objet), panne déjà rencontrée sur Tabulon.
 
-Mesure : 107 jeux sur 128 ont déjà un résumé français dans jocly2.
+Mesure : sur le dist de référence, **tous les jeux** ont désormais un résumé français dans
+jocly2 — il en manquait une vingtaine avant la 2.8.
+
+### Les titres : deux conventions, et il faut lire les deux
+
+jocly en emploie **deux**, et n'en lire qu'une coûtait cher :
+
+| Convention | Jeux | Contenu |
+|---|---|---|
+| `title-en` | 103 | une chaîne anglaise |
+| `title` | 26 | un objet localisé — et **tous les 26 ont une version française** |
+
+Le constructeur ne lisait que `title-en`. Les 26 autres tombaient donc sur le repli, c'est-à-dire
+qu'ils s'affichaient **sous leur identifiant** — « alquerque-arabic », « draughts8 » — dans les
+deux langues, alors que le titre traduit était juste à côté dans la source. L'objet localisé passe
+maintenant en premier : quand un jeu porte les deux, le plus riche gagne.
+
+Conséquences au-delà du titre affiché : le tri alphabétique et la **recherche** s'appuient sur ces
+champs, donc « Dames internationales » se cherche désormais en français.
+
+Deux tests tiennent l'acquis : aucun jeu du catalogue ne doit s'afficher sous son identifiant, et
+le nombre de titres français lus ne doit pas retomber.
+
+**Les 103 restants n'ont pas de titre français, et ce n'est pas à mogichex de l'inventer.** Ces
+titres appartiennent à jocly, qui les partage avec joclymatch et Tabulon ; les écrire ici les
+ferait diverger. Beaucoup sont d'ailleurs des noms propres qui ne se traduisent pas (Hnefatafl,
+Shako, Margo, Yohoho). Le gros du reste est `chessbase` — 68 jeux, souvent « … Chess », où un
+français aurait du sens.
 
 Le tri alphabétique suit la **langue affichée**, pas l'anglais.
 
@@ -224,6 +273,72 @@ le fichier de partie diffère.
 
 Un lien tronqué par un copier-coller rend `null` plutôt que de lancer une partie sur des valeurs
 partielles. L'identifiant est validé côté client **avant** l'envoi, avec le même motif que le PHP.
+
+## L'adresse qui part dans le lien d'invitation
+
+**`https://localhost` est une origine valide qui ne désigne rien chez le destinataire.** C'est ce
+que sert le WebView Android de Capacitor, et construire le lien depuis `location.href` — ce qui est
+juste sur le web — y produisait `https://localhost/?game=…`. Le lien a l'air normal, il se copie,
+il s'envoie : c'est l'invité qui découvre qu'il n'ouvre rien.
+
+`inviteBaseFrom()` (dans `js/remote/invite.js`, **pure et testée**) descend trois étages :
+
+1. **`CONFIG.inviteBase`**, si elle est configurée — autorité absolue, et c'est ce que pose
+   `tools/build-android.mjs` à côté de `relayUrl`, depuis la même valeur `SITE` ;
+2. **l'adresse de la page**, si elle n'est pas celle d'une coquille empaquetée — le cas du web, et
+   le comportement d'origine ;
+3. **l'adresse du relai**, si elle est absolue. Déduction, mais raisonnable : dans le déploiement
+   de référence le relai vit *dans* le répertoire de mogichex (« . » est sa première racine), donc
+   son adresse est celle de l'application. Au pire elle désigne le joclymatch voisin, qui lit le
+   même format de lien et parle au même relai — l'invité joue quand même.
+
+Sans rien de tout cela : **pas de lien, et un message qui le dit**. Mieux vaut pas de lien qu'un
+lien mort.
+
+**Ce qui est refusé est étroit, et volontairement.** Seules les origines d'application empaquetée :
+`capacitor:`, `file:`, `content:`, les ressources `android_asset`, et une adresse locale **sans
+port explicite**. Le schéma n'entre pas dans la décision : Capacitor sert `http://localhost` par
+défaut sur Android et `https://localhost` quand `androidScheme` est posé, et les deux sont aussi
+inutilisables chez le destinataire. Un `http://127.0.0.1:8090` de serveur de développement
+**passe** : il sert parfaitement à faire jouer deux navigateurs de la même machine, et c'est ainsi
+que les sondes de ce dépôt travaillent. Une adresse de réseau local passe pour la même raison. **Le
+port est le discriminant** : une coquille native n'en a jamais, un serveur local en a toujours un.
+
+### Où se règle l'adresse, concrètement
+
+Une seule option, au moment de fabriquer le paquet Android :
+
+```sh
+node tools/build-android.mjs --jocly ../jocly2 --site https://exemple.fr/mogichex
+```
+
+Sans elle, la valeur par défaut est celle du déploiement de référence,
+`https://www.biscandine.fr/variantes/mogichex`. L'option est **vérifiée avant le build** — une
+adresse relative ou un `localhost` est refusé tout de suite, pas après une minute de gulp — et
+l'adresse retenue est **affichée en fin de build** :
+
+```
+  relai          : https://www.biscandine.fr/variantes/mogichex
+  liens d'invitation : https://www.biscandine.fr/variantes/mogichex/index.html
+```
+
+La même valeur sert aux deux, parce que dans le déploiement de référence `match.php` vit *dans* le
+répertoire de mogichex.
+
+Et l'application les montre : **Réglages › À propos** affiche le relai employé et la base des liens.
+C'est là qu'on vérifie qu'un APK porte la bonne adresse, sans console et sans attendre d'envoyer
+une invitation pour découvrir le contraire. Sur le web, le relai s'affiche « pas encore cherché »
+tant qu'aucune partie à distance n'a été proposée — il n'est cherché qu'à ce moment-là.
+
+**Et il faut reconstruire.** Corriger `tools/build-android.mjs` ne change rien à un APK déjà
+installé : il faut refaire `node tools/build-android.mjs`, puis `npx cap sync android`, puis
+l'assemblage. Le contenu web est figé dans le paquet.
+
+Cette chaîne est pure et sans navigateur pour une raison précise : l'origine d'une coquille native
+n'est pas quelque chose qu'une page peut se donner, donc c'est le seul cas qu'aucune sonde ne peut
+atteindre.
+
+---
 
 ## Jouer à distance
 
@@ -282,7 +397,8 @@ pas chez celui qui avait ouvert la partie. C'est aussi l'ordre de `RunMatch()` d
 
 ## Le niveau « Expert » et l'isolation cross-origin
 
-34 jeux sur 128 proposent un niveau **Expert** confié à Fairy-Stockfish. Son moteur WebAssembly
+Un tiers environ des jeux proposent un niveau **Expert** confié à Fairy-Stockfish (45 sur les 129
+du dist de référence). Son moteur WebAssembly
 est multi-thread : il exige `SharedArrayBuffer`, que les navigateurs ne donnent qu'aux pages
 **cross-origin isolated**.
 
@@ -318,7 +434,26 @@ dès le premier coup. Bandeau présent sans isolation, absent avec.
 
 ## La liste des jeux
 
-**Tous les modules sont repliés par défaut.** Douze modules et jusqu'à 116 jeux : déroulée, la
+**Les noms de modules sont écrits à la main** (`MODULE_LABELS` dans `js/catalog.js`), pas déduits
+de l'identifiant. Le `text-transform: capitalize` qui s'en chargeait rendait « Fourinarow » et
+« Pensoc » — lisibles par qui connaît déjà jocly, opaques pour les autres — et il serait devenu
+nuisible une fois les libellés traduits, en transformant « Four in a row » en « Four In A Row » et
+« Foot des manchots » en « Foot Des Manchots ». Les libellés portent donc leur casse, et le CSS
+n'y touche plus.
+
+Cinq modules ont un nom français : *Échecs*, *Dames*, *Puissance 4*, *Moulin*, *Chasse* — plus
+*Foot des manchots*, qui reprend le vocabulaire des résumés français de jocly. Les autres sont des
+noms propres (Tafl, Margo, Mana, Yohoho, Go, Scrum, Reversi) et retombent sur l'anglais : c'est le
+bon résultat, pas un oubli. Un module inconnu — jocly en gagne — s'affiche avec une majuscule
+initiale, et un test signale celui qui arriverait sans libellé.
+
+**Les modules sont rangés dans l'ordre de la langue affichée**, pas de l'identifiant. Les jeux
+d'un module l'étaient déjà par titre localisé ; trier les modules par identifiant donnait, en
+français, « Dames, Échecs, Puissance 4, Go, Chasse… » — l'ordre alphabétique d'une langue que
+l'utilisateur ne voit pas.
+
+**Tous les modules sont repliés par défaut.** Une douzaine de modules et plus de cent jeux sur un
+dist complet : déroulée, la
 liste enterre `checkers`, `tafl` ou `margo` sous `chessbase`. Repliée, elle donne d'emblée la
 carte des familles disponibles, et un module s'ouvre d'un doigt. Une recherche déroule tout —
 afficher des sections fermées sur des résultats qu'on vient de demander n'aurait pas de sens.
@@ -336,9 +471,28 @@ Une seule ligne s'affiche si le jeu la gère : `getViewOptions()` ne rend que le
 supportées, et une case sans effet est pire qu'une case absente. Mesure : `classic-chess`
 expose les six, `english-draughts` n'expose pas *compléter les coups*.
 
-**« Voir en tant que joueur A » est le défaut**, pour que le joueur voie d'emblée le plateau
-de son côté. Jocly n'accepte `viewAs` que pour les jeux qui se déclarent `switchable`
-(107 sur 128) — ailleurs la ligne est masquée et le réglage n'est pas envoyé.
+**« Voir en tant que joueur A » est le défaut** en partie locale. Jocly n'accepte `viewAs` que
+pour les jeux qui se déclarent `switchable` (la grande majorité) — ailleurs la ligne est masquée
+et le réglage n'est pas envoyé.
+
+**En partie à distance, chacun regarde de son côté**, et ce réglage est posé **en dernier**, donc
+au-dessus de la préférence enregistrée pour ce jeu. Le camp qu'on joue est un fait de *cette*
+partie ; la préférence, elle, parle des parties locales, où le joueur choisit son camp et peut le
+rechoisir. À distance personne ne choisit : le créateur est A, l'invité est B — et l'invité se
+retrouvait à regarder par-dessus l'épaule de son adversaire.
+
+Le cas A est traité comme le cas B. Sans cela, un « voir en tant que B » gardé d'une partie
+précédente ferait jouer A depuis la place d'en face.
+
+Et **rien n'est réécrit dans les préférences** : ni à l'ouverture, ni si le joueur retourne le
+plateau une seconde pour regarder. La partie locale suivante retrouverait sinon une orientation
+qu'elle n'a jamais demandée. `applyViewOptions()` applique donc tout mais n'enregistre pas
+`viewAs` tant qu'un camp est distant.
+
+Même règle que Tabulon (`play.js`, `inviteLocalSide`), pour que deux joueurs des deux
+applications voient la même chose. Mesuré à deux navigateurs sur `classic-chess`, avec une
+préférence contraire plantée chez l'invité : A voit `a`, B voit `b`, et la préférence de B reste
+intacte.
 
 Les choix sont mémorisés par jeu, sous une clé unique (`view.<jeu>`), et rechargés au
 lancement suivant.
@@ -419,6 +573,49 @@ qui rejoint — **sans une ligne de configuration**.
 
 `signalconf.php` ne sert qu'aux origines *autres* que le relai : un miroir GitHub Pages, ou une
 coquille native. `https://biscandine.fr` y figure déjà.
+
+### Ce qu'il faut téléverser, et ce qu'il ne faut pas
+
+Le dépôt contient l'application **et** ce qui sert à la fabriquer. Seule la première moitié a sa
+place sur un serveur.
+
+**Indispensable :**
+
+```
+index.html   manifest.webmanifest   sw.js
+css/   js/   lang/   app/catalog.json   i/
+```
+
+Plus, au même endroit, les quatre fichiers de `deploy/` — `match.php`, `signal.php`, `.htaccess`,
+et `signalconf.php.example` renommé en `signalconf.php` — déposés **à plat** dans le répertoire de
+mogichex, pas dans un sous-dossier `deploy/` : le relai est cherché en `.`.
+
+La liste fait foi ailleurs qu'ici : c'est le tableau `SHELL` de `sw.js`, que le service worker
+pré-cache, et un test vérifie que chacune de ses entrées existe sur le disque. Un second test
+vérifie qu'aucune n'appartient à un répertoire de fabrication — sans quoi cette page deviendrait
+fausse en silence.
+
+**À laisser chez vous :**
+
+| | |
+|---|---|
+| `tools/` | fabrique le catalogue, l'APK, l'estampille du service worker. Ne tourne que chez vous |
+| `tests/` | 161 assertions Node et 14 PHP. `tests/*.php` sont des **exécutables** : les téléverser, c'est offrir des points d'entrée qui écrivent sur le disque |
+| `data/` | `phone-ineligible.json` est lu par le **build**, jamais par le navigateur — il est déjà cuit dans `catalog.json` |
+| `android/` | projet Capacitor, 1,8 Mo, sans objet sur le web |
+| `package.json`, `DEVELOPMENT.md`, `README.md`, `.gitignore` | rien ne les lit à l'exécution |
+
+Ce n'est pas qu'une question de place : `tests/match-runner.php` et `tests/signal-runner.php`
+sont faits pour écrire des fichiers de partie. Servis par un serveur web, ils deviennent des
+points d'entrée publics qui font exactement cela.
+
+**Ce qui reste, en revanche, doit rester :** `LICENSE`. mogichex est sous AGPL-3.0, dont
+l'article 13 demande d'offrir la source à ceux qui utilisent le logiciel **à travers le réseau**.
+Un lien vers le dépôt dans la page « à propos » y suffit — et il y est déjà.
+
+Ordre de grandeur : sur le dépôt, l'application pèse un peu moins de 500 Ko hors `dist`, dont
+les 300 Ko de `js/`. Le reste — outils, tests, projet Android — est à peu près du même ordre, et
+n'a rien à faire en ligne.
 
 ## Hébergement
 
@@ -503,6 +700,335 @@ appelle le relai. C'est ce qui rend l'embarquement possible sans réécriture.
 
 ---
 
+## Premier tour : ce que Tabulon a donné, et à quel prix
+
+Quatre fonctions reprises de [Tabulon](https://github.com/fhoudebert/tabulon)
+(branche 0.8.x), choisies pour **mesurer les changements d'interface** avant
+d'engager quoi que ce soit de lourd : favoris, horloge, historique, et la part
+de la discussion qui ne demande aucun chiffrement.
+
+Ce qui rend le portage possible est déjà là et n'a pas été touché : le lien
+d'invitation, l'enveloppe de partie et le motif d'identifiant accepté par le
+relai sont **les mêmes des deux côtés**. Un fil de discussion déposé par
+mogichex est relisible par Tabulon, et réciproquement.
+
+### Le budget de la barre de jeu, mesuré
+
+La barre ne porte **jamais plus de quatre icônes**. Mesure à 390 px, titre
+`Chess with different armies` :
+
+| Icônes | Largeur restante pour le titre |
+|---|---|
+| quatre | **166 px** |
+| cinq | **114 px** |
+
+Historique et discussion se partagent donc la quatrième place, et le partage
+tombe juste : le retour arrière n'a de sens qu'en partie locale, la discussion
+n'existe qu'en partie à distance. En distant, la **liste des coups reste
+atteignable depuis les options** — la *lire* ne change aucune position, c'est y
+*revenir* qui est interdit.
+
+« Reprendre le coup » a quitté la barre pour le haut du panneau des coups : il
+suit la fonction dont il n'est qu'un cas particulier (`rollbackTo()`), et la
+barre reste à quatre.
+
+### Favoris
+
+Une **section épinglée**, pas un filtre : un filtre « favoris seulement »
+remplacerait la liste, donc obligerait à le désactiver pour retrouver le reste.
+
+Elle est la **seule section déroulée par défaut**, et c'est tout son intérêt —
+les modules sont repliés pour donner la carte des familles, les favoris sont
+ouverts pour donner les jeux.
+
+Elle part des jeux **déjà filtrés** : sans cela, une recherche sans résultat
+afficherait quand même les favoris, et « adaptés à cet écran » se retrouverait
+contredit par sa propre section épinglée. Mesuré : une recherche qui ne rend
+rien fait disparaître la section.
+
+L'étoile est un **bouton à part**, avec sa propre cible de 44×64 px : ouvrir la
+fiche et marquer un favori sont deux gestes différents, et les superposer
+ferait rater l'un ou l'autre. Marquer un jeu ne **referme pas** les sections
+ouvertes (on marque ses favoris en parcourant les modules) — vérifié à la
+sonde.
+
+### Horloge
+
+Modèle JoclyBoard, incrément Fischer crédité à celui qui vient de jouer.
+Cadence mémorisée **globalement** et non par jeu : qui joue au blitz y joue à
+tous les jeux, et la régler 127 fois serait une punition.
+
+**Coût mesuré sur le plateau : 43 px, soit 5,7 %** de la hauteur disponible à
+390×844 (758 px sans horloge, 715 px avec). C'est le seul des quatre lots qui
+prend de la place à la seule chose qu'on regarde ; c'est pour cela qu'il passe
+en premier sur un vrai téléphone.
+
+**Masquée dès qu'un camp est distant.** Les deux appareils ne voient pas le
+même instant : le coup de l'adversaire est daté de son *arrivée*, pas de son
+départ. Le retard du réseau, une page mise en veille, un rechargement —
+chacun déduirait du temps à l'autre, et deux pendules afficheraient deux
+vérités. Une horloge à distance demande que le temps voyage dans l'enveloppe et
+soit arbitré d'un seul côté : autre format, autre chantier.
+
+**La chute du drapeau est annoncée, pas imposée à jocly.** Le moteur ignore
+tout de l'horloge ; lui faire croire à une fin de partie demanderait de mentir
+à `getFinished()`, ce qui casserait la sauvegarde et la reprise. Le tour en
+cours est simplement interrompu. Le drapeau ne tombe **qu'une fois** : sans
+cela, reprendre un coup après la chute relancerait un compteur à zéro sur une
+partie déjà close.
+
+### Historique et retour à une position
+
+`takeBack()` devient un cas particulier de `rollbackTo(n)`, qui garde
+l'ajustement déjà payé : tous les jeux n'alternent pas strictement les camps et
+`getPlayedMoves()` ne rend que des coups bruts, donc on vérifie **après** le
+rollback à qui c'est le tour et on recule d'un cran de plus si la position
+visée n'est pas observable (l'ordinateur rejouerait aussitôt).
+
+La notation vient de `getMoveString(moves)`, qui accepte un tableau. Tous les
+jeux ne l'implémentent pas : le repli affiche la forme brute du coup. Un
+historique qui refuserait de s'ouvrir sur certains jeux serait pire qu'un
+historique aride.
+
+**Deux colonnes, chaque cellule numérotée.** Une grille « blancs / noirs »
+mentirait dès qu'on sort des échecs (prise multiple aux dames, coups doubles) :
+la deuxième colonne n'est pas « le camp adverse », c'est « le coup suivant ».
+Mesuré : cible de 175×44 px, **26 coups visibles sans défiler** sur une partie
+de 80.
+
+### Messages rapides et présence
+
+Porté de `remote-chat-protocol.js` de Tabulon, **au format près**.
+
+**Deux clés, un seul écrivain chacune.** `match.php` stocke une clé → une
+valeur en dernier-écrit-gagne ; écrire une discussion à deux dans la même clé
+serait une lecture-modification-écriture concurrente. Chacun dépose son fil
+sous `matchId-ca` / `-cb`, n'écrit que dans le sien et ne lit que celui d'en
+face. Plus aucune concurrence. Vérifié : un identifiant mogichex fait 28
+caractères, le suffixe reste dans le `{6,64}` du serveur et ne contient ni
+point ni barre.
+
+**Le fil part en entier à chaque message**, faute de quoi le deuxième
+effacerait le premier.
+
+**Un message rapide voyage comme identifiant**, traduit chez celui qui le lit :
+deux joueurs sans langue commune se disent l'essentiel, et rien de personnel ne
+circule — donc rien à chiffrer, donc ils fonctionnent dans une partie sans clé.
+C'est aussi la seule forme de discussion praticable au pouce.
+
+**Le texte libre est refusé par construction.** `encodeThread()` lève tant
+qu'aucun scelleur ne lui est fourni : on ne peut pas ajouter un champ de saisie
+sans avoir ajouté le chiffrement. C'est le garde-fou du lot suivant, et il est
+testé.
+
+**Transport : le pair-à-pair quand il est ouvert, le relai toujours en
+écriture.** Le canal de données porte déjà les enveloppes de partie ;
+l'aiguillage se fait sur l'**absence** de champ `kind` (une enveloppe
+joclymatch n'en a pas), et non sur un champ ajouté aux enveloppes, qui
+casserait le format. Dès que le pair est ouvert, l'attente longue de la
+discussion s'arrête comme celle de la partie : sans cela, chaque joueur
+immobiliserait **deux** processus PHP pendant 20 s au lieu d'un.
+
+La conversation n'est **republiée que si elle a changé** : le fil d'en face est
+relu en entier à chaque tour, et prévenir à chaque fois ferait clignoter une
+pastille de « nouveau message » qui n'en est pas un.
+
+**Hors ligne (`--offline`) :** `remotePlay:false` ⇒ `attachRelay()` n'est jamais
+appelé ⇒ `state.chat` reste nul ⇒ le bouton reste masqué et aucune requête ne
+sort. Un test tient l'invariant qui rend cela vrai : `attachChat()` n'est appelé
+que depuis `attachRelay()`.
+
+### Un piège nouveau, propre à ce dépôt
+
+**Les clés de traduction sont les textes anglais** — deux usages différents du
+même libellé se marchent dessus. Le message rapide « Your turn » a écrasé le
+statut de partie du même nom (« À vous de jouer ») sans que rien ne le
+signale. Le bouton dit désormais `Your turn!`. À surveiller à chaque ajout de
+chaîne.
+
+### Ce qui a été mesuré (sonde Playwright, 390×844, pointeur grossier)
+
+Le dist jocly n'est pas versionné : **l'écran de jeu n'a pas de plateau**. La
+sonde mesure donc la mise en page, pas le jeu, et les éléments de partie sont
+révélés à la main. C'est dit, ce n'est pas masqué par des tests factices.
+
+- 13 modules, **toutes sections repliées** au départ ;
+- étoile : cible **44×64 px**, section favoris créée, en tête, déroulée, et
+  **conservée après rechargement** ; sections ouvertes non refermées ;
+- favori **masqué par une recherche sans résultat** ;
+- quatre cadences, `none` par défaut, ligne **masquée en mode distant** et
+  revenue en local ;
+- horloge : **43 px**, plateau de 758 → 715 px ;
+- barre : **4 icônes**, titre à 166 px (114 px à cinq) ;
+- coups : cible **175×44 px**, 26 visibles sans défiler sur 80 ;
+- discussion : 4 messages rapides + 4 états de présence, **aucun libellé
+  tronqué**, pastille de non-lus lisible ;
+- **zéro erreur de console** hors les 404 de vignettes (dist absent).
+
+Tests : **118 assertions**, Node pur.
+
+### Ce qui reste à voir au doigt
+
+- **jouer un coup au doigt**, toujours : la sonde n'y arrive pas dans l'iframe
+  jocly, limite déjà rencontrée sur Tabulon. Un coup *machine*, lui, se mesure
+  — il suffit de prendre le camp B et de laisser l'ordinateur ouvrir ;
+- un retour à une position **en milieu de partie**, et le ré-armement qui suit ;
+- le retour d'arrière-plan : l'application est suspendue dès qu'on change
+  d'écran, et le fil est relu en entier au réveil.
+
+---
+
+## Le texte libre et son scellement
+
+Les messages rapides ne portent rien de personnel — ils voyagent comme
+identifiants. Le texte libre, lui, ne peut pas partir en clair : le relai
+n'authentifie personne, et ce qu'on y dépose est lisible par qui tient le
+serveur et par qui devine un identifiant de partie.
+
+### Le format, celui de Tabulon à l'octet près
+
+| | |
+|---|---|
+| clé | 32 octets, hexadécimal **minuscule** (64 caractères) |
+| sceau | base64 standard de `nonce[24] ‖ chiffré ‖ étiquette[16]` |
+| chiffre | XChaCha20-Poly1305 |
+
+**XChaCha plutôt qu'AES-GCM, et c'est la seule décision de conception.** AES-GCM
+serait venu gratuitement avec `crypto.subtle` ; il aurait rendu les deux
+applications sourdes l'une à l'autre, alors qu'elles partagent déjà le lien
+d'invitation, l'enveloppe de partie et le relai. Le nonce de 192 bits est un
+bonus réel : tiré au hasard à chaque message, il n'oblige **jamais** à tenir un
+compteur persistant — impossible à garantir sur un téléphone, où le système tue
+l'application sans prévenir et où la partie peut reprendre ailleurs. Un nonce
+réutilisé n'est pas une petite fuite : il coûte la clé d'authentification, donc
+la possibilité de forger.
+
+Contrepartie assumée : **du code tiers embarqué**, une première ici. Voir
+`js/vendor/noble-ciphers/PROVENANCE.md` — 82 Ko non minifiés, MIT, quatre
+fichiers copiés sans retouche. Ne pas l'écrire à la main était le point
+important : ChaCha20 et Poly1305 sont add-rotate-xor, donc naturellement à
+temps constant et faits pour le logiciel — mais Poly1305 demande une
+arithmétique par membres de 32 bits qui se rate *silencieusement*, en rendant
+des résultats plausibles et un sceau qui ne protège rien.
+
+**L'interopérabilité est vérifiée contre libsodium**, pas contre nous-mêmes :
+`tests/test-mogichex.mjs` compare les octets produits à un vecteur de
+`crypto_aead_xchacha20poly1305_ietf`. Un aller-retour sur la même machine
+n'aurait rien prouvé — deux implémentations fausses de la même façon
+s'accordent très bien entre elles.
+
+### La clé voyage dans le fragment
+
+`#k=<64 hexa>`, jamais dans la requête. Le fragment n'est transmis à aucun
+serveur : ni l'hébergeur, ni le relai, ni un journal d'accès, ni un en-tête
+`Referer` ne le voient. En paramètre, la clé finirait dans les journaux du
+premier serveur venu, et la discussion serait protégée pour tout le monde sauf
+pour celui qui est le mieux placé pour la lire.
+
+Une clé mal formée est **ignorée des deux côtés** plutôt que recopiée : un lien
+qui promet une discussion protégée sans pouvoir la tenir est pire qu'un lien
+sans clé, où le manque se voit.
+
+**Une clé par partie, tirée au hasard, aucun trousseau.** Tabulon propose aussi
+une clé de communauté dont la clé de partie se dérive, désignée par son
+empreinte (`#kid=`). C'est utile pour un club ; sur un téléphone, cela veut dire
+un écran de gestion de trousseau pour deux joueurs qui s'échangent un lien.
+mogichex **lit** l'empreinte sans la gérer, uniquement pour pouvoir *dire* que
+cette invitation attend une clé qu'il n'a pas — plutôt que d'afficher une
+discussion muette sans explication.
+
+Conséquence à connaître : le lien **est** le secret. Qui l'intercepte lit la
+conversation, et perdre le lien c'est perdre le fil. C'est le bon compromis pour
+une partie, pas pour un secret durable.
+
+### Trois états, trois explications
+
+Le champ de saisie n'apparaît **que** si le texte peut être scellé : sans
+scelleur, `encodeThread()` refuse d'envoyer, et un champ qui n'envoie rien sans
+le dire se lit comme une panne. Clé présente → on tape. Empreinte Tabulon → on
+le dit. Rien → invitation ancienne, ou fragment perdu par un copier-coller
+maladroit, ce qui est la première chose qu'un partage abîme.
+
+Dans les trois cas, **messages rapides et présence continuent de fonctionner**.
+
+### Mesuré : deux navigateurs, un relai PHP
+
+`probe-chat.mjs` lance deux contextes et un vrai `match.php`. C'est ce que ni
+les tests ni les sondes précédentes ne pouvaient approcher.
+
+- clé dans le fragment, **absente de la requête** ;
+- B rejoint par le lien, champ de saisie présent **des deux côtés** ;
+- message écrit chez A, **reçu et déchiffré** chez B, aucun message verrouillé ;
+- message rapide de B **revenu** chez A ;
+- et surtout, ce que le relai détient réellement : **208 octets**, `"enc":1`,
+  un sceau de 75 octets (nonce de 24 + corps), et **pas une trace du texte** ;
+- zéro erreur de console.
+
+---
+
+## Relance et notifications
+
+La seule fonction de ce portage où le téléphone bat le PC : une partie par correspondance dure des
+jours, et l'adversaire ne va pas garder un onglet ouvert.
+
+### Ce que ça fait, et ce que ça ne fait pas
+
+Tant que l'application **vit** — onglet en arrière-plan, écran éteint, application Android
+suspendue mais pas tuée — la boucle d'écoute tourne, ralentie par le système, et une notification
+part. C'est déjà l'essentiel des cas : on repose le téléphone entre deux coups, on ne ferme pas.
+
+Une fois l'application **tuée**, plus rien n'arrive jusqu'à réouverture. Y remédier demanderait un
+service en arrière-plan : `WorkManager`, dont le réveil est différé d'un quart d'heure au minimum,
+ou FCM — c'est-à-dire un service tiers et un serveur. Tout le reste du projet a été construit pour
+n'en dépendre d'aucun. La limite est assumée et écrite, pas contournée en silence.
+
+### Trois décisions qui ne se négocient pas
+
+**La permission ne se demande jamais au démarrage.** Une invite sur le premier écran est refusée
+par réflexe, et ce refus est définitif dans la plupart des navigateurs : la fonction serait grillée
+avant que l'utilisateur sache ce qu'elle fait. Elle est demandée sur un geste, dans le panneau de
+discussion, quand le sujet est à l'écran. Un refus déjà enregistré ne se represente pas — on le
+**dit**, et on renvoie aux réglages du navigateur, seul endroit où il se défait.
+
+**Le texte libre n'entre pas dans la notification.** Il a été chiffré précisément pour que le relai
+ne le voie pas ; l'afficher sur un écran verrouillé, dans un bandeau que voit quiconque passe à
+côté, déferait une partie de ce travail. La notification annonce « nouveau message » et rien
+d'autre. Les messages rapides, eux, ne portent rien de personnel : ils s'affichent en toutes
+lettres, c'est tout leur intérêt.
+
+**La présence ne réveille pas un téléphone.** « Votre adversaire réfléchit » n'appelle aucune
+action ; le seuil d'une notification est qu'elle mérite d'interrompre. Seuls un message et une
+relance le franchissent.
+
+Deux détails qui se paient une fois : `new Notification()` **n'existe pas** sur Chrome Android — il
+faut passer par `ServiceWorkerRegistration.showNotification`, donc c'est le seul chemin emprunté,
+un repli ne servant que sur ordinateur et masquant l'échec ailleurs. Et l'étiquette (`tag`) est
+constante par partie : une notification en **remplace** une autre au lieu d'empiler cinq bandeaux,
+ce qui est la façon la plus sûre de se faire couper le son.
+
+### La relance
+
+Le garde-fou de cinq minutes était déjà dans le protocole (`canNudge`), testé, depuis le premier
+tour. Ce qui s'ajoute est l'**affichage** du délai : le bouton devient « Relancer — 4 min » au lieu
+de refuser l'appui. Un bouton qui ne répond pas sans dire pourquoi se presse trois fois.
+
+### Mesuré : deux navigateurs, un relai, une page en arrière-plan
+
+- relance envoyée, bouton passé à « Nudge — 5 min » et **non re-cliquable** ;
+- relance **reçue** chez l'adversaire ;
+- **aucune invite de permission au démarrage** ; l'interrupteur reflète la permission réelle ;
+- page déclarée cachée, permission accordée : **notification levée**, titre = le nom du jeu,
+  corps = « New message », **une seule**, étiquetée `chat` ;
+- et le texte du message **n'y figure pas**.
+
+Trois pièges de sondage payés pour obtenir ces cinq lignes, tous notés dans `probe-chat.mjs` :
+Chromium sans affichage rend `Notification.permission === 'denied'` quoi qu'on accorde (d'où
+`HEADED=1 xvfb-run`) ; `waitForFunction` s'accroche par défaut à `requestAnimationFrame`, qu'une
+page cachée **ne reçoit pas** ; et `waitUntil: 'networkidle'` n'arrive jamais sur une page qui
+maintient une attente longue — c'est même tout l'intérêt de l'attente longue.
+
+---
+
 ## Structure
 
 ```
@@ -520,6 +1046,14 @@ js/i18n.js              t(), pickLocalized(), chargement des langues
 js/device.js            classe d'appareil par capacité
 js/catalog.js           filtrage, groupement (pur, testé)
 js/catalog-view.js      rendu de la liste
+js/favorites.js         liste des favoris, section épinglée (pur, testé)
+js/clock.js             pendule : compteurs, incrément, drapeau (pur, testé)
+js/history.js           mise en lignes des coups, cible d'un retour (pur, testé)
+js/remote/chat-protocol.js  messages, présence, fils (pur, testé — format Tabulon)
+js/remote/chat-channel.js   transport de la discussion (relai + pair-à-pair)
+js/remote/chat-sealer.js    scellement du texte libre (pur, testé — format Tabulon)
+js/notify.js                notifications : quoi annoncer, et quand (pur, testé)
+js/vendor/noble-ciphers/    XChaCha20-Poly1305, MIT — voir PROVENANCE.md
 js/game.js              chargement Jocly, session, boucle de jeu, règles
 js/app.js               navigation entre écrans
 sw.js                   service worker
@@ -568,13 +1102,56 @@ tests/                       Node pur + PHP réel
   au chargement. `loadJocly()` redresse donc la base explicitement.
 - **Reculer / recommencer devront rester désactivés** dès qu'un côté est distant — sinon
   désynchronisation garantie (leçon Tabulon).
+- **Une « requête en échec » n'est pas forcément une erreur.** Un `<audio preload="auto">`
+  déclare deux `<source>` (`.ogg` puis `.mp3`) et le navigateur **annule** celui qu'il ne
+  retient pas ; changer d'écran pendant le préchargement annule le reste. Playwright compte
+  ces abandons comme `requestfailed`, au même titre qu'un 404. Toujours lire
+  `request.failure().errorText` avant de conclure : un `net::ERR_ABORTED` sur
+  `res/sounds/winblues.ogg` a été pris ici pour un fichier manquant côté jocly, alors que le
+  fichier est bien présent, dans les sources comme dans le dist, et qu'il se sert en 200.
+- **Sur le canal pair-à-pair, publier la forme SCELLÉE.** `send()` garde en
+  mémoire un message au corps clair ; le publier tel quel ferait voyager le
+  texte en clair et, surtout, l'autre bout le rejetterait — `decodeThread`
+  verrouille tout corps de discussion dépourvu de `enc`. On réutilise la sortie
+  de `encodeThread` plutôt que de sceller une seconde fois : deux chemins de
+  scellement finiraient par diverger.
+- **Le 400 sur `mid=x` est voulu.** `relay-locator` sonde le relai avec un
+  identifiant volontairement invalide, que `match.php` refuse par son motif
+  avant de toucher au disque — c'est ainsi qu'on distingue un vrai relai d'une
+  page d'erreur d'hébergeur sans créer de fichier. Il apparaît en rouge dans la
+  console du navigateur ; ce n'est pas une panne, et une sonde doit le filtrer
+  plutôt qu'envoyer le lecteur suivant chercher un défaut.
+- **Un script d'outillage doit être exécuté, pas seulement relu.** En déplaçant le bloc `--site`
+  vers le haut de `tools/build-android.mjs`, l'accolade fermante du premier `if` est restée cent
+  trente lignes plus bas : **tout le build s'est retrouvé à l'intérieur d'un
+  `if (adresse invalide) { … }`**, donc sauté dès que l'adresse était bonne. Le fichier se parsait,
+  `node --check` passait, et les deux chemins d'*erreur* fonctionnaient — ce sont les seuls que
+  j'avais relancés. Seul un build qui RÉUSSIT révélait le problème. Un test lance désormais le
+  script avec un chemin jocly inexistant : voir s'afficher « jocly2 introuvable » prouve que le flot
+  dépasse le bloc `--site`, et coûte deux cents millisecondes.
+- **`flex: 1` sur un bouton ne veut pas dire la même chose selon le conteneur.** La règle
+  `button.primary, button.secondary { flex: 1 }` sert aux paires côte à côte de
+  `.detail-actions`, une **rangée**. Dans une **colonne** — le panneau de discussion —
+  le même `flex-grow` étire le bouton sur toute la hauteur libre : « Relancer votre
+  adversaire » occupait 180 px. `button.wide` pose donc `flex: 0 0 auto` : un bouton
+  pleine largeur n'a jamais besoin de grandir sur l'axe principal.
+- **Les clés de traduction sont les textes anglais.** Deux usages différents du même
+  libellé partagent donc la même entrée : le message rapide « Your turn » a écrasé le
+  statut de partie « À vous de jouer », sans avertissement. Vérifier `lang/fr.json`
+  avant d'ajouter une chaîne dont le texte existe peut-être déjà ailleurs.
+- **Une capture d'écran prise trop tôt ment.** Les panneaux glissent en 180 ms ; une
+  sonde qui attend 100 ms photographie un panneau à mi-course et fait croire à un
+  défaut de mise en page. Attendre la fin de la transition, ou la désactiver.
+- **Le canal pair-à-pair porte maintenant deux sortes d'objets.** L'aiguillage se fait
+  sur l'ABSENCE de `kind` (une enveloppe joclymatch n'en a pas) : ajouter un `kind` aux
+  enveloppes de partie casserait la compatibilité du format avec joclymatch et Tabulon.
 
 ---
 
 ## Tests
 
 ```sh
-npm test                      # 18 assertions, Node pur
+npm test                      # 161 assertions, Node pur
 ```
 
 Ce qui est testable l'est : construction du catalogue, champs localisés, filtrage,
