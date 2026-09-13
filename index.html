@@ -164,7 +164,19 @@
                            enterkeyhint="send">
                     <button id="btn-chat-send" class="primary" data-t-label aria-label="Send">➤</button>
                 </div>
+                <!-- La relance INTERROMPT : elle ne se range pas avec les
+                     etats de presence, qui ne demandent rien a personne. Elle
+                     a sa ligne, et un delai de cinq minutes ecrit dessus. -->
+                <button id="btn-nudge" class="secondary wide" data-t>Nudge your opponent</button>
                 <p id="chat-note" class="hint"></p>
+                <!-- La permission est demandee ICI, sur un geste, et jamais au
+                     demarrage : une invite sur le premier ecran est refusee par
+                     reflexe, et ce refus est definitif. -->
+                <label class="switch row" id="row-notify">
+                    <input id="notify" type="checkbox">
+                    <span data-t>Notify me when I'm away</span>
+                </label>
+                <p id="notify-note" class="hint"></p>
             </div>
         </aside>
 

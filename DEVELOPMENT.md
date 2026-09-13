@@ -229,6 +229,32 @@ Deux mécanismes distincts, à ne pas confondre :
 Mesure : sur le dist de référence, **tous les jeux** ont désormais un résumé français dans
 jocly2 — il en manquait une vingtaine avant la 2.8.
 
+### Les titres : deux conventions, et il faut lire les deux
+
+jocly en emploie **deux**, et n'en lire qu'une coûtait cher :
+
+| Convention | Jeux | Contenu |
+|---|---|---|
+| `title-en` | 103 | une chaîne anglaise |
+| `title` | 26 | un objet localisé — et **tous les 26 ont une version française** |
+
+Le constructeur ne lisait que `title-en`. Les 26 autres tombaient donc sur le repli, c'est-à-dire
+qu'ils s'affichaient **sous leur identifiant** — « alquerque-arabic », « draughts8 » — dans les
+deux langues, alors que le titre traduit était juste à côté dans la source. L'objet localisé passe
+maintenant en premier : quand un jeu porte les deux, le plus riche gagne.
+
+Conséquences au-delà du titre affiché : le tri alphabétique et la **recherche** s'appuient sur ces
+champs, donc « Dames internationales » se cherche désormais en français.
+
+Deux tests tiennent l'acquis : aucun jeu du catalogue ne doit s'afficher sous son identifiant, et
+le nombre de titres français lus ne doit pas retomber.
+
+**Les 103 restants n'ont pas de titre français, et ce n'est pas à mogichex de l'inventer.** Ces
+titres appartiennent à jocly, qui les partage avec joclymatch et Tabulon ; les écrire ici les
+ferait diverger. Beaucoup sont d'ailleurs des noms propres qui ne se traduisent pas (Hnefatafl,
+Shako, Margo, Yohoho). Le gros du reste est `chessbase` — 68 jeux, souvent « … Chess », où un
+français aurait du sens.
+
 Le tri alphabétique suit la **langue affichée**, pas l'anglais.
 
 ---
@@ -444,6 +470,49 @@ qui rejoint — **sans une ligne de configuration**.
 
 `signalconf.php` ne sert qu'aux origines *autres* que le relai : un miroir GitHub Pages, ou une
 coquille native. `https://biscandine.fr` y figure déjà.
+
+### Ce qu'il faut téléverser, et ce qu'il ne faut pas
+
+Le dépôt contient l'application **et** ce qui sert à la fabriquer. Seule la première moitié a sa
+place sur un serveur.
+
+**Indispensable :**
+
+```
+index.html   manifest.webmanifest   sw.js
+css/   js/   lang/   app/catalog.json   i/
+```
+
+Plus, au même endroit, les quatre fichiers de `deploy/` — `match.php`, `signal.php`, `.htaccess`,
+et `signalconf.php.example` renommé en `signalconf.php` — déposés **à plat** dans le répertoire de
+mogichex, pas dans un sous-dossier `deploy/` : le relai est cherché en `.`.
+
+La liste fait foi ailleurs qu'ici : c'est le tableau `SHELL` de `sw.js`, que le service worker
+pré-cache, et un test vérifie que chacune de ses entrées existe sur le disque. Un second test
+vérifie qu'aucune n'appartient à un répertoire de fabrication — sans quoi cette page deviendrait
+fausse en silence.
+
+**À laisser chez vous :**
+
+| | |
+|---|---|
+| `tools/` | fabrique le catalogue, l'APK, l'estampille du service worker. Ne tourne que chez vous |
+| `tests/` | 143 assertions Node et 14 PHP. `tests/*.php` sont des **exécutables** : les téléverser, c'est offrir des points d'entrée qui écrivent sur le disque |
+| `data/` | `phone-ineligible.json` est lu par le **build**, jamais par le navigateur — il est déjà cuit dans `catalog.json` |
+| `android/` | projet Capacitor, 1,8 Mo, sans objet sur le web |
+| `package.json`, `DEVELOPMENT.md`, `README.md`, `.gitignore` | rien ne les lit à l'exécution |
+
+Ce n'est pas qu'une question de place : `tests/match-runner.php` et `tests/signal-runner.php`
+sont faits pour écrire des fichiers de partie. Servis par un serveur web, ils deviennent des
+points d'entrée publics qui font exactement cela.
+
+**Ce qui reste, en revanche, doit rester :** `LICENSE`. mogichex est sous AGPL-3.0, dont
+l'article 13 demande d'offrir la source à ceux qui utilisent le logiciel **à travers le réseau**.
+Un lien vers le dépôt dans la page « à propos » y suffit — et il y est déjà.
+
+Ordre de grandeur : sur le dépôt, l'application pèse un peu moins de 500 Ko hors `dist`, dont
+les 300 Ko de `js/`. Le reste — outils, tests, projet Android — est à peu près du même ordre, et
+n'a rien à faire en ligne.
 
 ## Hébergement
 
@@ -794,6 +863,69 @@ les tests ni les sondes précédentes ne pouvaient approcher.
 
 ---
 
+## Relance et notifications
+
+La seule fonction de ce portage où le téléphone bat le PC : une partie par correspondance dure des
+jours, et l'adversaire ne va pas garder un onglet ouvert.
+
+### Ce que ça fait, et ce que ça ne fait pas
+
+Tant que l'application **vit** — onglet en arrière-plan, écran éteint, application Android
+suspendue mais pas tuée — la boucle d'écoute tourne, ralentie par le système, et une notification
+part. C'est déjà l'essentiel des cas : on repose le téléphone entre deux coups, on ne ferme pas.
+
+Une fois l'application **tuée**, plus rien n'arrive jusqu'à réouverture. Y remédier demanderait un
+service en arrière-plan : `WorkManager`, dont le réveil est différé d'un quart d'heure au minimum,
+ou FCM — c'est-à-dire un service tiers et un serveur. Tout le reste du projet a été construit pour
+n'en dépendre d'aucun. La limite est assumée et écrite, pas contournée en silence.
+
+### Trois décisions qui ne se négocient pas
+
+**La permission ne se demande jamais au démarrage.** Une invite sur le premier écran est refusée
+par réflexe, et ce refus est définitif dans la plupart des navigateurs : la fonction serait grillée
+avant que l'utilisateur sache ce qu'elle fait. Elle est demandée sur un geste, dans le panneau de
+discussion, quand le sujet est à l'écran. Un refus déjà enregistré ne se represente pas — on le
+**dit**, et on renvoie aux réglages du navigateur, seul endroit où il se défait.
+
+**Le texte libre n'entre pas dans la notification.** Il a été chiffré précisément pour que le relai
+ne le voie pas ; l'afficher sur un écran verrouillé, dans un bandeau que voit quiconque passe à
+côté, déferait une partie de ce travail. La notification annonce « nouveau message » et rien
+d'autre. Les messages rapides, eux, ne portent rien de personnel : ils s'affichent en toutes
+lettres, c'est tout leur intérêt.
+
+**La présence ne réveille pas un téléphone.** « Votre adversaire réfléchit » n'appelle aucune
+action ; le seuil d'une notification est qu'elle mérite d'interrompre. Seuls un message et une
+relance le franchissent.
+
+Deux détails qui se paient une fois : `new Notification()` **n'existe pas** sur Chrome Android — il
+faut passer par `ServiceWorkerRegistration.showNotification`, donc c'est le seul chemin emprunté,
+un repli ne servant que sur ordinateur et masquant l'échec ailleurs. Et l'étiquette (`tag`) est
+constante par partie : une notification en **remplace** une autre au lieu d'empiler cinq bandeaux,
+ce qui est la façon la plus sûre de se faire couper le son.
+
+### La relance
+
+Le garde-fou de cinq minutes était déjà dans le protocole (`canNudge`), testé, depuis le premier
+tour. Ce qui s'ajoute est l'**affichage** du délai : le bouton devient « Relancer — 4 min » au lieu
+de refuser l'appui. Un bouton qui ne répond pas sans dire pourquoi se presse trois fois.
+
+### Mesuré : deux navigateurs, un relai, une page en arrière-plan
+
+- relance envoyée, bouton passé à « Nudge — 5 min » et **non re-cliquable** ;
+- relance **reçue** chez l'adversaire ;
+- **aucune invite de permission au démarrage** ; l'interrupteur reflète la permission réelle ;
+- page déclarée cachée, permission accordée : **notification levée**, titre = le nom du jeu,
+  corps = « New message », **une seule**, étiquetée `chat` ;
+- et le texte du message **n'y figure pas**.
+
+Trois pièges de sondage payés pour obtenir ces cinq lignes, tous notés dans `probe-chat.mjs` :
+Chromium sans affichage rend `Notification.permission === 'denied'` quoi qu'on accorde (d'où
+`HEADED=1 xvfb-run`) ; `waitForFunction` s'accroche par défaut à `requestAnimationFrame`, qu'une
+page cachée **ne reçoit pas** ; et `waitUntil: 'networkidle'` n'arrive jamais sur une page qui
+maintient une attente longue — c'est même tout l'intérêt de l'attente longue.
+
+---
+
 ## Structure
 
 ```
@@ -817,6 +949,7 @@ js/history.js           mise en lignes des coups, cible d'un retour (pur, testé
 js/remote/chat-protocol.js  messages, présence, fils (pur, testé — format Tabulon)
 js/remote/chat-channel.js   transport de la discussion (relai + pair-à-pair)
 js/remote/chat-sealer.js    scellement du texte libre (pur, testé — format Tabulon)
+js/notify.js                notifications : quoi annoncer, et quand (pur, testé)
 js/vendor/noble-ciphers/    XChaCha20-Poly1305, MIT — voir PROVENANCE.md
 js/game.js              chargement Jocly, session, boucle de jeu, règles
 js/app.js               navigation entre écrans
@@ -901,7 +1034,7 @@ tests/                       Node pur + PHP réel
 ## Tests
 
 ```sh
-npm test                      # 134 assertions, Node pur
+npm test                      # 143 assertions, Node pur
 ```
 
 Ce qui est testable l'est : construction du catalogue, champs localisés, filtrage,

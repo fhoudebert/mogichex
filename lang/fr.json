@@ -127,5 +127,13 @@
   "Write a message": "Écrire un message",
   "Send": "Envoyer",
   "No key in this invitation: quick messages only.": "Aucune clé dans cette invitation : messages rapides seulement.",
-  "This invitation uses a shared key from Tabulon. Quick messages still work.": "Cette invitation emploie un trousseau partagé de Tabulon. Les messages rapides fonctionnent quand même."
+  "This invitation uses a shared key from Tabulon. Quick messages still work.": "Cette invitation emploie un trousseau partagé de Tabulon. Les messages rapides fonctionnent quand même.",
+  "Nudge": "Relancer",
+  "Nudge your opponent": "Relancer votre adversaire",
+  "Your opponent is waiting": "Votre adversaire vous attend",
+  "New message": "Nouveau message",
+  "Notify me when I'm away": "Me prévenir quand je suis ailleurs",
+  "Only while the app is still running in the background.": "Seulement tant que l'application tourne encore en arrière-plan.",
+  "Notifications are blocked for this site. Change it in your browser settings.": "Les notifications sont bloquées pour ce site. Cela se change dans les réglages du navigateur.",
+  "This browser cannot show notifications.": "Ce navigateur ne sait pas afficher de notifications."
 }

@@ -3,7 +3,7 @@
  "source": {
   "repo": "jocly2",
   "commit": "c50c12d501c4e8b92196314bba8af7f3934294ff",
-  "builtAt": "2026-09-13T07:06:12.476Z"
+  "builtAt": "2026-09-13T07:19:38.551Z"
  },
  "counts": {
   "games": 129,
@@ -32,7 +32,8 @@
    "name": "alquerque-arabic",
    "module": "checkers",
    "title": {
-    "en": "alquerque-arabic"
+    "en": "Arabic Alquerque",
+    "fr": "Alquerque arabe"
    },
    "summary": {
     "en": "Alquerque as played in Middle-East and Spain.",
@@ -98,36 +99,57 @@
    "tier": "phone"
   },
   {
-   "name": "alquerque-roman",
+   "name": "draughts8",
    "module": "checkers",
    "title": {
-    "en": "alquerque-roman"
+    "en": "Draughts 8x8",
+    "fr": "Dames en 8x8"
    },
    "summary": {
-    "en": "Alquerque as played in France and England.",
-    "fr": "L'alquerque tel qu'on y jouait en France et en Angleterre."
+    "en": "English, Brazilian, Spanish or German draughts, chosen at the start",
+    "fr": "Dames anglaises, brésiliennes, espagnoles ou allemandes"
    },
-   "thumbnail": "alquerque-roman-thumb3d.png",
+   "thumbnail": "draughts8-thumb3d.png",
    "rules": {
-    "en": "rules-alquerque-roman.html",
-    "fr": "rules-alquerque-roman-fr.html"
+    "en": "rules-draughts8.html",
+    "fr": "rules-draughts8_fr.html"
    },
    "credits": {
-    "en": "credits-alquerque-roman.html"
+    "en": "credits.html"
    },
    "skins": [
     {
-     "name": "alquerque3d",
+     "name": "classic3d",
      "title": "3D Classic",
      "is3d": true
     },
     {
-     "name": "2d-wood-alquerque",
+     "name": "turtles3d",
+     "title": "3D Turtles",
+     "is3d": true
+    },
+    {
+     "name": "classical",
+     "title": "Classic",
+     "is3d": false
+    },
+    {
+     "name": "marble0",
+     "title": "Marble",
+     "is3d": false
+    },
+    {
+     "name": "wood0",
      "title": "Wood",
+     "is3d": false
+    },
+    {
+     "name": "green",
+     "title": "Green",
      "is3d": false
     }
    ],
-   "defaultSkin": "2d-wood-alquerque",
+   "defaultSkin": "classical",
    "defaultSkinIs2d": true,
    "ratio": 1,
    "switchable": true,
@@ -170,7 +192,8 @@
    "name": "draughts",
    "module": "checkers",
    "title": {
-    "en": "draughts"
+    "en": "International Draughts",
+    "fr": "Dames internationales"
    },
    "summary": {
     "en": "Rules for draughts as played in worldwide competitions.",
@@ -261,95 +284,6 @@
    "tier": "phone"
   },
   {
-   "name": "draughts8",
-   "module": "checkers",
-   "title": {
-    "en": "draughts8"
-   },
-   "summary": {
-    "en": "English, Brazilian, Spanish or German draughts, chosen at the start",
-    "fr": "Dames anglaises, brésiliennes, espagnoles ou allemandes"
-   },
-   "thumbnail": "draughts8-thumb3d.png",
-   "rules": {
-    "en": "rules-draughts8.html",
-    "fr": "rules-draughts8_fr.html"
-   },
-   "credits": {
-    "en": "credits.html"
-   },
-   "skins": [
-    {
-     "name": "classic3d",
-     "title": "3D Classic",
-     "is3d": true
-    },
-    {
-     "name": "turtles3d",
-     "title": "3D Turtles",
-     "is3d": true
-    },
-    {
-     "name": "classical",
-     "title": "Classic",
-     "is3d": false
-    },
-    {
-     "name": "marble0",
-     "title": "Marble",
-     "is3d": false
-    },
-    {
-     "name": "wood0",
-     "title": "Wood",
-     "is3d": false
-    },
-    {
-     "name": "green",
-     "title": "Green",
-     "is3d": false
-    }
-   ],
-   "defaultSkin": "classical",
-   "defaultSkinIs2d": true,
-   "ratio": 1,
-   "switchable": true,
-   "levels": [
-    {
-     "label": "Fast",
-     "isDefault": true,
-     "ai": "uct"
-    },
-    {
-     "label": "Beginner",
-     "isDefault": false,
-     "ai": "uct"
-    },
-    {
-     "label": "Easy",
-     "isDefault": false,
-     "ai": "uct"
-    },
-    {
-     "label": "Medium",
-     "isDefault": false,
-     "ai": "uct"
-    },
-    {
-     "label": "Hard",
-     "isDefault": false,
-     "ai": "uct"
-    },
-    {
-     "label": "Expert",
-     "isDefault": false,
-     "ai": "uct"
-    }
-   ],
-   "obsolete": false,
-   "tier": "phone"
-  },
-  {
    "name": "kids-draughts",
    "module": "checkers",
    "title": {
@@ -418,10 +352,81 @@
    "tier": "phone"
   },
   {
+   "name": "alquerque-roman",
+   "module": "checkers",
+   "title": {
+    "en": "Roman Alquerque",
+    "fr": "Alquerque romain"
+   },
+   "summary": {
+    "en": "Alquerque as played in France and England.",
+    "fr": "L'alquerque tel qu'on y jouait en France et en Angleterre."
+   },
+   "thumbnail": "alquerque-roman-thumb3d.png",
+   "rules": {
+    "en": "rules-alquerque-roman.html",
+    "fr": "rules-alquerque-roman-fr.html"
+   },
+   "credits": {
+    "en": "credits-alquerque-roman.html"
+   },
+   "skins": [
+    {
+     "name": "alquerque3d",
+     "title": "3D Classic",
+     "is3d": true
+    },
+    {
+     "name": "2d-wood-alquerque",
+     "title": "Wood",
+     "is3d": false
+    }
+   ],
+   "defaultSkin": "2d-wood-alquerque",
+   "defaultSkinIs2d": true,
+   "ratio": 1,
+   "switchable": true,
+   "levels": [
+    {
+     "label": "Fast",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Beginner",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Hard",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "uct"
+    }
+   ],
+   "obsolete": false,
+   "tier": "phone"
+  },
+  {
    "name": "suicide-checkers",
    "module": "checkers",
    "title": {
-    "en": "suicide-checkers"
+    "en": "Suicide checkers",
+    "fr": "Anti-dames"
    },
    "summary": {
     "en": "A.k.a Giveaway checkers or Anti-checkers",
@@ -598,7 +603,8 @@
    "name": "turkish-draughts",
    "module": "checkers",
    "title": {
-    "en": "turkish-draughts"
+    "en": "Turkish Draughts",
+    "fr": "Dames turques"
    },
    "summary": {
     "en": "A 8x8 checkers on straight lines.",
@@ -679,10 +685,150 @@
    "tier": "phone"
   },
   {
+   "name": "capablanca-chess",
+   "module": "chessbase",
+   "title": {
+    "en": "10x8 Chess variants",
+    "fr": "Échecs en 10x8"
+   },
+   "summary": {
+    "en": "Capablanca, Janus, Carrera, Gothic …",
+    "fr": "Capablanca, Janus, Carrera, Gothic…"
+   },
+   "thumbnail": "res/rules/capa10x8/capablanca-thumb.png",
+   "rules": {
+    "en": "res/rules/capa10x8/capablanca-rules.html"
+   },
+   "credits": {
+    "en": "res/rules/capa10x8/capablanca-credits.html"
+   },
+   "skins": [
+    {
+     "name": "skin3d",
+     "title": "3D Classic",
+     "is3d": true
+    },
+    {
+     "name": "skin2d",
+     "title": "2D Classic",
+     "is3d": false
+    }
+   ],
+   "defaultSkin": "skin2d",
+   "defaultSkinIs2d": true,
+   "ratio": 1,
+   "switchable": true,
+   "levels": [
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
+    }
+   ],
+   "obsolete": false,
+   "tier": "phone"
+  },
+  {
+   "name": "three-check-chess",
+   "module": "chessbase",
+   "title": {
+    "en": "3 check",
+    "fr": "3 Échecs"
+   },
+   "summary": {
+    "en": "Orthodox chess, but checking three times also wins",
+    "fr": "Mettre trois fois échec donne la victoire"
+   },
+   "thumbnail": "res/rules/standard/3check-thumbnail.png",
+   "rules": {
+    "en": "res/rules/standard/threecheck-rules.html",
+    "fr": "res/rules/standard/threecheck-rules_fr.html"
+   },
+   "credits": {
+    "en": "famous/credits.html"
+   },
+   "skins": [
+    {
+     "name": "skin3d",
+     "title": "3D Classic",
+     "is3d": true
+    },
+    {
+     "name": "skin3dflat",
+     "title": "3D Flat",
+     "is3d": true
+    },
+    {
+     "name": "skin2dfull",
+     "title": "2D Classic",
+     "is3d": false
+    },
+    {
+     "name": "skin2dwood",
+     "title": "2D Wood",
+     "is3d": false
+    }
+   ],
+   "defaultSkin": "skin2dfull",
+   "defaultSkinIs2d": true,
+   "ratio": 1,
+   "switchable": true,
+   "levels": [
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
+    }
+   ],
+   "obsolete": false,
+   "tier": "phone"
+  },
+  {
    "name": "3dchess",
    "module": "chessbase",
    "title": {
-    "en": "3dchess"
+    "en": "3D Chess",
+    "fr": "Échecs 3D"
    },
    "summary": {
     "en": "3D Chess (6x8x3)",
@@ -921,7 +1067,8 @@
    "name": "byzantine-chess",
    "module": "chessbase",
    "title": {
-    "en": "byzantine-chess"
+    "en": "Byzantine Chess",
+    "fr": "Échecs byzantins "
    },
    "summary": {
     "en": "10th century circular Chess",
@@ -977,21 +1124,22 @@
    "tier": "phone"
   },
   {
-   "name": "capablanca-chess",
+   "name": "chancellor-chess",
    "module": "chessbase",
    "title": {
-    "en": "capablanca-chess"
+    "en": "Chancellor Chess"
    },
    "summary": {
-    "en": "Capablanca, Janus, Carrera, Gothic …",
-    "fr": "Capablanca, Janus, Carrera, Gothic…"
+    "en": "Chess on 9x9 (1887)",
+    "fr": "Échecs en 9x9 (1887)"
    },
-   "thumbnail": "res/rules/capa10x8/capablanca-thumb.png",
+   "thumbnail": "res/rules/knighted/chancellor-thumb.png",
    "rules": {
-    "en": "res/rules/capa10x8/capablanca-rules.html"
+    "en": "res/rules/knighted/chancellor-rules.html",
+    "fr": "res/rules/knighted/chancellor-rules_fr.html"
    },
    "credits": {
-    "en": "res/rules/capa10x8/capablanca-credits.html"
+    "en": "res/rules/knighted/chancellor-credits.html"
    },
    "skins": [
     {
@@ -1040,22 +1188,24 @@
    "tier": "phone"
   },
   {
-   "name": "chancellor-chess",
+   "name": "classic-chess",
    "module": "chessbase",
    "title": {
-    "en": "Chancellor Chess"
+    "en": "Chess",
+    "fr": "Échecs FIDE"
    },
    "summary": {
-    "en": "Chess on 9x9 (1887)",
-    "fr": "Échecs en 9x9 (1887)"
+    "en": "Regular Orthodox Classic Western Chess",
+    "fr": "Les Échecs classiques (Orthodoxe)"
    },
-   "thumbnail": "res/rules/knighted/chancellor-thumb.png",
+   "thumbnail": "res/rules/famous/knight-thumbnail.png",
    "rules": {
-    "en": "res/rules/knighted/chancellor-rules.html",
-    "fr": "res/rules/knighted/chancellor-rules_fr.html"
+    "en": "res/rules/famous/rules.html",
+    "fr": "res/rules/famous/rules-fr.html"
    },
    "credits": {
-    "en": "res/rules/knighted/chancellor-credits.html"
+    "en": "res/rules/famous/credits.html",
+    "fr": "res/rules/famous/credits-fr.html"
    },
    "skins": [
     {
@@ -1064,12 +1214,22 @@
      "is3d": true
     },
     {
-     "name": "skin2d",
+     "name": "skin3dflat",
+     "title": "3D Flat",
+     "is3d": true
+    },
+    {
+     "name": "skin2dfull",
      "title": "2D Classic",
+     "is3d": false
+    },
+    {
+     "name": "skin2dwood",
+     "title": "2D Wood",
      "is3d": false
     }
    ],
-   "defaultSkin": "skin2d",
+   "defaultSkin": "skin2dfull",
    "defaultSkinIs2d": true,
    "ratio": 1,
    "switchable": true,
@@ -1354,143 +1514,11 @@
    "tier": "phone"
   },
   {
-   "name": "circular-chess",
-   "module": "chessbase",
-   "title": {
-    "en": "circular-chess"
-   },
-   "summary": {
-    "en": "Chess on a ring",
-    "fr": "Échiquier en anneau"
-   },
-   "thumbnail": "res/rules/circular/circular-thumb.png",
-   "rules": {
-    "en": "res/rules/circular/circular-rules.html"
-   },
-   "credits": {
-    "en": "res/rules/circular/circular-credits.html"
-   },
-   "skins": [
-    {
-     "name": "skin3d",
-     "title": "3D Classic",
-     "is3d": true
-    },
-    {
-     "name": "skin2d",
-     "title": "2D Classic",
-     "is3d": false
-    }
-   ],
-   "defaultSkin": "skin2d",
-   "defaultSkinIs2d": true,
-   "ratio": 1,
-   "switchable": true,
-   "levels": [
-    {
-     "label": "Easy",
-     "isDefault": false,
-     "ai": "uct"
-    },
-    {
-     "label": "Fast [1sec]",
-     "isDefault": true,
-     "ai": "uct"
-    },
-    {
-     "label": "Medium",
-     "isDefault": false,
-     "ai": "uct"
-    },
-    {
-     "label": "Strong",
-     "isDefault": false,
-     "ai": "uct"
-    }
-   ],
-   "obsolete": false,
-   "tier": "phone"
-  },
-  {
-   "name": "classic-chess",
-   "module": "chessbase",
-   "title": {
-    "en": "classic-chess"
-   },
-   "summary": {
-    "en": "Regular Orthodox Classic Western Chess",
-    "fr": "Les Échecs classiques (Orthodoxe)"
-   },
-   "thumbnail": "res/rules/famous/knight-thumbnail.png",
-   "rules": {
-    "en": "res/rules/famous/rules.html",
-    "fr": "res/rules/famous/rules-fr.html"
-   },
-   "credits": {
-    "en": "res/rules/famous/credits.html",
-    "fr": "res/rules/famous/credits-fr.html"
-   },
-   "skins": [
-    {
-     "name": "skin3d",
-     "title": "3D Classic",
-     "is3d": true
-    },
-    {
-     "name": "skin3dflat",
-     "title": "3D Flat",
-     "is3d": true
-    },
-    {
-     "name": "skin2dfull",
-     "title": "2D Classic",
-     "is3d": false
-    },
-    {
-     "name": "skin2dwood",
-     "title": "2D Wood",
-     "is3d": false
-    }
-   ],
-   "defaultSkin": "skin2dfull",
-   "defaultSkinIs2d": true,
-   "ratio": 1,
-   "switchable": true,
-   "levels": [
-    {
-     "label": "Easy",
-     "isDefault": false,
-     "ai": "uct"
-    },
-    {
-     "label": "Fast [1sec]",
-     "isDefault": true,
-     "ai": "uct"
-    },
-    {
-     "label": "Medium",
-     "isDefault": false,
-     "ai": "uct"
-    },
-    {
-     "label": "Strong",
-     "isDefault": false,
-     "ai": "uct"
-    },
-    {
-     "label": "Expert",
-     "isDefault": false,
-     "ai": "fairy-stockfish"
-    }
-   ],
-   "obsolete": false,
-   "tier": "phone"
-  },
-  {
    "name": "courier-chess",
    "module": "chessbase",
    "title": {
-    "en": "courier-chess"
+    "en": "Courier Chess",
+    "fr": "Échecs courier"
    },
    "summary": {
     "en": "12x8 chess (12th century)",
@@ -1675,7 +1703,8 @@
    "name": "cylinder-chess",
    "module": "chessbase",
    "title": {
-    "en": "cylinder-chess"
+    "en": "Cylinder Chess",
+    "fr": "Échecs cylindriques"
    },
    "summary": {
     "en": "Cylinder Chess",
@@ -1854,7 +1883,8 @@
    "name": "dukerutland-chess",
    "module": "chessbase",
    "title": {
-    "en": "dukerutland-chess"
+    "en": "Duke of Rutland Chess",
+    "fr": "Échecs du duc de Rutland"
    },
    "summary": {
     "en": "Chess on 14x10 (1747)",
@@ -3163,7 +3193,8 @@
    "name": "losing-chess",
    "module": "chessbase",
    "title": {
-    "en": "losing-chess"
+    "en": "Losing Chess",
+    "fr": "Qui perd gagne"
    },
    "summary": {
     "en": "Also known as Antichess, Suicide Chess, Giveaway Chess, ...",
@@ -3419,7 +3450,8 @@
    "name": "metamachy-chess",
    "module": "chessbase",
    "title": {
-    "en": "metamachy-chess"
+    "en": "Metamachy",
+    "fr": "Métamachie"
    },
    "summary": {
     "en": "Chess on 12x12 with fairy pieces",
@@ -3552,7 +3584,8 @@
    "name": "mini4x4-chess",
    "module": "chessbase",
    "title": {
-    "en": "mini4x4-chess"
+    "en": "MiniChess 4x5",
+    "fr": "Mini-échecs 4x5"
    },
    "summary": {
     "en": "4x4 mini chess variant",
@@ -3678,7 +3711,8 @@
    "name": "minichess5x5-chess",
    "module": "chessbase",
    "title": {
-    "en": "minichess5x5-chess"
+    "en": "MiniChess 5x5",
+    "fr": "Mini-échecs 5x5"
    },
    "summary": {
     "en": "Gardner, Baby and Malett on 5x5",
@@ -3813,6 +3847,65 @@
    },
    "credits": {
     "en": "res/rules/knighted/modern-credits.html"
+   },
+   "skins": [
+    {
+     "name": "skin3d",
+     "title": "3D Classic",
+     "is3d": true
+    },
+    {
+     "name": "skin2d",
+     "title": "2D Classic",
+     "is3d": false
+    }
+   ],
+   "defaultSkin": "skin2d",
+   "defaultSkinIs2d": true,
+   "ratio": 1,
+   "switchable": true,
+   "levels": [
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    }
+   ],
+   "obsolete": false,
+   "tier": "phone"
+  },
+  {
+   "name": "circular-chess",
+   "module": "chessbase",
+   "title": {
+    "en": "Modern Circular Chess",
+    "fr": "Échecs circulaires modernes"
+   },
+   "summary": {
+    "en": "Chess on a ring",
+    "fr": "Échiquier en anneau"
+   },
+   "thumbnail": "res/rules/circular/circular-thumb.png",
+   "rules": {
+    "en": "res/rules/circular/circular-rules.html"
+   },
+   "credits": {
+    "en": "res/rules/circular/circular-credits.html"
    },
    "skins": [
     {
@@ -4047,7 +4140,8 @@
    "name": "reformed-courier-chess",
    "module": "chessbase",
    "title": {
-    "en": "reformed-courier-chess"
+    "en": "Reformed Courierspiel",
+    "fr": "Échecs Courier Réformé"
    },
    "summary": {
     "en": "Modern version of courier chess (12x8)",
@@ -4833,7 +4927,8 @@
    "name": "space-spartan",
    "module": "chessbase",
    "title": {
-    "en": "space-spartan"
+    "en": "Space Spartan",
+    "fr": "Spartiates de l'espace"
    },
    "summary": {
     "en": "Asymmetric 3D Chess (6x8x3)",
@@ -5255,84 +5350,11 @@
    "tier": "tablet"
   },
   {
-   "name": "three-check-chess",
-   "module": "chessbase",
-   "title": {
-    "en": "three-check-chess"
-   },
-   "summary": {
-    "en": "Orthodox chess, but checking three times also wins",
-    "fr": "Mettre trois fois échec donne la victoire"
-   },
-   "thumbnail": "res/rules/standard/3check-thumbnail.png",
-   "rules": {
-    "en": "res/rules/standard/threecheck-rules.html",
-    "fr": "res/rules/standard/threecheck-rules_fr.html"
-   },
-   "credits": {
-    "en": "famous/credits.html"
-   },
-   "skins": [
-    {
-     "name": "skin3d",
-     "title": "3D Classic",
-     "is3d": true
-    },
-    {
-     "name": "skin3dflat",
-     "title": "3D Flat",
-     "is3d": true
-    },
-    {
-     "name": "skin2dfull",
-     "title": "2D Classic",
-     "is3d": false
-    },
-    {
-     "name": "skin2dwood",
-     "title": "2D Wood",
-     "is3d": false
-    }
-   ],
-   "defaultSkin": "skin2dfull",
-   "defaultSkinIs2d": true,
-   "ratio": 1,
-   "switchable": true,
-   "levels": [
-    {
-     "label": "Easy",
-     "isDefault": false,
-     "ai": "uct"
-    },
-    {
-     "label": "Fast [1sec]",
-     "isDefault": true,
-     "ai": "uct"
-    },
-    {
-     "label": "Medium",
-     "isDefault": false,
-     "ai": "uct"
-    },
-    {
-     "label": "Strong",
-     "isDefault": false,
-     "ai": "uct"
-    },
-    {
-     "label": "Expert",
-     "isDefault": false,
-     "ai": "fairy-stockfish"
-    }
-   ],
-   "obsolete": false,
-   "tier": "phone"
-  },
-  {
    "name": "timurid-chess",
    "module": "chessbase",
    "title": {
-    "en": "timurid-chess"
+    "en": "Timurid II",
+    "fr": "Timourides II"
    },
    "summary": {
     "en": "Tamerlan II on 12x10 with fairy pieces",
@@ -6981,10 +7003,77 @@
    "tier": "phone"
   },
   {
+   "name": "morris12",
+   "module": "mills",
+   "title": {
+    "en": "12 Men´s Morris",
+    "fr": "Marelle à 12"
+   },
+   "summary": {
+    "en": "An old board game, plain or flying",
+    "fr": "Jeu du moulin classique ou avec saut"
+   },
+   "thumbnail": "mensmorris12-thumb3d.png",
+   "rules": {
+    "en": "rules-morris12.html",
+    "fr": "rules-morris12-fr.html"
+   },
+   "credits": {
+    "en": "credits.html",
+    "fr": "credits-fr.html"
+   },
+   "skins": [
+    {
+     "name": "classic3d",
+     "title": "3D Classic",
+     "is3d": true
+    },
+    {
+     "name": "stone",
+     "title": "Stone",
+     "is3d": false
+    },
+    {
+     "name": "suede",
+     "title": "Suede",
+     "is3d": false
+    },
+    {
+     "name": "wood",
+     "title": "Wood",
+     "is3d": false
+    }
+   ],
+   "defaultSkin": "stone",
+   "defaultSkinIs2d": true,
+   "ratio": 1.2857142857143,
+   "switchable": true,
+   "levels": [
+    {
+     "label": "Easy",
+     "isDefault": true,
+     "ai": null
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": null
+    },
+    {
+     "label": "Hard",
+     "isDefault": false,
+     "ai": null
+    }
+   ],
+   "obsolete": false,
+   "tier": "phone"
+  },
+  {
    "name": "6-men-morris",
    "module": "mills",
    "title": {
-    "en": "6-men-morris"
+    "en": "6 Men´s Morris",
+    "fr": "Marelle à 6"
    },
    "summary": {
     "en": "An old board game, plain or flying",
@@ -7049,7 +7138,8 @@
    "name": "7-men-morris",
    "module": "mills",
    "title": {
-    "en": "7-men-morris"
+    "en": "7 Men´s Morris",
+    "fr": "Marelle à 7"
    },
    "summary": {
     "en": "An old board game, plain or flying",
@@ -7111,75 +7201,11 @@
    "tier": "phone"
   },
   {
-   "name": "morris12",
-   "module": "mills",
-   "title": {
-    "en": "morris12"
-   },
-   "summary": {
-    "en": "An old board game, plain or flying",
-    "fr": "Jeu du moulin classique ou avec saut"
-   },
-   "thumbnail": "mensmorris12-thumb3d.png",
-   "rules": {
-    "en": "rules-morris12.html",
-    "fr": "rules-morris12-fr.html"
-   },
-   "credits": {
-    "en": "credits.html",
-    "fr": "credits-fr.html"
-   },
-   "skins": [
-    {
-     "name": "classic3d",
-     "title": "3D Classic",
-     "is3d": true
-    },
-    {
-     "name": "stone",
-     "title": "Stone",
-     "is3d": false
-    },
-    {
-     "name": "suede",
-     "title": "Suede",
-     "is3d": false
-    },
-    {
-     "name": "wood",
-     "title": "Wood",
-     "is3d": false
-    }
-   ],
-   "defaultSkin": "stone",
-   "defaultSkinIs2d": true,
-   "ratio": 1.2857142857143,
-   "switchable": true,
-   "levels": [
-    {
-     "label": "Easy",
-     "isDefault": true,
-     "ai": null
-    },
-    {
-     "label": "Medium",
-     "isDefault": false,
-     "ai": null
-    },
-    {
-     "label": "Hard",
-     "isDefault": false,
-     "ai": null
-    }
-   ],
-   "obsolete": false,
-   "tier": "phone"
-  },
-  {
    "name": "morris9",
    "module": "mills",
    "title": {
-    "en": "morris9"
+    "en": "9 Men´s Morris",
+    "fr": "Marelle à 9"
    },
    "summary": {
     "en": "An old board game, plain or flying",

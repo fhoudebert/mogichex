@@ -19,7 +19,7 @@
 // SHELL_VERSION doit changer a chaque livraison — tools/stamp-sw.mjs s'en
 // charge au build pour eviter l'oubli.
 
-const SHELL_VERSION = '202609130706-4c4255b';
+const SHELL_VERSION = '202609130733-6fab548';
 const SHELL_CACHE = 'mogichex-shell-' + SHELL_VERSION;
 const DIST_CACHE = 'mogichex-dist-' + SHELL_VERSION;
 
@@ -38,6 +38,7 @@ const SHELL = [
     './js/favorites.js',
     './js/clock.js',
     './js/history.js',
+    './js/notify.js',
     './js/game.js',
     './js/remote/chat-channel.js',
     './js/remote/chat-protocol.js',

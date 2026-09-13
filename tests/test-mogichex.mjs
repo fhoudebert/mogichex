@@ -1772,3 +1772,137 @@ test('discussion : sans scelleur, le texte libre est refuse et ne laisse pas de 
     await chan.send({ kind: KIND.CHAT, quick: 'wellPlayed' });
     assert.equal(chan.conversation.length, 1);
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Titres de jeux : deux conventions dans jocly, et il faut lire les deux.
+// ─────────────────────────────────────────────────────────────────────────────
+
+test('buildEntry : le titre localise prime sur le titre anglais', () => {
+    const make = (model) =>
+        buildEntry({ name: 'jeu-x', config: { model } }, { ineligible: new Set() }).title;
+
+    // La convention la plus riche gagne quand un jeu porte les deux.
+    assert.deepEqual(
+        make({ title: { en: 'Roman Alquerque', fr: 'Alquerque romain' }, 'title-en': 'Vieux titre' }),
+        { en: 'Roman Alquerque', fr: 'Alquerque romain' }
+    );
+    assert.deepEqual(make({ title: { en: 'Arabic Alquerque', fr: 'Alquerque arabe' } }), {
+        en: 'Arabic Alquerque',
+        fr: 'Alquerque arabe',
+    });
+    assert.deepEqual(make({ 'title-en': 'Shako' }), { en: 'Shako' });
+
+    // Sans titre du tout, le repli reste l'identifiant : moche, mais jamais
+    // vide — une ligne sans nom serait intouchable.
+    assert.deepEqual(make({}), { en: 'jeu-x' });
+});
+
+test('aucun jeu du catalogue ne s affiche sous son identifiant', () => {
+    // CE QUE CE TEST AURAIT ATTRAPE : le constructeur ne lisait que
+    // `title-en`, et les 26 jeux qui declarent un `title` localise tombaient
+    // sur le repli — ils s'affichaient « alquerque-arabic », « draughts8 »,
+    // dans les deux langues, alors que jocly portait le titre traduit juste a
+    // cote.
+    const cat = JSON.parse(readFileSync(path.join(root, 'app', 'catalog.json'), 'utf8'));
+    const bruts = cat.games.filter((g) => g.title.en === g.name).map((g) => g.name);
+    assert.deepEqual(bruts, [], 'jeux affiches sous leur identifiant faute de titre');
+});
+
+test('les titres francais de jocly arrivent bien jusqu au catalogue', () => {
+    // Ils ne sont pas ecrits ici : ils appartiennent a jocly, qui les partage
+    // avec joclymatch et Tabulon. Ce test verifie seulement qu'on les LIT —
+    // et il retombera a zero si la lecture reprend le mauvais champ.
+    const cat = JSON.parse(readFileSync(path.join(root, 'app', 'catalog.json'), 'utf8'));
+    const avecFr = cat.games.filter((g) => g.title.fr);
+    assert.ok(avecFr.length >= 20, `titres francais lus : ${avecFr.length}`);
+    for (const g of avecFr) assert.notEqual(g.title.fr, g.title.en);
+});
+
+test('sw.js : la coquille ne pioche dans aucun repertoire de fabrication', () => {
+    // DEVELOPMENT.md § « Ce qu'il faut televerser » enumere les repertoires a
+    // deposer sur un serveur. Ce test tient la promesse : si une entree de
+    // SHELL venait un jour de tools/, tests/, data/ ou android/, la page
+    // deviendrait fausse en silence — et surtout, `tests/*.php` sont des
+    // EXECUTABLES qui ecrivent des fichiers de partie. Les televerser, c'est
+    // offrir ces points d'entree au public.
+    const sw = readFileSync(path.join(root, 'sw.js'), 'utf8');
+    const shell = [...sw.matchAll(/'\.\/([^']*)'/g)].map((m) => m[1]);
+    assert.ok(shell.length > 20, 'la coquille doit bien etre lue');
+    const interdits = shell.filter((p) => /^(tools|tests|data|android)\//.test(p));
+    assert.deepEqual(interdits, [], 'entrees de SHELL hors du perimetre d hebergement');
+
+    // Et l'inverse : tout ce qui est pre-cache appartient bien au petit
+    // nombre de repertoires documentes.
+    const autorises = /^($|index\.html$|manifest\.webmanifest$|sw\.js$|(css|js|lang|app|i)\/)/;
+    const hors = shell.filter((p) => !autorises.test(p));
+    assert.deepEqual(hors, [], 'entrees de SHELL hors des repertoires documentes');
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Relance et notifications.
+// ─────────────────────────────────────────────────────────────────────────────
+
+import { shouldNotify, notificationFor, nudgeCooldown, formatCooldown } from '../js/notify.js';
+
+const msg = (o) => Object.assign({ v: 1, kind: KIND.CHAT, side: -1, at: 1, id: 'z', quick: 'wellPlayed' }, o);
+
+test('notification : seulement quand l application n est pas sous les yeux', () => {
+    const base = { visible: false, permission: 'granted', message: msg({}), selfSide: 1 };
+    assert.equal(shouldNotify(base), true);
+    assert.equal(shouldNotify({ ...base, visible: true }), false, 'a l ecran, la pastille suffit');
+    assert.equal(shouldNotify({ ...base, permission: 'default' }), false);
+    assert.equal(shouldNotify({ ...base, permission: 'denied' }), false);
+    assert.equal(shouldNotify({ ...base, message: null }), false);
+});
+
+test('notification : ni ses propres messages, ni la presence', () => {
+    const base = { visible: false, permission: 'granted', selfSide: 1 };
+    assert.equal(shouldNotify({ ...base, message: msg({ side: 1 }) }), false, 'on ne se notifie pas soi-meme');
+    // « Votre adversaire reflechit » n'appelle aucune action : le seuil d'une
+    // notification est qu'elle merite d'interrompre.
+    assert.equal(
+        shouldNotify({ ...base, message: msg({ kind: KIND.PRESENCE, state: PRESENCE.THINKING, quick: null }) }),
+        false
+    );
+    assert.equal(shouldNotify({ ...base, message: msg({ kind: KIND.NUDGE, quick: null }) }), true);
+});
+
+test('notification : le texte libre est annonce, jamais cite', () => {
+    // Il a ete chiffre pour que le relai ne le voie pas ; l'afficher sur un
+    // ecran verrouille deferait une partie de ce travail.
+    const tr = (x) => x;
+    const libre = notificationFor(msg({ quick: null, body: 'rendez-vous a 18h' }), tr, 'Shako');
+    assert.equal(libre.body, 'New message');
+    assert.ok(!JSON.stringify(libre).includes('18h'));
+    assert.equal(libre.title, 'Shako');
+
+    // Un message rapide ne porte rien de personnel : il s'affiche en toutes
+    // lettres, c'est tout son interet.
+    assert.equal(notificationFor(msg({ quick: 'yourTurn' }), tr).body, 'Your turn!');
+    assert.equal(notificationFor(msg({ kind: KIND.NUDGE, quick: null }), tr).body, 'Your opponent is waiting');
+    // Meme etiquette pour toute la partie : une notification en REMPLACE une
+    // autre au lieu d'empiler cinq bandeaux.
+    assert.equal(notificationFor(msg({}), tr).tag, notificationFor(msg({ quick: 'rematch' }), tr).tag);
+});
+
+test('relance : le delai s affiche au lieu d echouer en silence', () => {
+    const now = 1000000;
+    assert.equal(nudgeCooldown([], 1, now, NUDGE_MIN_INTERVAL_MS), 0);
+    const recent = [{ id: 'n', at: now - 60000, kind: KIND.NUDGE, side: 1 }];
+    assert.equal(nudgeCooldown(recent, 1, now, NUDGE_MIN_INTERVAL_MS), NUDGE_MIN_INTERVAL_MS - 60000);
+    assert.equal(nudgeCooldown(recent, -1, now, NUDGE_MIN_INTERVAL_MS), 0, 'le delai est par camp');
+    const vieux = [{ id: 'n', at: now - NUDGE_MIN_INTERVAL_MS - 1, kind: KIND.NUDGE, side: 1 }];
+    assert.equal(nudgeCooldown(vieux, 1, now, NUDGE_MIN_INTERVAL_MS), 0);
+});
+
+test('relance : le delai se lit en clair', () => {
+    assert.equal(formatCooldown(240000), '4 min');
+    assert.equal(formatCooldown(45000), '45 s');
+    // Juste sous la minute, on arrondit VERS LE HAUT : « 60 s » est une
+    // facon bizarre d'ecrire une minute, et mieux vaut annoncer un peu trop
+    // que promettre un bouton qui ne s'ouvrira qu'apres.
+    assert.equal(formatCooldown(59999), '1 min');
+    assert.equal(formatCooldown(59000), '59 s');
+    assert.equal(formatCooldown(0), '0 s');
+    assert.equal(formatCooldown(-5), '0 s');
+});

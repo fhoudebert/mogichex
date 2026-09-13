@@ -61,6 +61,13 @@ in online games; going back doesn't, for the same reason take back doesn't.
 player's own language, so two people with no language in common still understand each other, and
 nothing personal ever reaches the relay.
 
+**Nudged, not nagged.** A single "your turn" tap that can notify your opponent even when the app
+isn't on screen — with a five-minute cooldown built into the protocol, not bolted on. Permission is
+asked when you turn it on, never on first launch. Notifications say *a message arrived*, never what
+it says: the text was encrypted so the relay couldn't read it, and a lock screen is no different.
+Fine print: this works while the app is still alive in the background. Once the system kills it,
+nothing arrives until you open it again — no push server involved, by design.
+
 **And you can just type.** Free text is sealed with XChaCha20-Poly1305 before it leaves the phone;
 the relay only ever holds opaque bytes. The key rides in the invitation link's *fragment*, which
 browsers never send to any server — so the link is the secret: share it the way you'd share a door
@@ -139,7 +146,7 @@ cd - && ln -s ../jocly2/dist/browser dist
 
 npm run build      # catalogue + service worker stamp + tests
 npm run serve      # http://localhost:8080
-npm test           # 134 assertions
+npm test           # 143 assertions
 npm run test:php   # 28 assertions (requires php-cli)
 ```
 

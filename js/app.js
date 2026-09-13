@@ -17,7 +17,8 @@ import { CLOCK_PRESETS, presetById, formatClock, Clock } from './clock.js';
 import { moveRows, canRollback } from './history.js';
 import { ChatChannel } from './remote/chat-channel.js';
 import { generateChatKey, makeSealer } from './remote/chat-sealer.js';
-import { KIND, PRESENCE, countUnread } from './remote/chat-protocol.js';
+import { KIND, PRESENCE, countUnread, canNudge, NUDGE_MIN_INTERVAL_MS } from './remote/chat-protocol.js';
+import { shouldNotify, notificationFor, nudgeCooldown, formatCooldown } from './notify.js';
 
 const $ = (sel) => document.querySelector(sel);
 const state = {
@@ -680,12 +681,15 @@ function attachChat(session, { matchId, side, peer, chatKey = null, chatKeyId = 
         onConversation: (conv) => {
             state.chatUnread = countUnread(conv, state.chatSeenId, chat.side);
             updateChatBadge();
+            notifyLast(conv, chat.side);
+            syncNudge(conv, chat.side);
             if ($('#panel-chat').classList.contains('is-open')) renderChat(conv);
         },
         onError: (err) => console.warn('discussion :', err.message || err),
     });
     state.chat = chat;
     state.chatSeenId = null;
+    state.notifiedId = null;
     state.chatUnread = 0;
     chat.start().catch((err) => console.warn('discussion indisponible :', err.message || err));
     syncChatComposer();
@@ -718,6 +722,127 @@ function syncChatComposer() {
                 : 'No key in this invitation: quick messages only.'
         );
     }
+}
+
+/**
+ * Prevenir, si l'application n'est pas sous les yeux.
+ *
+ * Seul le DERNIER message est notifie, jamais le rattrapage : au reveil, un
+ * fil relu en entier declencherait autant de bandeaux qu'il contient de
+ * messages. On retient donc ce qui a deja ete notifie, et ce reperage est
+ * distinct de `chatSeenId` — « vu a l'ecran » et « annonce hors de l'ecran »
+ * ne sont pas la meme chose.
+ */
+function notifyLast(conversation, selfSide) {
+    const last = conversation[conversation.length - 1];
+    if (!last || last.id === state.notifiedId) return;
+    // On note le message AVANT de decider : meme refuse (application visible,
+    // permission absente, interrupteur baisse), il ne doit pas etre repropose
+    // au tour suivant.
+    state.notifiedId = last.id;
+    if (state.notifyOff) return;
+    if (
+        !shouldNotify({
+            visible: document.visibilityState === 'visible',
+            permission: typeof Notification === 'undefined' ? 'denied' : Notification.permission,
+            message: last,
+            selfSide,
+        })
+    )
+        return;
+    const { title, body, tag } = notificationFor(last, t, $('#game-title').textContent);
+    // `new Notification()` n'existe PAS sur Chrome Android : il faut passer par
+    // l'enregistrement du service worker. C'est le chemin qui marche partout,
+    // donc le seul emprunte — un repli `new Notification()` ne servirait que
+    // sur ordinateur et masquerait l'echec ailleurs.
+    navigator.serviceWorker?.ready
+        .then((reg) => reg.showNotification(title, { body, tag, icon: 'i/icon-192.png' }))
+        .catch((err) => console.warn('notification :', err.message || err));
+}
+
+/**
+ * Etat du bouton de relance.
+ *
+ * Le delai s'AFFICHE au lieu de faire echouer l'appui : un bouton qui ne
+ * repond pas sans dire pourquoi se presse trois fois.
+ */
+function syncNudge(conversation, selfSide) {
+    const btn = $('#btn-nudge');
+    if (!state.chat) return;
+    const now = Date.now();
+    const ok = canNudge(conversation, selfSide, now);
+    btn.disabled = !ok;
+    btn.textContent = ok
+        ? t('Nudge your opponent')
+        : t('Nudge') + ' — ' + formatCooldown(nudgeCooldown(conversation, selfSide, now, NUDGE_MIN_INTERVAL_MS));
+}
+
+/**
+ * L'interrupteur des notifications.
+ *
+ * La permission se demande sur un GESTE et jamais au demarrage : une invite
+ * sur le premier ecran est refusee par reflexe, et ce refus est definitif dans
+ * la plupart des navigateurs — la fonction serait grillee avant d'avoir servi.
+ *
+ * Un refus deja enregistre ne se represente pas : on le DIT, et on renvoie aux
+ * reglages du navigateur, seul endroit ou il se defait.
+ */
+/**
+ * L'interrupteur doit refleter l'etat REEL a chaque ouverture du panneau : la
+ * permission se revoque depuis les reglages du navigateur, sans que la page en
+ * soit avertie. Un interrupteur reste leve sur une permission retiree
+ * promettrait des notifications qui n'arriveront jamais.
+ */
+function syncNotifySwitch() {
+    const box = $('#notify');
+    const note = $('#notify-note');
+    if (typeof Notification === 'undefined' || !navigator.serviceWorker) {
+        box.checked = false;
+        box.disabled = true;
+        note.textContent = t('This browser cannot show notifications.');
+        return;
+    }
+    box.disabled = false;
+    box.checked = Notification.permission === 'granted' && !state.notifyOff;
+    note.textContent =
+        Notification.permission === 'denied'
+            ? t('Notifications are blocked for this site. Change it in your browser settings.')
+            : box.checked
+              ? t('Only while the app is still running in the background.')
+              : '';
+}
+
+async function toggleNotify(wanted) {
+    const box = $('#notify');
+    const note = $('#notify-note');
+    if (typeof Notification === 'undefined' || !navigator.serviceWorker) {
+        box.checked = false;
+        box.disabled = true;
+        note.textContent = t('This browser cannot show notifications.');
+        return;
+    }
+    if (!wanted) {
+        // On ne peut pas RETIRER une permission accordee depuis la page ; on
+        // cesse simplement de notifier.
+        state.notifyOff = true;
+        note.textContent = '';
+        return;
+    }
+    state.notifyOff = false;
+    if (Notification.permission === 'denied') {
+        box.checked = false;
+        note.textContent = t('Notifications are blocked for this site. Change it in your browser settings.');
+        return;
+    }
+    if (Notification.permission !== 'granted') {
+        const res = await Notification.requestPermission();
+        if (res !== 'granted') {
+            box.checked = false;
+            note.textContent = t('Notifications are blocked for this site. Change it in your browser settings.');
+            return;
+        }
+    }
+    note.textContent = t('Only while the app is still running in the background.');
 }
 
 function updateChatBadge() {
@@ -803,6 +928,8 @@ function wireChat() {
     $('#btn-chat').addEventListener('click', () => {
         openPanel('#panel-chat');
         syncChatComposer();
+        syncNotifySwitch();
+        if (state.chat) syncNudge(state.chat.conversation, state.chat.side);
         renderChat(state.chat ? state.chat.conversation : []);
     });
     const send = async () => {
@@ -816,6 +943,11 @@ function wireChat() {
         await sendChat({ kind: KIND.CHAT, body });
     };
     $('#btn-chat-send').addEventListener('click', send);
+    $('#btn-nudge').addEventListener('click', async () => {
+        await sendChat({ kind: KIND.NUDGE });
+        if (state.chat) syncNudge(state.chat.conversation, state.chat.side);
+    });
+    $('#notify').addEventListener('change', (e) => toggleNotify(e.target.checked));
     $('#chat-text').addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
