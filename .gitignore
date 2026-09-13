@@ -21,6 +21,9 @@ package-lock.json
 /android/gradle*
 /android/.gitignore
 /android/.idea
+/android/build/
+/problems
+/android/capacitor-cordova-android-plugins
 /android/*.properties
 /android/.gradle
 /android/*.gradle
