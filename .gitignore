@@ -3,6 +3,9 @@
 /dist
 /node_modules
 /signals
+# Parties deposees par match.php quand le relai tourne depuis la racine du
+# depot (serveur PHP local). Meme raison que /signals.
+/matches
 
 /deploy/signalconf.php
 .DS_Store
