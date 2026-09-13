@@ -1571,3 +1571,204 @@ test('hors ligne : la discussion ne peut pas se brancher sans le jeu a distance'
     const call = src.indexOf('    attachChat(');
     assert.ok(call > relayStart && call < relayEnd, 'attachChat doit vivre dans attachRelay');
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Texte libre et scellement (XChaCha20-Poly1305).
+// ─────────────────────────────────────────────────────────────────────────────
+
+import {
+    makeSealer,
+    generateChatKey,
+    isChatKey,
+    isChatKeyId,
+    NONCE_BYTES,
+} from '../js/remote/chat-sealer.js';
+
+const KEY = '00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff';
+const OTHER_KEY = 'ffeeddccbbaa99887766554433221100ffeeddccbbaa99887766554433221100';
+const fixedNonce = (b) => b.forEach((_, i) => (b[i] = i));
+
+test('scellement : les octets sont ceux de libsodium, pas seulement les notres', async () => {
+    // LE TEST QUI COMPTE. Un aller-retour sur cette machine ne prouve rien :
+    // deux implementations fausses de la meme facon s'accordent tres bien
+    // entre elles. Ce vecteur vient de libsodium
+    // (crypto_aead_xchacha20poly1305_ietf), que la caisse Rust de Tabulon
+    // implemente aussi — donc un message scelle ici s'ouvre la-bas.
+    const sealer = makeSealer(KEY, { rand: fixedNonce });
+    assert.equal(
+        await sealer.seal('bien joue'),
+        'AAECAwQFBgcICQoLDA0ODxAREhMUFRYX0de4kUi3xJoohcyImxxzUHjjZmZHQtaVTg=='
+    );
+});
+
+test('scellement : aller-retour, et rien du texte ne transparait', async () => {
+    const sealer = makeSealer(KEY);
+    const sealed = await sealer.seal('rendez-vous a 18h');
+    assert.equal(await sealer.open(sealed), 'rendez-vous a 18h');
+    assert.ok(!sealed.includes('rendez'));
+    assert.ok(!sealed.includes('18h'));
+});
+
+test('scellement : deux fois le meme texte donne deux sceaux differents', async () => {
+    // Sans cela, un observateur verrait qu'une phrase se repete — ce qui en
+    // dit deja beaucoup sur une conversation courte.
+    const sealer = makeSealer(KEY);
+    const a = await sealer.seal('a toi');
+    const b = await sealer.seal('a toi');
+    assert.notEqual(a, b);
+    assert.equal(await sealer.open(a), 'a toi');
+    assert.equal(await sealer.open(b), 'a toi');
+});
+
+test('scellement : une autre cle n ouvre pas', async () => {
+    const sealed = await makeSealer(KEY).seal('secret');
+    assert.equal(await makeSealer(OTHER_KEY).open(sealed), null);
+});
+
+test('scellement : un message trafique est rejete', async () => {
+    // AEAD : le sceau authentifie. N'importe qui connaissant l'identifiant de
+    // partie peut ECRIRE dans le fil sur un relai sans authentification ; ce
+    // bruit doit etre rejete a l'ouverture, pas affiche.
+    const sealer = makeSealer(KEY);
+    const raw = Buffer.from(await sealer.seal('je fais une pause'), 'base64');
+    raw[raw.length - 1] ^= 0x01;
+    assert.equal(await sealer.open(raw.toString('base64')), null);
+});
+
+test('scellement : rien ne fait lever open()', async () => {
+    const sealer = makeSealer(KEY);
+    for (const bad of ['', 'pas du base64 !!', Buffer.alloc(8).toString('base64'), 'AAAA']) {
+        assert.equal(await sealer.open(bad), null);
+    }
+    // Exactement la longueur du nonce, sans corps : refuse avant le chiffre.
+    assert.equal(await sealer.open(Buffer.alloc(NONCE_BYTES).toString('base64')), null);
+});
+
+test('scellement : une cle mal formee est refusee a la construction', () => {
+    // Elle vient d'un lien colle par l'utilisateur : echouer tot vaut mieux
+    // qu'un scelleur qui ne scelle rien.
+    for (const bad of ['', 'trop court', 'z'.repeat(64), 'aa'.repeat(8), KEY.toUpperCase()]) {
+        assert.throws(() => makeSealer(bad));
+    }
+    assert.equal(isChatKey(generateChatKey()), true);
+    assert.equal(isChatKey(KEY.toUpperCase()), false, 'hexadecimal MINUSCULE, comme Tabulon');
+    assert.equal(isChatKeyId('b'.repeat(16)), true);
+    assert.equal(isChatKeyId('b'.repeat(15)), false);
+});
+
+test('scellement : accents et emoji survivent', async () => {
+    const text = "à tout à l'heure 👋 — ça va être long";
+    const sealer = makeSealer(KEY);
+    assert.equal(await sealer.open(await sealer.seal(text)), text);
+});
+
+test('discussion : le texte libre part scelle et revient lisible', async () => {
+    const sealer = makeSealer(KEY);
+    const msg = newMessage({ kind: KIND.CHAT, side: 1, body: 'on se voit demain', at: 1, rand });
+    const wire = await encodeThread([msg], { sealer });
+    assert.ok(!wire.includes('demain'), 'rien du texte ne doit figurer dans ce qui part');
+    assert.equal(JSON.parse(wire).msgs[0].enc, 1);
+    const [back] = await decodeThread(wire, { sealer });
+    assert.equal(back.body, 'on se voit demain');
+    assert.equal(back.locked, undefined);
+});
+
+test('discussion : avec la mauvaise cle, le message reste visible et verrouille', async () => {
+    const wire = await encodeThread(
+        [newMessage({ kind: KIND.CHAT, side: 1, body: 'secret', at: 1, rand })],
+        { sealer: makeSealer(KEY) }
+    );
+    const [m] = await decodeThread(wire, { sealer: makeSealer(OTHER_KEY) });
+    assert.equal(m.locked, true);
+    assert.equal(m.reason, 'badKey');
+    const [n] = await decodeThread(wire);
+    assert.equal(n.locked, true);
+    assert.equal(n.reason, 'noKey');
+});
+
+test('invitation : la cle voyage dans le FRAGMENT, jamais dans la requete', () => {
+    // Le fragment n'est transmis a aucun serveur : ni a l'hebergeur, ni au
+    // relai, ni dans un journal d'acces. En parametre, la cle finirait dans
+    // les journaux du premier serveur venu.
+    const link = buildInviteLink({
+        game: 'shako-chess',
+        matchId: '1748100000000-AbCdEfGhIjKlMn',
+        side: 'b',
+        chatKey: 'a'.repeat(64),
+    });
+    const [query, fragment] = link.split('#');
+    assert.ok(!query.includes('a'.repeat(64)), 'la cle ne doit pas etre dans la requete');
+    assert.equal(fragment, 'k=' + 'a'.repeat(64));
+    assert.equal(parseInviteLink(link).chatKey, 'a'.repeat(64));
+});
+
+test('invitation : une cle abimee est ignoree des deux cotes', () => {
+    // Un lien qui promet une discussion protegee sans pouvoir la tenir est
+    // pire qu'un lien sans cle, ou le manque se voit.
+    const base = { game: 'x', matchId: '1748100000000-AbCdEfGhIjKlMn', side: 'b' };
+    assert.ok(!buildInviteLink({ ...base, chatKey: 'zz' }).includes('#'));
+    assert.ok(!buildInviteLink({ ...base, chatKey: 'A'.repeat(64) }).includes('#'));
+    assert.equal(parseInviteLink('index.html?game=x&mid=123456#k=zz').chatKey, null);
+    assert.equal(parseInviteLink('index.html?game=x&mid=123456').chatKey, null);
+});
+
+test('invitation : l empreinte de trousseau Tabulon est lue, pas confondue', () => {
+    // mogichex ne gere pas de trousseau, mais il doit pouvoir DIRE que cette
+    // invitation en attend un, plutot que d'afficher une discussion muette.
+    const p = parseInviteLink('index.html?game=x&mid=123456#kid=' + 'b'.repeat(16));
+    assert.equal(p.chatKeyId, 'b'.repeat(16));
+    assert.equal(p.chatKey, null);
+    assert.equal(parseInviteLink('index.html?game=x&mid=123456#kid=zz').chatKeyId, null);
+});
+
+test('invitation : un lien joclymatch sans fragment reste lisible', () => {
+    const p = parseInviteLink('https://exemple.fr/jm/index.php?game=shogi&mid=1748100000000-AAAAAAAAAAAAAA&player=a');
+    assert.equal(p.origin, 'joclymatch');
+    assert.equal(p.chatKey, null);
+    assert.equal(p.chatKeyId, null);
+});
+
+test('discussion : c est la forme SCELLEE qui part sur le canal pair-a-pair', async () => {
+    // Publier l'objet en memoire ferait voyager le texte en clair, et surtout
+    // l'autre bout le rejetterait : decodeThread verrouille tout corps sans
+    // `enc`.
+    const sent = [];
+    const peer = { isOpen: true, publish: (m) => sent.push(m) };
+    const chan = new ChatChannel({
+        relayUrl: '.',
+        matchId: '1748100000000-AbCdEfGhIjKlMn',
+        side: 1,
+        peer,
+        sealer: makeSealer(KEY),
+        fetchImpl: async () => ({ ok: true, headers: { get: () => '0' }, text: async () => '' }),
+    });
+    await chan.send({ kind: KIND.CHAT, body: 'a tout de suite' });
+    assert.equal(sent.length, 1);
+    assert.equal(sent[0].enc, 1);
+    assert.ok(!JSON.stringify(sent[0]).includes('a tout de suite'));
+
+    // Et ce que le pair recoit s'ouvre bien de l'autre cote.
+    const other = new ChatChannel({
+        relayUrl: '.',
+        matchId: '1748100000000-AbCdEfGhIjKlMn',
+        side: -1,
+        sealer: makeSealer(KEY),
+        fetchImpl: async () => ({ ok: true, headers: { get: () => '0' }, text: async () => '' }),
+    });
+    await other.acceptFromPeer(sent[0]);
+    assert.equal(other.conversation[0].body, 'a tout de suite');
+});
+
+test('discussion : sans scelleur, le texte libre est refuse et ne laisse pas de trace', async () => {
+    const chan = new ChatChannel({
+        relayUrl: '.',
+        matchId: '1748100000000-AbCdEfGhIjKlMn',
+        side: 1,
+        fetchImpl: async () => ({ ok: true, headers: { get: () => '0' }, text: async () => '' }),
+    });
+    await assert.rejects(() => chan.send({ kind: KIND.CHAT, body: 'bonjour' }));
+    assert.equal(chan.conversation.length, 0, 'un envoi refuse ne doit rien laisser dans le fil');
+    // Les messages rapides, eux, passent toujours.
+    await chan.send({ kind: KIND.CHAT, quick: 'wellPlayed' });
+    assert.equal(chan.conversation.length, 1);
+});

@@ -697,15 +697,100 @@ Tests : **118 assertions**, Node pur.
 
 ### Ce qui reste à voir au doigt
 
-- **jouer un coup**, toujours : la sonde n'y arrive pas dans l'iframe jocly,
-  limite déjà rencontrée sur Tabulon ;
-- l'horloge qui tourne pendant une vraie recherche machine — 200 ms de
-  rafraîchissement, sur batterie ;
+- **jouer un coup au doigt**, toujours : la sonde n'y arrive pas dans l'iframe
+  jocly, limite déjà rencontrée sur Tabulon. Un coup *machine*, lui, se mesure
+  — il suffit de prendre le camp B et de laisser l'ordinateur ouvrir ;
 - un retour à une position **en milieu de partie**, et le ré-armement qui suit ;
-- une discussion **réellement à deux**, sur deux appareils : c'est la seule
-  chose que ni les tests ni la sonde ne peuvent approcher ;
 - le retour d'arrière-plan : l'application est suspendue dès qu'on change
   d'écran, et le fil est relu en entier au réveil.
+
+---
+
+## Le texte libre et son scellement
+
+Les messages rapides ne portent rien de personnel — ils voyagent comme
+identifiants. Le texte libre, lui, ne peut pas partir en clair : le relai
+n'authentifie personne, et ce qu'on y dépose est lisible par qui tient le
+serveur et par qui devine un identifiant de partie.
+
+### Le format, celui de Tabulon à l'octet près
+
+| | |
+|---|---|
+| clé | 32 octets, hexadécimal **minuscule** (64 caractères) |
+| sceau | base64 standard de `nonce[24] ‖ chiffré ‖ étiquette[16]` |
+| chiffre | XChaCha20-Poly1305 |
+
+**XChaCha plutôt qu'AES-GCM, et c'est la seule décision de conception.** AES-GCM
+serait venu gratuitement avec `crypto.subtle` ; il aurait rendu les deux
+applications sourdes l'une à l'autre, alors qu'elles partagent déjà le lien
+d'invitation, l'enveloppe de partie et le relai. Le nonce de 192 bits est un
+bonus réel : tiré au hasard à chaque message, il n'oblige **jamais** à tenir un
+compteur persistant — impossible à garantir sur un téléphone, où le système tue
+l'application sans prévenir et où la partie peut reprendre ailleurs. Un nonce
+réutilisé n'est pas une petite fuite : il coûte la clé d'authentification, donc
+la possibilité de forger.
+
+Contrepartie assumée : **du code tiers embarqué**, une première ici. Voir
+`js/vendor/noble-ciphers/PROVENANCE.md` — 82 Ko non minifiés, MIT, quatre
+fichiers copiés sans retouche. Ne pas l'écrire à la main était le point
+important : ChaCha20 et Poly1305 sont add-rotate-xor, donc naturellement à
+temps constant et faits pour le logiciel — mais Poly1305 demande une
+arithmétique par membres de 32 bits qui se rate *silencieusement*, en rendant
+des résultats plausibles et un sceau qui ne protège rien.
+
+**L'interopérabilité est vérifiée contre libsodium**, pas contre nous-mêmes :
+`tests/test-mogichex.mjs` compare les octets produits à un vecteur de
+`crypto_aead_xchacha20poly1305_ietf`. Un aller-retour sur la même machine
+n'aurait rien prouvé — deux implémentations fausses de la même façon
+s'accordent très bien entre elles.
+
+### La clé voyage dans le fragment
+
+`#k=<64 hexa>`, jamais dans la requête. Le fragment n'est transmis à aucun
+serveur : ni l'hébergeur, ni le relai, ni un journal d'accès, ni un en-tête
+`Referer` ne le voient. En paramètre, la clé finirait dans les journaux du
+premier serveur venu, et la discussion serait protégée pour tout le monde sauf
+pour celui qui est le mieux placé pour la lire.
+
+Une clé mal formée est **ignorée des deux côtés** plutôt que recopiée : un lien
+qui promet une discussion protégée sans pouvoir la tenir est pire qu'un lien
+sans clé, où le manque se voit.
+
+**Une clé par partie, tirée au hasard, aucun trousseau.** Tabulon propose aussi
+une clé de communauté dont la clé de partie se dérive, désignée par son
+empreinte (`#kid=`). C'est utile pour un club ; sur un téléphone, cela veut dire
+un écran de gestion de trousseau pour deux joueurs qui s'échangent un lien.
+mogichex **lit** l'empreinte sans la gérer, uniquement pour pouvoir *dire* que
+cette invitation attend une clé qu'il n'a pas — plutôt que d'afficher une
+discussion muette sans explication.
+
+Conséquence à connaître : le lien **est** le secret. Qui l'intercepte lit la
+conversation, et perdre le lien c'est perdre le fil. C'est le bon compromis pour
+une partie, pas pour un secret durable.
+
+### Trois états, trois explications
+
+Le champ de saisie n'apparaît **que** si le texte peut être scellé : sans
+scelleur, `encodeThread()` refuse d'envoyer, et un champ qui n'envoie rien sans
+le dire se lit comme une panne. Clé présente → on tape. Empreinte Tabulon → on
+le dit. Rien → invitation ancienne, ou fragment perdu par un copier-coller
+maladroit, ce qui est la première chose qu'un partage abîme.
+
+Dans les trois cas, **messages rapides et présence continuent de fonctionner**.
+
+### Mesuré : deux navigateurs, un relai PHP
+
+`probe-chat.mjs` lance deux contextes et un vrai `match.php`. C'est ce que ni
+les tests ni les sondes précédentes ne pouvaient approcher.
+
+- clé dans le fragment, **absente de la requête** ;
+- B rejoint par le lien, champ de saisie présent **des deux côtés** ;
+- message écrit chez A, **reçu et déchiffré** chez B, aucun message verrouillé ;
+- message rapide de B **revenu** chez A ;
+- et surtout, ce que le relai détient réellement : **208 octets**, `"enc":1`,
+  un sceau de 75 octets (nonce de 24 + corps), et **pas une trace du texte** ;
+- zéro erreur de console.
 
 ---
 
@@ -731,6 +816,8 @@ js/clock.js             pendule : compteurs, incrément, drapeau (pur, testé)
 js/history.js           mise en lignes des coups, cible d'un retour (pur, testé)
 js/remote/chat-protocol.js  messages, présence, fils (pur, testé — format Tabulon)
 js/remote/chat-channel.js   transport de la discussion (relai + pair-à-pair)
+js/remote/chat-sealer.js    scellement du texte libre (pur, testé — format Tabulon)
+js/vendor/noble-ciphers/    XChaCha20-Poly1305, MIT — voir PROVENANCE.md
 js/game.js              chargement Jocly, session, boucle de jeu, règles
 js/app.js               navigation entre écrans
 sw.js                   service worker
@@ -786,6 +873,18 @@ tests/                       Node pur + PHP réel
   `request.failure().errorText` avant de conclure : un `net::ERR_ABORTED` sur
   `res/sounds/winblues.ogg` a été pris ici pour un fichier manquant côté jocly, alors que le
   fichier est bien présent, dans les sources comme dans le dist, et qu'il se sert en 200.
+- **Sur le canal pair-à-pair, publier la forme SCELLÉE.** `send()` garde en
+  mémoire un message au corps clair ; le publier tel quel ferait voyager le
+  texte en clair et, surtout, l'autre bout le rejetterait — `decodeThread`
+  verrouille tout corps de discussion dépourvu de `enc`. On réutilise la sortie
+  de `encodeThread` plutôt que de sceller une seconde fois : deux chemins de
+  scellement finiraient par diverger.
+- **Le 400 sur `mid=x` est voulu.** `relay-locator` sonde le relai avec un
+  identifiant volontairement invalide, que `match.php` refuse par son motif
+  avant de toucher au disque — c'est ainsi qu'on distingue un vrai relai d'une
+  page d'erreur d'hébergeur sans créer de fichier. Il apparaît en rouge dans la
+  console du navigateur ; ce n'est pas une panne, et une sonde doit le filtrer
+  plutôt qu'envoyer le lecteur suivant chercher un défaut.
 - **Les clés de traduction sont les textes anglais.** Deux usages différents du même
   libellé partagent donc la même entrée : le message rapide « Your turn » a écrasé le
   statut de partie « À vous de jouer », sans avertissement. Vérifier `lang/fr.json`
@@ -802,7 +901,7 @@ tests/                       Node pur + PHP réel
 ## Tests
 
 ```sh
-npm test                      # 118 assertions, Node pur
+npm test                      # 134 assertions, Node pur
 ```
 
 Ce qui est testable l'est : construction du catalogue, champs localisés, filtrage,

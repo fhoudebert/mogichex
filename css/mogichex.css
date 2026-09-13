@@ -253,6 +253,11 @@ button.wide { width: 100%; margin-top: 1.25rem; }
     max-width: 100%; text-align: center; padding: .2rem; }
 .chat-line.locked { color: var(--fg-dim); font-style: italic; }
 .chat-when { color: var(--fg-dim); font-size: .7rem; margin-left: .4rem; }
+/* Le champ et son bouton sur une seule ligne : le clavier virtuel mange deja
+   la moitie de l'ecran, une ligne de plus pousserait le fil hors de vue. */
+.chat-composer { display: flex; gap: .5rem; margin-top: .75rem; }
+.chat-composer input { flex: 1 1 auto; margin: 0; }
+.chat-composer button { flex: 0 0 auto; width: var(--tap); padding: 0; font-size: 1.1rem; }
 .chat-quick { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .75rem; }
 /* Trois poids, trois intentions : un message rapide se DIT (contour accentue),
    un etat de presence se CONSTATE (sourd). Quatre aplats pleins cote a cote

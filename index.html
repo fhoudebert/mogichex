@@ -155,7 +155,16 @@
                     <button class="secondary" data-presence="back" data-t>I'm back</button>
                     <button class="secondary" data-presence="leaving" data-t>Done for today</button>
                 </div>
-                <p id="chat-note" class="hint" data-t>Free text will come with encryption.</p>
+                <!-- Le champ n'apparait que si le texte peut etre scelle :
+                     encodeThread refuserait de l'envoyer, et un champ qui
+                     n'envoie rien sans le dire se lit comme une panne. -->
+                <div id="chat-composer" class="chat-composer" hidden>
+                    <input id="chat-text" type="text" maxlength="500" data-t-placeholder
+                           placeholder="Write a message" autocomplete="off"
+                           enterkeyhint="send">
+                    <button id="btn-chat-send" class="primary" data-t-label aria-label="Send">➤</button>
+                </div>
+                <p id="chat-note" class="hint"></p>
             </div>
         </aside>
 

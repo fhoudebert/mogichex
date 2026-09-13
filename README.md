@@ -59,7 +59,13 @@ in online games; going back doesn't, for the same reason take back doesn't.
 **A word to your opponent.** In online games, a handful of one-tap messages and presence states —
 *well played*, *your turn*, *stepping away*. They travel as identifiers and are shown in each
 player's own language, so two people with no language in common still understand each other, and
-nothing personal ever reaches the relay. Free text will come with encryption, not before.
+nothing personal ever reaches the relay.
+
+**And you can just type.** Free text is sealed with XChaCha20-Poly1305 before it leaves the phone;
+the relay only ever holds opaque bytes. The key rides in the invitation link's *fragment*, which
+browsers never send to any server — so the link is the secret: share it the way you'd share a door
+code, and don't expect it to outlive the game. Same format as
+[Tabulon](https://github.com/fhoudebert/tabulon), so a message written here opens there.
 
 ---
 
@@ -133,7 +139,7 @@ cd - && ln -s ../jocly2/dist/browser dist
 
 npm run build      # catalogue + service worker stamp + tests
 npm run serve      # http://localhost:8080
-npm test           # 118 assertions
+npm test           # 134 assertions
 npm run test:php   # 28 assertions (requires php-cli)
 ```
 

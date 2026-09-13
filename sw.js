@@ -19,7 +19,7 @@
 // SHELL_VERSION doit changer a chaque livraison — tools/stamp-sw.mjs s'en
 // charge au build pour eviter l'oubli.
 
-const SHELL_VERSION = '202609122128-65ff23b';
+const SHELL_VERSION = '202609130706-4c4255b';
 const SHELL_CACHE = 'mogichex-shell-' + SHELL_VERSION;
 const DIST_CACHE = 'mogichex-dist-' + SHELL_VERSION;
 
@@ -41,6 +41,11 @@ const SHELL = [
     './js/game.js',
     './js/remote/chat-channel.js',
     './js/remote/chat-protocol.js',
+    './js/remote/chat-sealer.js',
+    './js/vendor/noble-ciphers/chacha.js',
+    './js/vendor/noble-ciphers/_arx.js',
+    './js/vendor/noble-ciphers/_poly1305.js',
+    './js/vendor/noble-ciphers/utils.js',
     './js/remote/invite.js',
     './js/remote/peer-channel.js',
     './js/remote/protocol.js',

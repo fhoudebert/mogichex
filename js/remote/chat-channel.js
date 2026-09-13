@@ -34,8 +34,10 @@ export class ChatChannel {
      *   fils en derivent, donc les deux joueurs les trouvent sans se concerter
      * @param {1|-1} o.side       notre camp : decide laquelle est la notre
      * @param {object} [o.peer]   PeerChannel, s'il y en a un
-     * @param {object} [o.sealer] viendra avec le texte libre ; sans lui, un
-     *   message de texte libre est REFUSE a l'envoi (voir encodeThread)
+     * @param {object} [o.sealer] scelleur de texte libre (chat-sealer.js).
+     *   Sans lui, un message de texte libre est REFUSE a l'envoi (voir
+     *   encodeThread) ; messages rapides et presence continuent de passer,
+     *   n'ayant rien de personnel a proteger.
      */
     constructor(o) {
         this.relayUrl = String(o.relayUrl || '').replace(/\/$/, '');
@@ -119,7 +121,18 @@ export class ChatChannel {
         this.mine = next;
         this.publish();
         // Le pair d'abord (immediat), le relai ensuite (reference durable).
-        if (this.peer && this.peer.isOpen) this.peer.publish(msg);
+        //
+        // C'est la forme SCELLEE qui part sur le canal pair-a-pair, pas
+        // l'objet en memoire. Envoyer `msg` tel quel ferait voyager le texte
+        // en clair, et surtout l'autre bout le rejetterait : decodeThread
+        // marque `locked` tout corps de discussion depourvu de `enc`. On
+        // reutilise la sortie de encodeThread plutot que de sceller une
+        // seconde fois ici — deux chemins de scellement finiraient par
+        // diverger.
+        if (this.peer && this.peer.isOpen) {
+            const sealed = JSON.parse(payload).msgs.pop();
+            this.peer.publish(sealed);
+        }
         try {
             await this.post({ action: 'save', mid: this.mineMid, data: payload });
         } catch (err) {

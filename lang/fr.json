@@ -124,5 +124,8 @@
   "You nudged": "Vous avez relancé",
   "Your opponent nudged you": "Votre adversaire vous a relancé",
   "A message you cannot read.": "Un message que vous ne pouvez pas lire.",
-  "Free text will come with encryption.": "Le texte libre viendra avec le chiffrement."
+  "Write a message": "Écrire un message",
+  "Send": "Envoyer",
+  "No key in this invitation: quick messages only.": "Aucune clé dans cette invitation : messages rapides seulement.",
+  "This invitation uses a shared key from Tabulon. Quick messages still work.": "Cette invitation emploie un trousseau partagé de Tabulon. Les messages rapides fonctionnent quand même."
 }

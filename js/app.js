@@ -16,6 +16,7 @@ import { FAV_KEY, sanitizeFavorites, toggleFavorite } from './favorites.js';
 import { CLOCK_PRESETS, presetById, formatClock, Clock } from './clock.js';
 import { moveRows, canRollback } from './history.js';
 import { ChatChannel } from './remote/chat-channel.js';
+import { generateChatKey, makeSealer } from './remote/chat-sealer.js';
 import { KIND, PRESENCE, countUnread } from './remote/chat-protocol.js';
 
 const $ = (sel) => document.querySelector(sel);
@@ -551,7 +552,18 @@ async function openInvite(entry) {
     } else {
         $('#invite-error').textContent = '';
         $('#btn-start-remote').disabled = false;
-        state.pending = { matchId: newMatchId(), side: 'a' };
+        // Une cle par PARTIE, tiree au hasard. Pas de trousseau, pas de
+        // secret durable a gerer sur un telephone : le lien est le secret, et
+        // il vit le temps de la partie. Si l'aleatoire sur du n'est pas
+        // disponible, on part SANS discussion protegee plutot qu'avec une cle
+        // devinable, qui en donnerait l'apparence.
+        let chatKey = null;
+        try {
+            chatKey = generateChatKey();
+        } catch (err) {
+            console.warn('pas de cle de discussion :', err.message || err);
+        }
+        state.pending = { matchId: newMatchId(), side: 'a', chatKey };
         // L'invite recoit le camp OPPOSE au notre.
         const link = buildInviteLink({
             game: entry.name,
@@ -559,6 +571,7 @@ async function openInvite(entry) {
             side: 'b',
             locale: getLocale(),
             base: location.href.split('?')[0],
+            chatKey,
         });
         $('#invite-link').value = link;
     }
@@ -569,7 +582,7 @@ async function openInvite(entry) {
  * pas seulement pendant le tour de l'adversaire : c'est ce qui permet de
  * rattraper une partie rechargee ou reprise sur un autre appareil.
  */
-function attachRelay(session, { matchId, side }) {
+function attachRelay(session, { matchId, side, chatKey = null, chatKeyId = null }) {
     const selfKey = makeId(8);
     const channel = new RelayChannel({
         relayUrl: CONFIG.relayUrl,
@@ -617,7 +630,7 @@ function attachRelay(session, { matchId, side }) {
     });
     state.peer = peer;
 
-    attachChat(session, { matchId, side, peer });
+    attachChat(session, { matchId, side, peer, chatKey, chatKeyId });
 
     session.hooks.onLocalMove = async () => {
         const { matchdata, nbTurns } = await session.exportState();
@@ -644,13 +657,26 @@ function attachRelay(session, { matchId, side }) {
  * ferme et rouvert sans que la partie s'en apercoive, et les messages recus
  * pendant qu'il est ferme doivent quand meme faire monter la pastille.
  */
-function attachChat(session, { matchId, side, peer }) {
+function attachChat(session, { matchId, side, peer, chatKey = null, chatKeyId = null }) {
     const Jocly = session.Jocly;
+    // Une cle mal formee ne desactive pas la discussion : messages rapides et
+    // presence n'en ont pas besoin. Seul le texte libre disparait — et il le
+    // fait VISIBLEMENT, le panneau disant pourquoi.
+    let sealer = null;
+    if (chatKey) {
+        try {
+            sealer = makeSealer(chatKey);
+        } catch (err) {
+            console.warn('cle de discussion inutilisable :', err.message || err);
+        }
+    }
+    state.chatKeyId = chatKeyId;
     const chat = new ChatChannel({
         relayUrl: CONFIG.relayUrl,
         matchId,
         side: side === 'b' ? Jocly.PLAYER_B : Jocly.PLAYER_A,
         peer,
+        sealer,
         onConversation: (conv) => {
             state.chatUnread = countUnread(conv, state.chatSeenId, chat.side);
             updateChatBadge();
@@ -662,7 +688,36 @@ function attachChat(session, { matchId, side, peer }) {
     state.chatSeenId = null;
     state.chatUnread = 0;
     chat.start().catch((err) => console.warn('discussion indisponible :', err.message || err));
+    syncChatComposer();
     syncBarButtons();
+}
+
+/**
+ * Le champ de saisie n'apparait QUE si le texte peut etre scelle.
+ *
+ * Trois etats, trois explications — parce qu'un champ absent sans motif se lit
+ * comme une panne, et qu'un champ present sans chiffrement serait un mensonge
+ * (encodeThread refuserait d'envoyer, l'utilisateur ne saurait pas pourquoi) :
+ *
+ *   - cle presente        : on tape, le message part scelle ;
+ *   - empreinte Tabulon   : l'invitation designe un trousseau de communaute,
+ *                           que mogichex ne gere pas. On le DIT ;
+ *   - rien                : invitation ancienne, ou lien tronque au partage —
+ *                           le fragment est la premiere chose que perd un
+ *                           copier-coller maladroit.
+ */
+function syncChatComposer() {
+    const has = !!(state.chat && state.chat.sealer);
+    $('#chat-composer').hidden = !has;
+    const note = $('#chat-note');
+    note.hidden = has;
+    if (!has) {
+        note.textContent = t(
+            state.chatKeyId
+                ? 'This invitation uses a shared key from Tabulon. Quick messages still work.'
+                : 'No key in this invitation: quick messages only.'
+        );
+    }
 }
 
 function updateChatBadge() {
@@ -747,7 +802,25 @@ async function sendChat(payload) {
 function wireChat() {
     $('#btn-chat').addEventListener('click', () => {
         openPanel('#panel-chat');
+        syncChatComposer();
         renderChat(state.chat ? state.chat.conversation : []);
+    });
+    const send = async () => {
+        const input = $('#chat-text');
+        const body = input.value.trim();
+        if (!body) return;
+        // On vide le champ AVANT l'envoi : le message est deja affiche par
+        // publish(), et laisser le texte en place le ferait apparaitre deux
+        // fois — une dans le fil, une sous le pouce.
+        input.value = '';
+        await sendChat({ kind: KIND.CHAT, body });
+    };
+    $('#btn-chat-send').addEventListener('click', send);
+    $('#chat-text').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            send();
+        }
     });
     for (const btn of document.querySelectorAll('#chat-quick [data-quick]')) {
         btn.addEventListener('click', () => sendChat({ kind: KIND.CHAT, quick: btn.dataset.quick }));
@@ -953,7 +1026,9 @@ async function main() {
     // Lien d'invitation ouvert par l'adversaire : on lance directement la
     // partie a distance, sur le bon jeu et le bon camp. Un lien joclymatch
     // fonctionne ici aussi (memes parametres).
-    const invite = parseInviteLink(location.search);
+    // `location.search` ne contient PAS le fragment : la cle de discussion y
+    // serait perdue. On lit les deux.
+    const invite = parseInviteLink(location.search + location.hash);
     if (invite) {
         const entry = state.catalog.games.find((g) => g.name === invite.game);
         if (entry) {
@@ -961,7 +1036,12 @@ async function main() {
             if (invite.side && CONFIG.remotePlay) {
                 await ensureRelay();
                 if (CONFIG.relayUrl) {
-                    state.remote = { matchId: invite.matchId, side: invite.side };
+                    state.remote = {
+                        matchId: invite.matchId,
+                        side: invite.side,
+                        chatKey: invite.chatKey,
+                        chatKeyId: invite.chatKeyId,
+                    };
                     $('#sel-mode').value = 'remote';
                     syncModeRows();
                     startMatch();
