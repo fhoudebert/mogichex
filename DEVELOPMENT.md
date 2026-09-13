@@ -387,9 +387,28 @@ Une seule ligne s'affiche si le jeu la gère : `getViewOptions()` ne rend que le
 supportées, et une case sans effet est pire qu'une case absente. Mesure : `classic-chess`
 expose les six, `english-draughts` n'expose pas *compléter les coups*.
 
-**« Voir en tant que joueur A » est le défaut**, pour que le joueur voie d'emblée le plateau
-de son côté. Jocly n'accepte `viewAs` que pour les jeux qui se déclarent `switchable`
-(la grande majorité) — ailleurs la ligne est masquée et le réglage n'est pas envoyé.
+**« Voir en tant que joueur A » est le défaut** en partie locale. Jocly n'accepte `viewAs` que
+pour les jeux qui se déclarent `switchable` (la grande majorité) — ailleurs la ligne est masquée
+et le réglage n'est pas envoyé.
+
+**En partie à distance, chacun regarde de son côté**, et ce réglage est posé **en dernier**, donc
+au-dessus de la préférence enregistrée pour ce jeu. Le camp qu'on joue est un fait de *cette*
+partie ; la préférence, elle, parle des parties locales, où le joueur choisit son camp et peut le
+rechoisir. À distance personne ne choisit : le créateur est A, l'invité est B — et l'invité se
+retrouvait à regarder par-dessus l'épaule de son adversaire.
+
+Le cas A est traité comme le cas B. Sans cela, un « voir en tant que B » gardé d'une partie
+précédente ferait jouer A depuis la place d'en face.
+
+Et **rien n'est réécrit dans les préférences** : ni à l'ouverture, ni si le joueur retourne le
+plateau une seconde pour regarder. La partie locale suivante retrouverait sinon une orientation
+qu'elle n'a jamais demandée. `applyViewOptions()` applique donc tout mais n'enregistre pas
+`viewAs` tant qu'un camp est distant.
+
+Même règle que Tabulon (`play.js`, `inviteLocalSide`), pour que deux joueurs des deux
+applications voient la même chose. Mesuré à deux navigateurs sur `classic-chess`, avec une
+préférence contraire plantée chez l'invité : A voit `a`, B voit `b`, et la préférence de B reste
+intacte.
 
 Les choix sont mémorisés par jeu, sous une clé unique (`view.<jeu>`), et rechargés au
 lancement suivant.
@@ -497,7 +516,7 @@ fausse en silence.
 | | |
 |---|---|
 | `tools/` | fabrique le catalogue, l'APK, l'estampille du service worker. Ne tourne que chez vous |
-| `tests/` | 143 assertions Node et 14 PHP. `tests/*.php` sont des **exécutables** : les téléverser, c'est offrir des points d'entrée qui écrivent sur le disque |
+| `tests/` | 148 assertions Node et 14 PHP. `tests/*.php` sont des **exécutables** : les téléverser, c'est offrir des points d'entrée qui écrivent sur le disque |
 | `data/` | `phone-ineligible.json` est lu par le **build**, jamais par le navigateur — il est déjà cuit dans `catalog.json` |
 | `android/` | projet Capacitor, 1,8 Mo, sans objet sur le web |
 | `package.json`, `DEVELOPMENT.md`, `README.md`, `.gitignore` | rien ne les lit à l'exécution |
@@ -1034,7 +1053,7 @@ tests/                       Node pur + PHP réel
 ## Tests
 
 ```sh
-npm test                      # 143 assertions, Node pur
+npm test                      # 148 assertions, Node pur
 ```
 
 Ce qui est testable l'est : construction du catalogue, champs localisés, filtrage,

@@ -1906,3 +1906,81 @@ test('relance : le delai se lit en clair', () => {
     assert.equal(formatCooldown(0), '0 s');
     assert.equal(formatCooldown(-5), '0 s');
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Point de vue : en partie a distance, on regarde de son cote.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const JOCLY = { PLAYER_A: 1, PLAYER_B: -1 };
+const ENTRY = { name: 'jeu-x', defaultSkin: '2d', switchable: true };
+
+/** Une session prete a repondre a initialViewOptions, sans moteur ni DOM. */
+function viewSession({ mode = 'ai', side = 'a', entry = ENTRY, stored = {} } = {}) {
+    const s = new GameSession(null, entry, {});
+    s.mode = mode;
+    s.humanSides = mode === 'human' ? [1, -1] : [side === 'b' ? -1 : 1];
+    s.storedViewOptions = () => stored;
+    s.saveViewOptions = (o) => (s.saved = o);
+    return s;
+}
+
+test('point de vue : l invite d une partie a distance regarde de son cote', () => {
+    // Le cas qui manquait : en partie a distance, personne ne choisit son
+    // camp — le createur est A, l'invite est B. Sans cela, B regardait
+    // par-dessus l'epaule de son adversaire.
+    assert.equal(viewSession({ mode: 'remote', side: 'b' }).initialViewOptions(JOCLY).viewAs, -1);
+    assert.equal(viewSession({ mode: 'remote', side: 'a' }).initialViewOptions(JOCLY).viewAs, 1);
+});
+
+test('point de vue : le camp joue l emporte sur la preference enregistree', () => {
+    // Le camp est un fait de CETTE partie ; la preference parle des parties
+    // locales, ou le joueur choisit son camp et peut le rechoisir.
+    assert.equal(
+        viewSession({ mode: 'remote', side: 'b', stored: { viewAs: 1 } }).initialViewOptions(JOCLY).viewAs,
+        -1
+    );
+    // Et le cas A est pose comme le cas B : sans quoi un « voir en tant que B »
+    // garde d'une partie precedente ferait jouer A depuis la place d'en face.
+    assert.equal(
+        viewSession({ mode: 'remote', side: 'a', stored: { viewAs: -1 } }).initialViewOptions(JOCLY).viewAs,
+        1
+    );
+});
+
+test('point de vue : les parties locales gardent la preference du joueur', () => {
+    // Rien ne change hors du jeu a distance : contre l'ordinateur, le camp se
+    // choisit, donc l'orientation aussi — et elle se retient.
+    assert.equal(viewSession({ mode: 'ai', side: 'b', stored: { viewAs: 1 } }).initialViewOptions(JOCLY).viewAs, 1);
+    assert.equal(viewSession({ mode: 'ai', side: 'a' }).initialViewOptions(JOCLY).viewAs, 1, 'defaut A');
+    assert.equal(viewSession({ mode: 'human' }).initialViewOptions(JOCLY).viewAs, 1);
+});
+
+test('point de vue : rien n est pose pour un jeu non retournable', () => {
+    // jocly ignore viewAs hors des jeux switchable ; le poser quand meme
+    // remplirait le panneau d'un reglage sans effet.
+    const fixe = { name: 'jeu-fixe', defaultSkin: '2d', switchable: false };
+    const opts = viewSession({ mode: 'remote', side: 'b', entry: fixe }).initialViewOptions(JOCLY);
+    assert.equal(opts.viewAs, undefined);
+    assert.equal(opts.skin, '2d');
+});
+
+test('point de vue : retourner le plateau a distance ne change pas le reglage local', () => {
+    // Le joueur qui retourne le plateau une seconde pour regarder ne demande
+    // pas a changer son reglage ; la partie locale suivante retrouverait
+    // sinon une orientation qu'elle n'a jamais demandee.
+    const dist = viewSession({ mode: 'remote', side: 'b', stored: { skin: '2d', viewAs: 1 } });
+    dist.match = { setViewOptions: async () => {} };
+    dist.rearm = async () => {};
+    return dist.applyViewOptions({ viewAs: -1, notation: true }).then(() => {
+        assert.equal(dist.saved.viewAs, 1, 'la preference locale reste intacte');
+        assert.equal(dist.saved.notation, true, 'le reste est bien enregistre');
+
+        // En local, au contraire, il s'enregistre : c'est un reglage.
+        const loc = viewSession({ mode: 'ai', side: 'a', stored: { skin: '2d' } });
+        loc.match = { setViewOptions: async () => {} };
+        loc.rearm = async () => {};
+        return loc.applyViewOptions({ viewAs: -1 }).then(() => {
+            assert.equal(loc.saved.viewAs, -1);
+        });
+    });
+});

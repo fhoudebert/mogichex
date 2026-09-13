@@ -157,16 +157,31 @@ export class GameSession {
      * Deux defauts imposes ici, et un seul endroit pour les imposer :
      *   - le skin 2D du catalogue, tant que l'utilisateur n'en a pas choisi
      *     un autre (three.js n'est alors jamais charge) ;
-     *   - viewAs = PLAYER_A, pour que le joueur voie toujours le plateau de
-     *     SON cote au premier lancement. jocly n'accepte ce reglage que si le
-     *     jeu se declare switchable ; le poser ailleurs serait ignore, voire
-     *     source de confusion dans le panneau.
+     *   - viewAs = PLAYER_A au premier lancement. jocly n'accepte ce reglage
+     *     que si le jeu se declare switchable ; le poser ailleurs serait
+     *     ignore, voire source de confusion dans le panneau.
+     *
+     * EN PARTIE A DISTANCE, ON REGARDE DE SON COTE — et ce reglage est pose
+     * EN DERNIER, donc au-dessus de la preference enregistree pour ce jeu.
+     * Le camp qu'on joue est un fait de CETTE partie ; la preference, elle,
+     * parle des parties locales, ou le joueur a choisi son camp et peut le
+     * rechoisir. En partie a distance, personne ne choisit : le createur est
+     * A, l'invite est B, et l'invite se retrouvait a regarder par-dessus
+     * l'epaule de son adversaire.
+     *
+     * Le cas A est pose comme le cas B, sans quoi un « voir en tant que B »
+     * garde d'une partie precedente ferait jouer A depuis la place d'en face.
+     *
+     * Meme regle que Tabulon (play.js, inviteLocalSide), pour que deux joueurs
+     * des deux applications voient la meme chose.
      */
     initialViewOptions(Jocly) {
         const saved = this.storedViewOptions();
         const opts = Object.assign({}, saved);
         if (!opts.skin) opts.skin = this.entry.defaultSkin;
-        if (this.entry.switchable && opts.viewAs === undefined) opts.viewAs = Jocly.PLAYER_A;
+        if (!this.entry.switchable) return opts;
+        if (opts.viewAs === undefined) opts.viewAs = Jocly.PLAYER_A;
+        if (this.mode === 'remote' && this.humanSides.length) opts.viewAs = this.humanSides[0];
         return opts;
     }
 
@@ -205,7 +220,14 @@ export class GameSession {
      * rappelle RunMatch pour la meme raison).
      */
     async applyViewOptions(patch) {
-        const merged = Object.assign({}, this.storedViewOptions(), patch);
+        // On applique tout, on n'enregistre pas TOUT : en partie a distance,
+        // le point de vue appartient a cette partie-la. L'enregistrer ferait
+        // retrouver a la partie suivante, locale, une orientation qu'elle n'a
+        // jamais demandee — et le joueur qui a retourne le plateau une
+        // seconde pour regarder ne demande pas a changer son reglage.
+        const keep = Object.assign({}, patch);
+        if (this.mode === 'remote') delete keep.viewAs;
+        const merged = Object.assign({}, this.storedViewOptions(), keep);
         this.saveViewOptions(merged);
         await this.match.setViewOptions(patch);
         this.viewOptions = Object.assign({}, this.viewOptions, patch);
