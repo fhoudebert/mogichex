@@ -8,7 +8,14 @@ import { detectTier } from './device.js';
 import { CatalogView } from './catalog-view.js';
 import { filterGames } from './catalog.js';
 import { GameSession, loadRules, winnerLabel, fallbackNotice } from './game.js';
-import { newMatchId, buildInviteLink, parseInviteLink, buildEnvelope, makeId } from './remote/invite.js';
+import {
+    newMatchId,
+    buildInviteLink,
+    parseInviteLink,
+    buildEnvelope,
+    makeId,
+    inviteBaseFrom,
+} from './remote/invite.js';
 import { RelayChannel } from './remote/relay-channel.js';
 import { locateRelay, RELAY_ROOTS } from './remote/relay-locator.js';
 import { PeerChannel } from './remote/peer-channel.js';
@@ -565,18 +572,39 @@ async function openInvite(entry) {
             console.warn('pas de cle de discussion :', err.message || err);
         }
         state.pending = { matchId: newMatchId(), side: 'a', chatKey };
+        // La chaine de repli vit dans invite.js, pure et testee : c'est le
+        // seul moyen d'eprouver le cas de la coquille native, dont l'origine
+        // n'est pas quelque chose qu'une page peut se donner.
+        const base = inviteBaseFrom({
+            configured: CONFIG.inviteBase,
+            page: location.href,
+            relay: CONFIG.relayUrl,
+        });
+        if (!base) {
+            // Mieux vaut pas de lien qu'un lien mort : un « https://localhost/… »
+            // se copie et s'envoie sans que rien n'avertisse, et c'est l'invite
+            // qui decouvre le probleme.
+            $('#invite-error').textContent = t(
+                'This build has no public address, so no invitation link can be made.'
+            );
+            $('#invite-link').value = '';
+            $('#btn-start-remote').disabled = true;
+            return;
+        }
         // L'invite recoit le camp OPPOSE au notre.
         const link = buildInviteLink({
             game: entry.name,
             matchId: state.pending.matchId,
             side: 'b',
             locale: getLocale(),
-            base: location.href.split('?')[0],
+            base,
             chatKey,
         });
         $('#invite-link').value = link;
     }
 }
+
+
 
 /**
  * Branche le relai sur la session. La boucle d'ecoute tourne EN PERMANENCE,

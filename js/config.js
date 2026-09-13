@@ -40,6 +40,22 @@ export const CONFIG = Object.assign(
         // c'est ce qu'il faudra faire dans une coquille NATIVE, dont l'origine
         // n'est pas celle du site et pour qui « . » ne veut rien dire.
         relayUrl: null,
+        // Adresse PUBLIQUE de cette application, celle qui part dans les liens
+        // d'invitation. null = celle de la page, ce qui est juste sur le web.
+        //
+        // INDISPENSABLE DANS UNE COQUILLE NATIVE : sous Capacitor la page est
+        // servie depuis https://localhost, une origine valide qui ne designe
+        // rien chez le destinataire — le lien produit n'ouvre rien. Voir
+        // buildInviteBase() dans js/app.js pour la chaine de repli.
+        inviteBase: null,
+        // Adresse PUBLIQUE de cette application, celle qui part dans les liens
+        // d'invitation. null = celle de la page, ce qui est juste sur le web.
+        //
+        // INDISPENSABLE DANS UNE COQUILLE NATIVE : sous Capacitor la page est
+        // servie depuis https://localhost, une origine valide qui ne designe
+        // rien chez le destinataire — le lien produit n'ouvre rien. Voir
+        // buildInviteBase() dans js/app.js pour la chaine de repli.
+        inviteBase: null,
         // Jeu a distance. Le passer a false retire l'adversaire « un autre
         // joueur par Internet » : plus de choix dans la liste, plus de
         // recherche de relai, plus une seule requete sortante. C'est ce qu'il

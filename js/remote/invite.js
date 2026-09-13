@@ -92,6 +92,80 @@ export function buildInviteLink(o) {
     return link;
 }
 
+/**
+ * Cette adresse peut-elle servir de base a un lien d'invitation ?
+ *
+ * LE PIEGE DE LA COQUILLE NATIVE. Sous Capacitor, l'application est servie
+ * depuis `https://localhost` — une origine parfaitement valide, securisee, et
+ * qui ne designe RIEN chez le destinataire. Construire le lien depuis
+ * `location.href`, ce qui est juste sur le web, produit donc la un
+ * `https://localhost/?game=…` qui n'ouvre rien chez personne. Et il echoue en
+ * silence : le lien a l'air normal, il se copie, il s'envoie, et c'est
+ * l'invite qui decouvre le probleme.
+ *
+ * ON NE REFUSE QUE LES ORIGINES D'APPLICATION EMPAQUETEE : les schemas
+ * `capacitor:`, `file:`, `content:`, les ressources `android_asset`, et
+ * `https://localhost` SANS PORT — qui est exactement ce que sert le WebView
+ * Android de Capacitor.
+ *
+ * Un serveur de developpement, lui, passe : `http://127.0.0.1:8080` ou
+ * `http://localhost:8080` servent parfaitement a faire jouer deux navigateurs
+ * de la meme machine, et c'est ainsi que les sondes de ce depot travaillent.
+ * Une adresse de reseau local passe pour la meme raison : deux appareils de la
+ * meme maison n'ont pas besoin d'Internet. Le port est le discriminant, parce
+ * qu'une coquille native n'en a jamais et qu'un serveur local en a toujours un.
+ */
+export function isShareableBase(url) {
+    const text = String(url || '');
+    if (!text) return false;
+    if (/^(capacitor|file|content|chrome-extension):/i.test(text)) return false;
+    if (text.includes('android_asset')) return false;
+    let u;
+    try {
+        u = new URL(text, 'https://relatif.invalid/');
+    } catch {
+        return false;
+    }
+    if (u.hostname === 'relatif.invalid') return false; // adresse relative : rien a partager
+    const local =
+        u.hostname === 'localhost' ||
+        u.hostname.endsWith('.localhost') ||
+        u.hostname === '127.0.0.1' ||
+        u.hostname === '[::1]';
+    // `https://localhost` sans port : la coquille Capacitor, et elle seule.
+    if (local && u.protocol === 'https:' && !u.port) return false;
+    return true;
+}
+
+/**
+ * L'adresse a mettre dans un lien d'invitation, ou null s'il n'y en a pas.
+ *
+ * Trois etages, du plus sur au plus deduit :
+ *
+ *   1. l'adresse CONFIGUREE (`CONFIG.inviteBase`). Autorite absolue, et c'est
+ *      ce que pose tools/build-android.mjs ;
+ *   2. l'adresse de la PAGE, si elle n'est pas celle d'une coquille
+ *      empaquetee. C'est le cas du web, et le comportement d'origine ;
+ *   3. l'adresse du RELAI, si elle est absolue. C'est une deduction, mais une
+ *      deduction raisonnable : dans le deploiement de reference le relai vit
+ *      DANS le repertoire de mogichex (« . » est sa premiere racine), donc son
+ *      adresse est celle de l'application. Au pire elle designe le joclymatch
+ *      voisin — qui lit le meme format de lien et parle au meme relai, donc
+ *      l'invite joue quand meme.
+ *
+ * Fonction PURE, pour que les trois etages se testent sans navigateur : c'est
+ * justement le cas qu'on ne peut pas simuler ailleurs, l'origine d'une
+ * coquille native n'etant pas quelque chose qu'une page peut se donner.
+ */
+export function inviteBaseFrom({ configured = null, page = '', relay = '' } = {}) {
+    if (configured) return String(configured);
+    const clean = String(page).split('#')[0].split('?')[0];
+    if (isShareableBase(clean)) return clean;
+    const r = String(relay || '');
+    if (/^https?:/i.test(r) && isShareableBase(r)) return r.replace(/\/+$/, '') + '/index.html';
+    return null;
+}
+
 /** Forme d'une cle de discussion : 32 octets en hexadecimal minuscule.
  *  Duplique ici — et non importe de chat-sealer.js — pour que ce module reste
  *  PUR et sans dependance : c'est ce qui permet a joclymatch ou a un script de

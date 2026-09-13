@@ -2,7 +2,7 @@
 // filtre d'appareil avec echappatoire.
 
 import { t, pickLocalized, getLocale } from './i18n.js';
-import { filterGames, groupByModule, initialCollapsed } from './catalog.js';
+import { filterGames, groupByModule, initialCollapsed, moduleLabel } from './catalog.js';
 import { favoriteGroup, isFavorite } from './favorites.js';
 import { gameAssetUrl } from './config.js';
 
@@ -60,7 +60,7 @@ export class CatalogView {
             showAll: this.showAll,
             locale,
         });
-        const groups = groupByModule(selected, locale);
+        const groups = groupByModule(selected, locale, t);
         const fav = favoriteGroup(selected, this.favorites);
         if (fav) groups.unshift(fav);
         if (this.collapsed === null) this.collapsed = initialCollapsed(groups, { searching });
@@ -91,7 +91,7 @@ export class CatalogView {
             `<span class="chevron" aria-hidden="true"></span>`;
         head.querySelector('.module-name').textContent = group.favorite
             ? '\u2605 ' + t('Favorites')
-            : group.module;
+            : moduleLabel(group.module, t);
         head.addEventListener('click', () => {
             if (this.collapsed.has(group.module)) this.collapsed.delete(group.module);
             else this.collapsed.add(group.module);

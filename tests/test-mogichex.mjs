@@ -1984,3 +1984,162 @@ test('point de vue : retourner le plateau a distance ne change pas le reglage lo
         });
     });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Noms de modules : lisibles, et traduits quand ça a un sens.
+// ─────────────────────────────────────────────────────────────────────────────
+
+import { MODULE_LABELS, moduleLabel } from '../js/catalog.js';
+
+test('modules : les mots-valises deviennent lisibles', () => {
+    // « Fourinarow » et « Pensoc » etaient ce que rendait le capitalize du
+    // CSS : lisibles par qui connait deja jocly, opaques pour les autres.
+    assert.equal(moduleLabel('fourinarow'), 'Four in a row');
+    assert.equal(moduleLabel('pensoc'), 'Penguin soccer');
+    assert.equal(moduleLabel('chessbase'), 'Chessbase');
+});
+
+test('modules : un module inconnu reste affichable', () => {
+    // jocly en gagne. Le repli doit etre moche, jamais vide, et jamais criard.
+    assert.equal(moduleLabel('nouveaumodule'), 'Nouveaumodule');
+    assert.equal(moduleLabel(''), '');
+    assert.equal(moduleLabel(null), '');
+});
+
+test('modules : la traduction passe par les memes cles que le reste', () => {
+    const fr = JSON.parse(readFileSync(path.join(root, 'lang', 'fr.json'), 'utf8'));
+    const t = (x) => (fr[x] !== undefined ? fr[x] : x);
+    assert.equal(moduleLabel('chessbase', t), 'Échecs');
+    assert.equal(moduleLabel('checkers', t), 'Dames');
+    assert.equal(moduleLabel('fourinarow', t), 'Puissance 4');
+    assert.equal(moduleLabel('mills', t), 'Moulin');
+    assert.equal(moduleLabel('hunt', t), 'Chasse');
+    // Les noms propres ne se traduisent pas : ils retombent sur l'anglais,
+    // ce qui est le bon resultat et non un oubli.
+    assert.equal(moduleLabel('tafl', t), 'Tafl');
+    assert.equal(moduleLabel('go', t), 'Go');
+});
+
+test('modules : tout module du catalogue a un libelle ecrit a la main', () => {
+    // Ce test attrape le module qu'une mise a jour de jocly ajouterait :
+    // sans entree, il s'afficherait sous son identifiant capitalise.
+    const cat = JSON.parse(readFileSync(path.join(root, 'app', 'catalog.json'), 'utf8'));
+    const modules = [...new Set(cat.games.map((g) => g.module))].sort();
+    const sans = modules.filter((m) => !MODULE_LABELS[m]);
+    assert.deepEqual(sans, [], 'modules sans libelle dans MODULE_LABELS');
+    assert.ok(modules.length >= 10);
+});
+
+test('modules : ranges dans l ordre de la langue affichee', () => {
+    // Ranger par identifiant donnait, en francais, « Dames, Échecs,
+    // Puissance 4, Go, Chasse… » : l'ordre alphabetique d'une langue que
+    // l'utilisateur ne voit pas.
+    const fr = JSON.parse(readFileSync(path.join(root, 'lang', 'fr.json'), 'utf8'));
+    const t = (x) => (fr[x] !== undefined ? fr[x] : x);
+    const jeux = ['chessbase', 'hunt', 'fourinarow', 'checkers'].map((m, i) => ({
+        name: 'g' + i,
+        module: m,
+        title: { en: 'G' + i },
+    }));
+    assert.deepEqual(
+        groupByModule(jeux, 'fr', t).map((g) => g.module),
+        ['hunt', 'checkers', 'chessbase', 'fourinarow'],
+        'Chasse, Dames, Échecs, Puissance 4'
+    );
+    // Sans traduction, l'ordre anglais.
+    assert.deepEqual(
+        groupByModule(jeux, 'en').map((g) => g.module),
+        ['checkers', 'chessbase', 'fourinarow', 'hunt']
+    );
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Lien d'invitation : l'adresse doit sortir de l'appareil.
+// ─────────────────────────────────────────────────────────────────────────────
+
+import { isShareableBase, inviteBaseFrom } from '../js/remote/invite.js';
+
+test('invitation : une origine de coquille native n est pas partageable', () => {
+    // LE BUG : sous Capacitor la page est servie depuis https://localhost —
+    // une origine valide, securisee, et qui ne designe RIEN chez le
+    // destinataire. Le lien « https://localhost/?game=… » se copie, s'envoie,
+    // et c'est l'invite qui decouvre qu'il n'ouvre rien.
+    for (const url of [
+        'https://localhost/index.html',
+        'https://localhost/',
+        'capacitor://localhost/index.html',
+        'file:///android_asset/public/index.html',
+        'content://com.exemple/index.html',
+    ]) {
+        assert.equal(isShareableBase(url), false, url);
+    }
+});
+
+test('invitation : un serveur local reste partageable, lui', () => {
+    // On ne refuse QUE les origines d'application empaquetee. Un serveur de
+    // developpement sert parfaitement a faire jouer deux navigateurs de la
+    // meme machine — c'est ainsi que les sondes de ce depot travaillent — et
+    // une adresse de reseau local sert entre deux appareils de la meme maison.
+    // Le PORT est le discriminant : une coquille native n'en a jamais.
+    for (const url of [
+        'http://127.0.0.1:8090/index.html',
+        'http://localhost:8080/index.html',
+        'https://localhost:8443/index.html',
+        'http://192.168.1.20:8080/index.html',
+        'https://biscandine.fr/variantes/mogichex/index.html',
+        'https://exemple.github.io/mogichex/',
+    ]) {
+        assert.equal(isShareableBase(url), true, url);
+    }
+});
+
+test('invitation : rien d exploitable ne passe pour vrai', () => {
+    for (const url of ['', null, undefined, 'index.html', './index.html', 'pas une url']) {
+        assert.equal(isShareableBase(url), false, String(url));
+    }
+});
+
+test('android : la configuration generee porte une adresse publique', () => {
+    // Sans `inviteBase`, l'APK reconstruit referait exactement le meme lien
+    // mort. Ce test tient la ligne qui l'en empeche.
+    const src = readFileSync(path.join(root, 'tools', 'build-android.mjs'), 'utf8');
+    const m = src.match(/const SITE = '([^']+)'/);
+    assert.ok(m, 'build-android.mjs doit definir SITE');
+    assert.equal(isShareableBase(m[1]), true, 'SITE doit etre une adresse publique');
+    assert.ok(src.includes('inviteBase:'), 'la configuration native doit poser inviteBase');
+    assert.ok(src.includes('relayUrl:'), 'et relayUrl');
+});
+
+test('invitation : la base suit les trois etages, du configure au deduit', () => {
+    const SITE = 'https://biscandine.fr/variantes/mogichex';
+
+    // 1. Configure : autorite absolue, meme si la page est parfaitement bonne.
+    assert.equal(
+        inviteBaseFrom({ configured: SITE + '/index.html', page: 'https://autre.fr/', relay: '.' }),
+        SITE + '/index.html'
+    );
+
+    // 2. Sinon la page, requete et fragment retires — surtout le fragment, qui
+    //    porterait la cle de la partie PRECEDENTE dans le nouveau lien.
+    assert.equal(
+        inviteBaseFrom({ page: 'https://exemple.fr/jeux/index.html?game=x#k=' + 'a'.repeat(64) }),
+        'https://exemple.fr/jeux/index.html'
+    );
+
+    // 3. La coquille native : la page ne vaut rien, le relai sauve la mise.
+    //    C'est le cas qu'aucun navigateur de bureau ne peut simuler.
+    assert.equal(
+        inviteBaseFrom({ page: 'https://localhost/index.html', relay: SITE }),
+        SITE + '/index.html'
+    );
+    assert.equal(
+        inviteBaseFrom({ page: 'capacitor://localhost/index.html', relay: SITE + '/' }),
+        SITE + '/index.html'
+    );
+
+    // Un relai relatif ne designe rien hors de l'appareil : on prefere le
+    // silence a un lien mort.
+    assert.equal(inviteBaseFrom({ page: 'https://localhost/index.html', relay: '.' }), null);
+    assert.equal(inviteBaseFrom({ page: 'https://localhost/index.html' }), null);
+    assert.equal(inviteBaseFrom({}), null);
+});

@@ -146,7 +146,7 @@ cd - && ln -s ../jocly2/dist/browser dist
 
 npm run build      # catalogue + service worker stamp + tests
 npm run serve      # http://localhost:8080
-npm test           # 148 assertions
+npm test           # 158 assertions
 npm run test:php   # 28 assertions (requires php-cli)
 ```
 

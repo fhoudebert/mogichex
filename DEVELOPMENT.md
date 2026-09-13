@@ -274,6 +274,40 @@ le fichier de partie diffère.
 Un lien tronqué par un copier-coller rend `null` plutôt que de lancer une partie sur des valeurs
 partielles. L'identifiant est validé côté client **avant** l'envoi, avec le même motif que le PHP.
 
+## L'adresse qui part dans le lien d'invitation
+
+**`https://localhost` est une origine valide qui ne désigne rien chez le destinataire.** C'est ce
+que sert le WebView Android de Capacitor, et construire le lien depuis `location.href` — ce qui est
+juste sur le web — y produisait `https://localhost/?game=…`. Le lien a l'air normal, il se copie,
+il s'envoie : c'est l'invité qui découvre qu'il n'ouvre rien.
+
+`inviteBaseFrom()` (dans `js/remote/invite.js`, **pure et testée**) descend trois étages :
+
+1. **`CONFIG.inviteBase`**, si elle est configurée — autorité absolue, et c'est ce que pose
+   `tools/build-android.mjs` à côté de `relayUrl`, depuis la même constante `SITE` ;
+2. **l'adresse de la page**, si elle n'est pas celle d'une coquille empaquetée — le cas du web, et
+   le comportement d'origine ;
+3. **l'adresse du relai**, si elle est absolue. Déduction, mais raisonnable : dans le déploiement
+   de référence le relai vit *dans* le répertoire de mogichex (« . » est sa première racine), donc
+   son adresse est celle de l'application. Au pire elle désigne le joclymatch voisin, qui lit le
+   même format de lien et parle au même relai — l'invité joue quand même.
+
+Sans rien de tout cela : **pas de lien, et un message qui le dit**. Mieux vaut pas de lien qu'un
+lien mort.
+
+**Ce qui est refusé est étroit, et volontairement.** Seules les origines d'application empaquetée :
+`capacitor:`, `file:`, `content:`, les ressources `android_asset`, et `https://localhost` **sans
+port** — exactement ce que sert Capacitor. Un `http://127.0.0.1:8090` de serveur de développement
+**passe** : il sert parfaitement à faire jouer deux navigateurs de la même machine, et c'est ainsi
+que les sondes de ce dépôt travaillent. Une adresse de réseau local passe pour la même raison. **Le
+port est le discriminant** : une coquille native n'en a jamais, un serveur local en a toujours un.
+
+Cette chaîne est pure et sans navigateur pour une raison précise : l'origine d'une coquille native
+n'est pas quelque chose qu'une page peut se donner, donc c'est le seul cas qu'aucune sonde ne peut
+atteindre.
+
+---
+
 ## Jouer à distance
 
 Trois adversaires possibles depuis l'écran de démarrage : **l'ordinateur**, **un autre joueur
@@ -367,6 +401,24 @@ reposte l'objet entier. Mesuré sans isolation : `{engine, reason, level}` arriv
 dès le premier coup. Bandeau présent sans isolation, absent avec.
 
 ## La liste des jeux
+
+**Les noms de modules sont écrits à la main** (`MODULE_LABELS` dans `js/catalog.js`), pas déduits
+de l'identifiant. Le `text-transform: capitalize` qui s'en chargeait rendait « Fourinarow » et
+« Pensoc » — lisibles par qui connaît déjà jocly, opaques pour les autres — et il serait devenu
+nuisible une fois les libellés traduits, en transformant « Four in a row » en « Four In A Row » et
+« Foot des manchots » en « Foot Des Manchots ». Les libellés portent donc leur casse, et le CSS
+n'y touche plus.
+
+Cinq modules ont un nom français : *Échecs*, *Dames*, *Puissance 4*, *Moulin*, *Chasse* — plus
+*Foot des manchots*, qui reprend le vocabulaire des résumés français de jocly. Les autres sont des
+noms propres (Tafl, Margo, Mana, Yohoho, Go, Scrum, Reversi) et retombent sur l'anglais : c'est le
+bon résultat, pas un oubli. Un module inconnu — jocly en gagne — s'affiche avec une majuscule
+initiale, et un test signale celui qui arriverait sans libellé.
+
+**Les modules sont rangés dans l'ordre de la langue affichée**, pas de l'identifiant. Les jeux
+d'un module l'étaient déjà par titre localisé ; trier les modules par identifiant donnait, en
+français, « Dames, Échecs, Puissance 4, Go, Chasse… » — l'ordre alphabétique d'une langue que
+l'utilisateur ne voit pas.
 
 **Tous les modules sont repliés par défaut.** Une douzaine de modules et plus de cent jeux sur un
 dist complet : déroulée, la
@@ -516,7 +568,7 @@ fausse en silence.
 | | |
 |---|---|
 | `tools/` | fabrique le catalogue, l'APK, l'estampille du service worker. Ne tourne que chez vous |
-| `tests/` | 148 assertions Node et 14 PHP. `tests/*.php` sont des **exécutables** : les téléverser, c'est offrir des points d'entrée qui écrivent sur le disque |
+| `tests/` | 158 assertions Node et 14 PHP. `tests/*.php` sont des **exécutables** : les téléverser, c'est offrir des points d'entrée qui écrivent sur le disque |
 | `data/` | `phone-ineligible.json` est lu par le **build**, jamais par le navigateur — il est déjà cuit dans `catalog.json` |
 | `android/` | projet Capacitor, 1,8 Mo, sans objet sur le web |
 | `package.json`, `DEVELOPMENT.md`, `README.md`, `.gitignore` | rien ne les lit à l'exécution |
@@ -1053,7 +1105,7 @@ tests/                       Node pur + PHP réel
 ## Tests
 
 ```sh
-npm test                      # 148 assertions, Node pur
+npm test                      # 158 assertions, Node pur
 ```
 
 Ce qui est testable l'est : construction du catalogue, champs localisés, filtrage,

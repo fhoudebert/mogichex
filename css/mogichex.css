@@ -85,7 +85,9 @@ html, body {
     background: var(--bg-soft); border: 0; color: var(--fg);
     font-size: .95rem; font-weight: 600; text-align: left;
 }
-.module-name { flex: 1; text-transform: capitalize; }
+/* La casse vient du libelle (voir MODULE_LABELS) : un capitalize ici
+   rendrait « Four In A Row » et « Foot Des Manchots ». */
+.module-name { flex: 1; }
 .module-count { color: var(--fg-dim); font-weight: 400; font-size: .85rem; }
 .chevron::before { content: "▸"; display: inline-block; color: var(--fg-dim); }
 .module-head[aria-expanded="true"] .chevron::before { transform: rotate(90deg); }
@@ -193,7 +195,6 @@ button.wide { width: 100%; margin-top: 1.25rem; }
 }
 .fav-btn[aria-pressed="true"] { color: #e2b53c; }
 .fav-btn:active { background: #ffffff10; }
-.module.is-favorites .module-name { text-transform: none; }
 
 /* ---- horloge ----
    Deux compteurs cote a cote, en chiffres tabulaires : sans cela le libelle

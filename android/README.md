@@ -9,6 +9,18 @@ la génération et la signature de l'APK restent indépendantes, par Gradle ou A
 > Voir *Pièges* en fin de document si `npx cap sync android` répond
 > « android platform has not been added yet ».
 
+
+## Le lien d'invitation
+
+`tools/build-android.mjs` écrit `inviteBase` dans `config-android.js`, à côté de `relayUrl` et
+depuis la même constante `SITE`. **Sans elle, le lien d'invitation vaudrait
+`https://localhost/?game=…`** : l'origine du WebView Capacitor est valide et sécurisée, mais elle
+ne désigne rien chez le destinataire — le lien se copie, s'envoie, et n'ouvre rien.
+
+Un autre hébergement se change en un seul endroit, la constante `SITE` en tête de la section 5 de
+`tools/build-android.mjs`. Elle sert aux deux : le relai et la base des liens, puisque `match.php`
+vit dans le répertoire de mogichex.
+
 ## 1. Créer le projet Capacitor (une seule fois, EN PREMIER)
 
 ```sh

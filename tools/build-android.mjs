@@ -181,6 +181,11 @@ writeFileSync(
 );
 
 // --- 5. configuration imposee ---------------------------------------------
+// Adresse publique du deploiement de reference : elle sert de relai ET de base
+// des liens d'invitation, puisque match.php vit dans le repertoire de
+// mogichex. Un autre hebergement se change ici, en un seul endroit.
+const SITE = 'https://biscandine.fr/variantes/mogichex';
+
 // Sous capacitor:// ou https://localhost, « . » ne designe pas le site : la
 // recherche du relai n'aurait aucun sens. Le dist, lui, est embarque a cote
 // de index.html, donc un chemin relatif suffit et reste juste.
@@ -196,9 +201,15 @@ window.MOGICHEX_CONFIG = {
     : `// L'origine d'une application native n'est ni le site ni GitHub Pages : le
 // relai doit etre nomme en absolu, et son origine autorisee dans
 // signalconf.php (capacitor://localhost, https://localhost y figurent deja).
+//
+// inviteBase, pour la meme raison : la page est servie depuis
+// https://localhost, une origine valide qui ne designe RIEN chez le
+// destinataire. Sans cette ligne, le lien d'invitation vaudrait
+// « https://localhost/?game=… » — il se copie, il s'envoie, et il n'ouvre rien.
 window.MOGICHEX_CONFIG = {
     distBase: 'dist/',
-    relayUrl: 'https://biscandine.fr/variantes/mogichex',
+    relayUrl: '${SITE}',
+    inviteBase: '${SITE}/index.html',
 };
 `;
 writeFileSync(
