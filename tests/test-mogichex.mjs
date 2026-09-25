@@ -1293,6 +1293,8 @@ import {
     canNudge,
     requiresSeal,
     NUDGE_MIN_INTERVAL_MS,
+    toRelayMessage,
+    fromRelayMessage,
 } from '../js/remote/chat-protocol.js';
 import { ChatChannel } from '../js/remote/chat-channel.js';
 
@@ -1496,33 +1498,78 @@ test('discussion : la relance est bornee dans le temps', () => {
     assert.equal(canNudge(old, 1, now), true);
 });
 
-test('discussion : un seul ecrivain par fil — on ecrit chez soi, on lit en face', async () => {
+test('discussion : un seul fil commun, servi par fileio.php', async () => {
+    // CE QUI A CHANGE. Avant, chaque joueur deposait son fil ENTIER sous sa
+    // propre cle de partie (`-ca` / `-cb`) et ne lisait que celle d'en face :
+    // aucune concurrence, mais personne d'autre ne lisait ce fil. Desormais
+    // les deux joueurs ecrivent dans le MEME fichier, que le serveur complete
+    // ligne par ligne — le format que parlent aussi joclymatch et Tabulon.
     const calls = [];
-    const files = new Map();
+    const lignes = [];
     const fakeFetch = async (url, init) => {
         const f = Object.fromEntries(new URLSearchParams(init.body));
-        calls.push(f);
-        if (f.action === 'save') files.set(f.mid, f.data);
+        calls.push({ url, ...f });
+        if (f.chatioaction === 'save') lignes.push(JSON.parse(f.chatmsg));
         return {
             ok: true,
             headers: { get: () => '0' },
-            text: async () => files.get(f.mid) || '',
+            text: async () =>
+                f.chatioaction === 'load' ? JSON.stringify({ messages: lignes }) : '{}',
         };
     };
     const mid = '1748100000000-AbCdEfGhIjKlMn';
     const chan = new ChatChannel({ relayUrl: '.', matchId: mid, side: 1, fetchImpl: fakeFetch });
     await chan.send({ kind: KIND.CHAT, quick: 'wellPlayed' });
-    const saves = calls.filter((c) => c.action === 'save');
+
+    const saves = calls.filter((c) => c.chatioaction === 'save');
     assert.equal(saves.length, 1);
-    assert.equal(saves[0].mid, mid + '-ca', 'on n ecrit que dans SON fil');
-    assert.equal(chan.theirsMid, mid + '-cb');
+    assert.ok(saves[0].url.endsWith('/fileio.php'), 'le fil vit au point d entree PARTAGE');
+    assert.equal(saves[0].gameid, mid, 'sous l identifiant de la partie, sans suffixe');
     assert.equal(chan.conversation.length, 1);
 
-    // Le fil part en ENTIER : sans cela, le deuxieme message effacerait le
-    // premier, puisque le relai est en dernier-ecrit-gagne.
+    // Une ligne par message, et non le fil entier : le serveur ajoute.
     await chan.send({ kind: KIND.PRESENCE, state: PRESENCE.PAUSED });
-    const last = calls.filter((c) => c.action === 'save').pop();
-    assert.equal(JSON.parse(last.data).msgs.length, 2);
+    assert.equal(lignes.length, 2, 'deux messages, deux lignes');
+    assert.equal(lignes[0].data.player, 1, 'le camp voyage sous le nom de joclymatch');
+    assert.equal(lignes[1].data.kind, KIND.PRESENCE, 'le genre part en facultatif');
+});
+
+test('discussion : un message rapide n arrive pas vide chez les autres', async () => {
+    // joclymatch affiche `msg` et ne connait pas `quick` : sans repli, la
+    // bulle serait vide dans son fil.
+    const lignes = [];
+    const fakeFetch = async (url, init) => {
+        const f = Object.fromEntries(new URLSearchParams(init.body));
+        if (f.chatioaction === 'save') lignes.push(JSON.parse(f.chatmsg));
+        return { ok: true, headers: { get: () => '0' },
+            text: async () => JSON.stringify({ messages: lignes }) };
+    };
+    const chan = new ChatChannel({
+        relayUrl: '.', matchId: '1748100000000-AbCdEfGhIjKlMn', side: 1,
+        fetchImpl: fakeFetch, quickText: (id) => ({ wellPlayed: 'Bien joué' })[id] || id,
+    });
+    await chan.send({ kind: KIND.CHAT, quick: 'wellPlayed' });
+    assert.equal(lignes[0].data.msg, 'Bien joué', 'le corps porte le libelle traduit');
+    assert.equal(lignes[0].data.quick, 'wellPlayed', 'et l identifiant part quand meme');
+});
+
+test('discussion : un relai sans fileio.php le DIT au lieu de reessayer sans fin', async () => {
+    // match.php deploye sans son voisin : une installation incomplete, pas une
+    // panne passagere. Reessayer indefiniment ne la corrigera pas.
+    let codes = [];
+    const chan = new ChatChannel({
+        relayUrl: '.', matchId: '1748100000000-AbCdEfGhIjKlMn', side: 1,
+        onError: (err, n, code) => codes.push(code),
+        fetchImpl: async (url) => url.endsWith('/fileio.php')
+            ? { ok: false, status: 404, headers: { get: () => null }, text: async () => '' }
+            : { ok: true, headers: { get: () => '0' }, text: async () => '{}' },
+    });
+    await chan.start();
+    await new Promise((r) => setTimeout(r, 60));
+    assert.equal(chan.unavailable, true);
+    assert.equal(chan.running, false, 'la boucle s arrete');
+    assert.ok(codes.includes('chat-unavailable'), 'et le motif est nomme');
+    await assert.rejects(() => chan.send({ kind: KIND.CHAT, quick: 'wellPlayed' }));
 });
 
 test('discussion : un message du pair entre, le sien est ignore', async () => {
@@ -2201,4 +2248,49 @@ test('android : --site refuse ce qui ne designe rien chez le destinataire', () =
         assert.match(r.out, /sortir de l'appareil/, local);
         assert.equal(r.code, 2, local);
     }
+});
+
+test('discussion : l identifiant se reconstruit depuis le fil, sinon tout double', async () => {
+    // CE QUE CE TEST AURAIT ATTRAPE. Le fil commun transporte `time` et `key`
+    // separement ; l'identifiant s'en reconstruit a la lecture. Tant qu'il
+    // etait un simple hexadecimal, il ne se reconstruisait pas : le message
+    // revenu du serveur portait un AUTRE identifiant que celui affiche, la
+    // deduplication ne voyait plus le lien, et chaque message apparaissait
+    // deux fois — six a l'ecran pour quatre sur le relai.
+    const m = newMessage({ kind: KIND.CHAT, side: 1, quick: 'wellPlayed', at: 1748100000000, rand });
+    assert.match(m.id, /^\d+-[0-9a-f]{16}$/, 'forme <horodatage>-<aleatoire>');
+    const relu = fromRelayMessage({ data: toRelayMessage(m) });
+    assert.equal(relu.id, m.id, 'l aller-retour rend le MEME identifiant');
+    assert.equal(relu.side, m.side);
+    assert.equal(relu.at, m.at);
+});
+
+test('discussion : le pseudo d en face survit a la lecture', async () => {
+    // joclymatch attache un nom a chaque message. Le perdre afficherait
+    // « Votre adversaire » a la place du nom qu'il s'est donne.
+    const ligne = { data: { msg: 'bonjour', player: -1, pseudo: 'Ada', time: 1748100000000, key: 'zz' } };
+    const interne = fromRelayMessage(ligne);
+    assert.equal(interne.pseudo, 'Ada');
+    const [relu] = await decodeThread(JSON.stringify({ v: 1, msgs: [interne] }), { allowClear: true });
+    assert.equal(relu.pseudo, 'Ada', 'et decodeThread ne le jette pas');
+    assert.equal(relu.body, 'bonjour');
+});
+
+test('discussion : sans cle, le clair est une PERMISSION, pas un defaut', async () => {
+    // Un scelleur qui n'a pas pu se construire ne vaut pas autorisation
+    // d'ecrire en clair : c'est ainsi qu'une protection se perd sans que
+    // personne ne l'ait decide.
+    const libre = { v: 1, kind: KIND.CHAT, side: 1, at: 1, id: '1-ab', body: 'bonjour' };
+    await assert.rejects(() => encodeThread([libre]), 'sans permission, refus');
+    assert.ok(await encodeThread([libre], { allowClear: true }), 'avec permission, ca passe');
+
+    // Et a la lecture : un corps sans sceau est NORMAL dans une partie non
+    // protegee, suspect dans une partie qui l'est.
+    const fil = JSON.stringify({ v: 1, msgs: [libre] });
+    const [sansPermission] = await decodeThread(fil);
+    assert.equal(sansPermission.locked, true);
+    assert.equal(sansPermission.reason, 'unsealed');
+    const [avecPermission] = await decodeThread(fil, { allowClear: true });
+    assert.equal(avecPermission.locked, undefined);
+    assert.equal(avecPermission.body, 'bonjour');
 });

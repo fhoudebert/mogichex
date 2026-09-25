@@ -706,6 +706,14 @@ function attachChat(session, { matchId, side, peer, chatKey = null, chatKeyId = 
         side: side === 'b' ? Jocly.PLAYER_B : Jocly.PLAYER_A,
         peer,
         sealer,
+        // Une partie sans cle n'est pas une partie mal configuree : c'est une
+        // invitation qui n'en portait pas — un lien joclymatch, typiquement.
+        // Les messages recus sans sceau y sont alors NORMAUX, et les refuser
+        // priverait le joueur de tout ce que son correspondant lui ecrit.
+        allowClear: !chatKey,
+        // Le fil est partage avec des clients qui ignorent `quick` : sans
+        // repli lisible, un message rapide y apparait comme une bulle vide.
+        quickText: (id) => t(QUICK_LABEL[id] || id),
         onConversation: (conv) => {
             state.chatUnread = countUnread(conv, state.chatSeenId, chat.side);
             updateChatBadge();
@@ -713,7 +721,12 @@ function attachChat(session, { matchId, side, peer, chatKey = null, chatKeyId = 
             syncNudge(conv, chat.side);
             if ($('#panel-chat').classList.contains('is-open')) renderChat(conv);
         },
-        onError: (err) => console.warn('discussion :', err.message || err),
+        onError: (err, failures, code) => {
+            console.warn('discussion :', err.message || err);
+            // Relai incomplet : match.php deploye sans fileio.php. On le dit
+            // dans le panneau plutot que de laisser une discussion muette.
+            if (code === 'chat-unavailable') syncChatComposer();
+        },
     });
     state.chat = chat;
     state.chatSeenId = null;
@@ -739,16 +752,31 @@ function attachChat(session, { matchId, side, peer, chatKey = null, chatKeyId = 
  *                           copier-coller maladroit.
  */
 function syncChatComposer() {
-    const has = !!(state.chat && state.chat.sealer);
-    $('#chat-composer').hidden = !has;
     const note = $('#chat-note');
-    note.hidden = has;
+    // Relai incomplet : rien ne part ni n'arrive. On le dit avant tout le
+    // reste — une discussion muette se lit comme un defaut de l'application.
+    if (state.chat && state.chat.unavailable) {
+        $('#chat-composer').hidden = true;
+        note.hidden = false;
+        note.textContent = t('Messages are unavailable: this relay has no fileio.php.');
+        return;
+    }
+    // Sans cle, le texte libre part EN CLAIR plutot que d'etre refuse : c'est
+    // une partie non protegee, pas une partie cassee, et c'est exactement ce
+    // que fait le correspondant en face.
+    const has = !!(state.chat && (state.chat.sealer || state.chat.allowClear));
+    $('#chat-composer').hidden = !has;
+    note.hidden = false;
     if (!has) {
         note.textContent = t(
             state.chatKeyId
                 ? 'This invitation uses a shared key from Tabulon. Quick messages still work.'
                 : 'No key in this invitation: quick messages only.'
         );
+    } else if (state.chat && !state.chat.sealer) {
+        note.textContent = t('This conversation is not protected.');
+    } else {
+        note.hidden = true;
     }
 }
 

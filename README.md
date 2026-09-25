@@ -59,7 +59,10 @@ in online games; going back doesn't, for the same reason take back doesn't.
 **A word to your opponent.** In online games, a handful of one-tap messages and presence states —
 *well played*, *your turn*, *stepping away*. They travel as identifiers and are shown in each
 player's own language, so two people with no language in common still understand each other, and
-nothing personal ever reaches the relay.
+nothing personal ever reaches the relay. The thread itself is the shared one, so a
+[Tabulon](https://github.com/fhoudebert/tabulon) or
+[joclymatch](https://github.com/fhoudebert/joclymatch) player in the same game reads you and you
+read them.
 
 **Nudged, not nagged.** A single "your turn" tap that can notify your opponent even when the app
 isn't on screen — with a five-minute cooldown built into the protocol, not bolted on. Permission is
@@ -153,7 +156,7 @@ cd - && ln -s ../jocly2/dist/browser dist
 
 npm run build      # catalogue + service worker stamp + tests
 npm run serve      # http://localhost:8080
-npm test           # 161 assertions
+npm test           # 166 assertions
 npm run test:php   # 52 assertions (requires php-cli)
 ```
 

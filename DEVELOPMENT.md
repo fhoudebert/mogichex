@@ -600,7 +600,7 @@ fausse en silence.
 | | |
 |---|---|
 | `tools/` | fabrique le catalogue, l'APK, l'estampille du service worker. Ne tourne que chez vous |
-| `tests/` | 161 assertions Node et 14 PHP. `tests/*.php` sont des **exécutables** : les téléverser, c'est offrir des points d'entrée qui écrivent sur le disque |
+| `tests/` | 166 assertions Node et 52 PHP. `tests/*.php` sont des **exécutables** : les téléverser, c'est offrir des points d'entrée qui écrivent sur le disque |
 | `data/` | `phone-ineligible.json` est lu par le **build**, jamais par le navigateur — il est déjà cuit dans `catalog.json` |
 | `android/` | projet Capacitor, 1,8 Mo, sans objet sur le web |
 | `package.json`, `DEVELOPMENT.md`, `README.md`, `.gitignore` | rien ne les lit à l'exécution |
@@ -641,6 +641,59 @@ aucune signalisation possible. Et surtout, le mutualisé donne la **maîtrise de
 HTTP**, donc COOP/COEP, donc l'isolation cross-origin — précisément ce qui manquait à Tabulon
 sous `tauri://` et qui débloquerait fairy-stockfish multi-thread. Pages reste un bon miroir.
 
+### La discussion vit dans le fil commun
+
+**Les deux joueurs écrivent dans le même fichier**, que le serveur complète
+ligne par ligne (`chatioaction` de `deploy/fileio.php`). C'est le format que
+parlent aussi joclymatch et Tabulon : un joueur mogichex et un joueur Tabulon
+dans la même partie se lisent l'un l'autre.
+
+Cela remplace le schéma précédent — deux clés de partie ordinaires,
+`<mid>-ca` / `-cb`, chacune réécrite en entier à chaque message. Il évitait la
+concurrence sans rien demander au serveur, mais il **isolait** : personne
+d'autre ne lisait ce fil. Tabulon en est parti pour la même raison.
+
+**La discussion passe donc par `fileio.php`, pas par `match.php`.** Elle est
+désormais un format partagé ; elle appartient au point d'entrée partagé.
+`match.php` reste ce qu'il est — le stockage des parties de mogichex, qu'une
+seule chose touche.
+
+Quatre décisions, dont trois ont été trouvées en faisant réellement dialoguer
+les deux applications :
+
+- **L'identifiant est `<horodatage>-<aléatoire>`.** Le fil transporte `time` et
+  `key` séparément, et l'identifiant s'en reconstruit à la lecture. Tant qu'il
+  était un simple hexadécimal, il ne se reconstruisait pas : le message revenu
+  du serveur en portait un autre que celui affiché, la déduplication ne voyait
+  plus le lien, et **chaque message apparaissait deux fois** — six à l'écran
+  pour quatre sur le relai.
+- **Un message rapide part avec son libellé traduit dans `msg`.** Le champ
+  `quick` voyage comme identifiant et se traduit chez le lecteur ; un client
+  qui l'ignore affiche `msg`, qui valait la chaîne vide — donc une **bulle
+  vide** dans son fil. Rien n'est trahi : un message rapide ne porte aucun
+  texte personnel, c'est précisément ce qui lui permet de circuler sans clé.
+- **Le `pseudo` reçu est conservé.** `decodeThread` rebâtit chaque message à
+  partir d'une liste fixe de champs — c'est ce qui empêche un client inconnu
+  d'injecter n'importe quoi — et jetait le nom que le joueur d'en face s'était
+  donné.
+- **`allowClear` est une permission explicite, jamais déduite.** Une partie
+  sans clé n'est pas une partie mal configurée : c'est une invitation qui n'en
+  portait pas, typiquement un lien joclymatch. Mais un scelleur qui n'a pas pu
+  se construire — clé abîmée, aléatoire indisponible — ne vaut pas autorisation
+  d'écrire en clair. C'est exactement ainsi qu'une protection se perd sans que
+  personne ne l'ait décidé.
+
+**Les anciens fils sont relus une fois, en lecture seule.** Une partie
+commencée avant ce changement a ses messages sous `-ca` / `-cb` ; sans ce
+rattrapage, la conversation en cours disparaîtrait de l'écran le jour de la
+mise à jour — et une partie par correspondance dure des jours. On n'y écrit
+jamais.
+
+**Un relai sans `fileio.php` arrête la boucle et le dit.** C'est une
+installation incomplète, pas une panne passagère : réessayer indéfiniment ne la
+corrigera pas, et une discussion muette sans explication se lit comme un défaut
+de l'application.
+
 ### `deploy/fileio.php` — le relai vu par Tabulon
 
 **mogichex sert de relai à une partie Tabulon↔Tabulon ou Tabulon↔mogichex.** L'enveloppe était
@@ -663,9 +716,7 @@ une ligne de changement de son côté.**
 **La discussion, que `match.php` ne connaît pas.** `chatioaction=save|load` est servi ici, avec
 l'ajout d'une ligne côté serveur — les deux joueurs écrivent dans le même fichier
 `<mid>-chat.jsonl`, et il n'y a donc aucune concurrence à éviter. C'est le format qu'emploient
-joclymatch et, depuis peu, Tabulon. Le client de mogichex, lui, écrit encore son fil selon le
-schéma à deux clés `<mid>-ca` / `-cb` : **des trois applications, c'est la seule restée hors du fil
-commun**, et c'est ce qui reste à faire pour que la discussion Tabulon↔mogichex fonctionne.
+joclymatch et, depuis peu, Tabulon. Le client de mogichex y écrit désormais lui aussi — voir la section précédente.
 
 Trois détails qui se paient une fois :
 
@@ -1194,7 +1245,7 @@ tests/                       Node pur + PHP réel
 ## Tests
 
 ```sh
-npm test                      # 161 assertions, Node pur
+npm test                      # 166 assertions, Node pur
 ```
 
 Ce qui est testable l'est : construction du catalogue, champs localisés, filtrage,
