@@ -75,7 +75,7 @@ export function otherSide(side) {
  * mieux place pour la lire. Meme choix que Tabulon, et meme nom de champ.
  *
  * @param {{game:string, matchId:string, side:'a'|'b', locale?:string,
- *          base?:string, chatKey?:string}} o
+ *          base?:string, chatKey?:string, allowTakeback?:boolean}} o
  */
 export function buildInviteLink(o) {
     const base = o.base === undefined ? 'index.html' : o.base;
@@ -84,6 +84,10 @@ export function buildInviteLink(o) {
     q.set('mid', o.matchId);
     q.set('player', o.side);
     if (o.locale) q.set('lg', o.locale);
+    // Reprise de coup : ecrite EXPLICITEMENT dans les deux sens (tb=1 comme
+    // tb=0), dans la REQUETE — c'est la forme de Tabulon et joclymatch, et
+    // Tabulon lit un lien mogichex SANS tb comme « interdit ».
+    if (typeof o.allowTakeback === 'boolean') q.set('tb', o.allowTakeback ? '1' : '0');
     let link = base + '?' + q.toString();
     // Une cle mal formee est IGNOREE plutot que collee telle quelle : un lien
     // qui promet une discussion protegee sans pouvoir la tenir est pire qu'un
@@ -185,7 +189,8 @@ const CHAT_KEY_ID_RE = /^[0-9a-f]{16}$/;
  *
  * @returns {{game:string, matchId:string, side:'a'|'b', locale:string|null,
  *            chatKey:string|null, chatKeyId:string|null,
- *            origin:'mogichex'|'joclymatch'|'unknown'}|null}
+ *            origin:'mogichex'|'joclymatch'|'unknown',
+ *            allowTakeback:boolean|null}|null}
  */
 export function parseInviteLink(text) {
     if (typeof text !== 'string') return null;
@@ -237,6 +242,8 @@ export function parseInviteLink(text) {
         chatKey: CHAT_KEY_RE.test(k || '') ? k : null,
         chatKeyId: CHAT_KEY_ID_RE.test(kid || '') ? kid : null,
         origin,
+        // null = « le lien ne dit rien » (lien d'avant ce reglage)
+        allowTakeback: params.get('tb') === '1' ? true : params.get('tb') === '0' ? false : null,
     };
 }
 

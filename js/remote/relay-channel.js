@@ -7,12 +7,16 @@
 // se greffer par-dessus cette meme interface, pas a sa place.
 
 import { shouldApplyEnvelope, nextSince, backoffDelay } from './protocol.js';
+import { isUsableEnvelope } from './invite.js';
 
 export class RelayChannel {
     /**
      * @param {{relayUrl:string, matchId:string, selfKey:string,
      *          gameName?:string, onEnvelope:Function, onError?:Function,
-     *          fetchImpl?:Function}} o
+     *          onSeen?:Function, fetchImpl?:Function}} o
+     *   onSeen(env) : toute enveloppe de l'ADVERSAIRE lue, appliquee ou non —
+     *   c'est par la qu'on apprend les reglages de la partie (reprise de
+     *   coup), que l'enveloppe apporte un coup ou pas.
      */
     constructor(o) {
         this.relayUrl = String(o.relayUrl).replace(/\/$/, '');
@@ -21,6 +25,12 @@ export class RelayChannel {
         this.gameName = o.gameName || null;
         this.onEnvelope = o.onEnvelope;
         this.onError = o.onError || (() => {});
+        this.onSeen = o.onSeen || (() => {});
+        // Derniere enveloppe de l'adversaire prise en compte, {key, time} :
+        // c'est elle qui distingue une reprise d'une relecture en retard
+        // (voir shouldApplyEnvelope). Partagee avec le canal pair-a-pair par
+        // noteRemote().
+        this.lastRemote = null;
         this.fetchImpl = o.fetchImpl || ((u, i) => fetch(u, i));
         this.since = 0;
         this.lastTurns = 0;
@@ -54,7 +64,9 @@ export class RelayChannel {
         // compte tout de suite, sinon la prochaine attente longue rendrait
         // immediatement notre propre enveloppe.
         this.since = nextSince(res.headers.get('X-Match-Mtime'), this.since);
-        this.lastTurns = Math.max(this.lastTurns, envelopeTurnsOf(envelope));
+        // AFFECTE, et non plus le maximum : notre ecriture est la position
+        // courante, y compris quand elle en a MOINS — une reprise de coup.
+        this.lastTurns = envelopeTurnsOf(envelope);
         return res;
     }
 
@@ -74,11 +86,32 @@ export class RelayChannel {
             selfKey: this.selfKey,
             lastTurns: this.lastTurns,
             gameName: this.gameName,
+            lastRemote: this.lastRemote,
         });
+        const theirs = isUsableEnvelope(env) && env.key !== this.selfKey && verdict.reason !== 'other-game';
+        if (theirs) this.onSeen(env);
+        // Vue sans rien apporter (autant de coups) : notee quand meme, sinon
+        // une relecture en retard de CETTE enveloppe, apres notre coup,
+        // passerait pour une reprise.
+        if (theirs && (verdict.apply || verdict.turns === this.lastTurns)) this.noteRemote(env);
         if (!verdict.apply) return false;
         this.lastTurns = verdict.turns;
-        await this.onEnvelope(env);
+        await this.onEnvelope(env, verdict);
         return true;
+    }
+
+    /**
+     * Retient une enveloppe de l'adversaire comme deja prise en compte.
+     * Appelee aussi pour ce qui arrive par le canal pair-a-pair : les deux
+     * chemins portent les memes enveloppes, et le relai repasse souvent
+     * derriere le pair avec une copie plus ancienne.
+     */
+    noteRemote(env) {
+        if (!env || typeof env.key !== 'string' || !Number.isFinite(env.time)) return;
+        const last = this.lastRemote;
+        if (!last || last.key !== env.key || env.time > last.time) {
+            this.lastRemote = { key: env.key, time: env.time };
+        }
     }
 
     /**

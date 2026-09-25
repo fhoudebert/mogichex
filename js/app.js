@@ -19,6 +19,7 @@ import {
 import { RelayChannel } from './remote/relay-channel.js';
 import { locateRelay, RELAY_ROOTS } from './remote/relay-locator.js';
 import { PeerChannel } from './remote/peer-channel.js';
+import { resolveAllowTakeback, shouldApplyEnvelope } from './remote/protocol.js';
 import { FAV_KEY, sanitizeFavorites, toggleFavorite } from './favorites.js';
 import { CLOCK_PRESETS, presetById, formatClock, Clock } from './clock.js';
 import { moveRows, canRollback } from './history.js';
@@ -182,6 +183,8 @@ async function startMatch() {
     $('#status').textContent = t('Loading…');
     $('#notice').hidden = true;
     $('#notice').textContent = '';
+    // Reglage de la partie a distance PRECEDENTE : attachRelay le repose.
+    state.remoteTakeback = null;
     showScreen('screen-game');
 
     const mode = $('#sel-mode').value;
@@ -304,9 +307,15 @@ function fillGameOptions(session) {
 
 /**
  * Le bouton « reprendre le coup » n'apparait que quand il a un sens :
- * il y a un coup a reprendre, c'est au tour d'un humain, et AUCUN camp n'est
- * tenu par un joueur distant — reprendre un coup deja parti chez l'adversaire
- * desynchroniserait les deux plateaux (lecon Tabulon).
+ * il y a un coup a reprendre et c'est au tour d'un humain local.
+ *
+ * Contre un joueur distant, il faut EN PLUS que la partie le permette
+ * (reglage pose a l'invitation, voir attachRelay). « A notre tour » n'y est
+ * pas une politesse : joclymatch ne sonde le relai que pendant qu'il attend
+ * l'adversaire ; pendant son propre tour il ne verrait pas la reprise, et son
+ * coup suivant, calcule sur l'ancienne position, l'ecraserait (lecon
+ * Tabulon). La reprise est ensuite PUBLIEE comme un coup : l'etat complet,
+ * avec moins de coups.
  *
  * Le niveau « expert » (fairy-stockfish) n'est PAS une exception : le moteur
  * recoit une FEN complete a chaque recherche, sans historique de coups.
@@ -314,7 +323,7 @@ function fillGameOptions(session) {
 async function syncTakeBack() {
     const btn = $('#btn-take-back');
     const s = state.session;
-    if (!s || !s.match || state.remote) {
+    if (!s || !s.match || (state.remote && !(state.remoteTakeback && state.remoteTakeback()))) {
         btn.hidden = true;
         return;
     }
@@ -571,7 +580,11 @@ async function openInvite(entry) {
         } catch (err) {
             console.warn('pas de cle de discussion :', err.message || err);
         }
-        state.pending = { matchId: newMatchId(), side: 'a', chatKey };
+        // Reprise de coup : NON par defaut (meme choix que Tabulon), et le
+        // reglage part dans le lien (tb=0/1) puis dans chaque ecriture.
+        const takebackBox = $('#invite-takeback');
+        takebackBox.checked = false;
+        state.pending = { matchId: newMatchId(), side: 'a', chatKey, allowTakeback: false };
         // La chaine de repli vit dans invite.js, pure et testee : c'est le
         // seul moyen d'eprouver le cas de la coquille native, dont l'origine
         // n'est pas quelque chose qu'une page peut se donner.
@@ -592,15 +605,20 @@ async function openInvite(entry) {
             return;
         }
         // L'invite recoit le camp OPPOSE au notre.
-        const link = buildInviteLink({
-            game: entry.name,
-            matchId: state.pending.matchId,
-            side: 'b',
-            locale: getLocale(),
-            base,
-            chatKey,
-        });
-        $('#invite-link').value = link;
+        const render = () => {
+            state.pending.allowTakeback = takebackBox.checked;
+            $('#invite-link').value = buildInviteLink({
+                game: entry.name,
+                matchId: state.pending.matchId,
+                side: 'b',
+                locale: getLocale(),
+                base,
+                chatKey,
+                allowTakeback: state.pending.allowTakeback,
+            });
+        };
+        takebackBox.onchange = render;
+        render();
     }
 }
 
@@ -611,20 +629,42 @@ async function openInvite(entry) {
  * pas seulement pendant le tour de l'adversaire : c'est ce qui permet de
  * rattraper une partie rechargee ou reprise sur un autre appareil.
  */
-function attachRelay(session, { matchId, side, chatKey = null, chatKeyId = null }) {
+function attachRelay(session, { matchId, side, chatKey = null, chatKeyId = null, allowTakeback = null }) {
     const selfKey = makeId(8);
+    /*
+     * REPRISE DE COUP. Ce que le lien annoncait, ce que le fichier du relai
+     * dit (il fait foi), et « interdit » quand personne ne dit rien — voir
+     * resolveAllowTakeback. Le reglage ne dit que si NOUS pouvons reprendre :
+     * une reprise de l'adversaire est toujours suivie.
+     */
+    const takeback = { link: typeof allowTakeback === 'boolean' ? allowTakeback : null, file: null };
+    const learn = (env) => {
+        const v = env && env.matchDetails && env.matchDetails.allowTakeback;
+        if (typeof v !== 'boolean' || v === takeback.file) return;
+        takeback.file = v;
+        syncTakeBack();
+    };
+    state.remoteTakeback = () => resolveAllowTakeback(takeback.file, takeback.link);
+    const onRemote = async (env, reason) => {
+        try {
+            await session.applyRemoteState(env.matchdata);
+            if (reason === 'takeback') {
+                const el = $('#notice');
+                el.textContent = t('Your opponent took back a move.');
+                el.hidden = false;
+            }
+        } catch (err) {
+            console.error('etat distant refuse', err);
+        }
+        syncTakeBack();
+    };
     const channel = new RelayChannel({
         relayUrl: CONFIG.relayUrl,
         matchId,
         selfKey,
         gameName: session.entry.name,
-        onEnvelope: async (env) => {
-            try {
-                await session.applyRemoteState(env.matchdata);
-            } catch (err) {
-                console.error('etat distant refuse', err);
-            }
-        },
+        onSeen: learn,
+        onEnvelope: (env, verdict) => onRemote(env, verdict && verdict.reason),
         onError: () => {
             $('#status').textContent = t('Connection lost, retrying…');
         },
@@ -639,15 +679,22 @@ function attachRelay(session, { matchId, side, chatKey = null, chatKeyId = null 
         matchId,
         side,
         onEnvelope: async (env) => {
-            // Meme filtre que par le relai : une enveloppe recue deux fois, ou
-            // la sienne, ne doit pas etre rejouee.
-            if (env && env.key === selfKey) return;
-            try {
-                await session.applyRemoteState(env.matchdata);
-                channel.lastTurns = Math.max(channel.lastTurns, (env.matchDetails || {}).nbTurns || 0);
-            } catch (err) {
-                console.error('etat pair refuse', err);
-            }
+            // Meme filtre que par le relai : la sienne, une enveloppe deja
+            // vue, ou une copie plus ancienne ne doivent pas etre rejouees.
+            // Le MEME verdict que le relai decide aussi « reprise » : moins de
+            // coups n'est plus un rebut.
+            if (!env || env.key === selfKey) return;
+            learn(env);
+            const verdict = shouldApplyEnvelope(env, {
+                selfKey,
+                lastTurns: channel.lastTurns,
+                gameName: session.entry.name,
+                lastRemote: channel.lastRemote,
+            });
+            if (verdict.apply || verdict.turns === channel.lastTurns) channel.noteRemote(env);
+            if (!verdict.apply) return;
+            channel.lastTurns = verdict.turns;
+            await onRemote(env, verdict.reason);
         },
         onStateChange: (st) => {
             channel.setLongPolling(st !== 'open');
@@ -663,8 +710,13 @@ function attachRelay(session, { matchId, side, chatKey = null, chatKeyId = null 
 
     session.hooks.onLocalMove = async () => {
         const { matchdata, nbTurns } = await session.exportState();
+        const matchDetails = { matchId, gameName: session.entry.name, nbTurns, side };
+        // Recopie a CHAQUE ecriture : joclymatch et Tabulon reecrivent
+        // matchDetails en entier, un champ que l'un omet est efface chez tous.
+        const known = takeback.file ?? takeback.link;
+        if (typeof known === 'boolean') matchDetails.allowTakeback = known;
         const env = buildEnvelope({
-            matchDetails: { matchId, gameName: session.entry.name, nbTurns, side },
+            matchDetails,
             matchdata,
             key: selfKey,
         });
@@ -1211,7 +1263,10 @@ async function main() {
         if (!s) return;
         $('#btn-take-back').disabled = true;
         try {
-            await s.takeBack();
+            const done = await s.takeBack();
+            // En partie a distance, l'adversaire doit voir la position
+            // reprise : on la publie exactement comme apres un coup.
+            if (done && state.remote && s.hooks.onLocalMove) await s.hooks.onLocalMove();
         } finally {
             $('#btn-take-back').disabled = false;
             syncTakeBack();
@@ -1262,6 +1317,7 @@ async function main() {
                         side: invite.side,
                         chatKey: invite.chatKey,
                         chatKeyId: invite.chatKeyId,
+                        allowTakeback: invite.allowTakeback,
                     };
                     $('#sel-mode').value = 'remote';
                     syncModeRows();
