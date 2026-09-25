@@ -22,7 +22,7 @@ import { PeerChannel } from './remote/peer-channel.js';
 import { resolveAllowTakeback, shouldApplyEnvelope } from './remote/protocol.js';
 import { FAV_KEY, sanitizeFavorites, toggleFavorite } from './favorites.js';
 import { CLOCK_PRESETS, presetById, formatClock, Clock } from './clock.js';
-import { moveRows, canRollback, historyHint } from './history.js';
+import { moveRows, canRollback, historyHint, barLayout } from './history.js';
 import { ChatChannel } from './remote/chat-channel.js';
 import { generateChatKey, makeSealer } from './remote/chat-sealer.js';
 import { KIND, PRESENCE, countUnread, canNudge, NUDGE_MIN_INTERVAL_MS } from './remote/chat-protocol.js';
@@ -339,19 +339,19 @@ async function syncTakeBack() {
     }
 }
 
-/**
- * Qui occupe la quatrieme icone de la barre.
- *
- * Historique et discussion ne coexistent jamais : a 390 px, une cinquieme
- * icone mange le titre du jeu. Le partage est net — le retour arriere n'a de
- * sens qu'en partie locale, la discussion n'existe qu'en partie a distance.
- * En distant, la liste des coups reste atteignable depuis les options.
- */
+/** Barre de la partie : voir barLayout(). */
 function syncBarButtons() {
-    const playing = !!(state.session && state.session.match);
-    $('#btn-history').hidden = !playing || !!state.remote;
-    $('#btn-chat').hidden = !(playing && state.remote && state.chat);
-    $('#btn-open-history').hidden = !(playing && state.remote);
+    const lay = barLayout({
+        playing: !!(state.session && state.session.match),
+        remote: !!state.remote,
+        chat: !!state.chat,
+        takeback: !!(state.remote && state.remoteTakeback && state.remoteTakeback()),
+    });
+    $('#btn-history').hidden = !lay.history;
+    $('#btn-chat').hidden = !lay.chat;
+    $('#btn-rules-game').hidden = !lay.rules;
+    $('#btn-open-history').hidden = !lay.openHistory;
+    $('#btn-open-rules').hidden = !lay.openRules;
 }
 
 // ---------------------------------------------------------------- horloge
@@ -530,6 +530,11 @@ function wireGameOptions() {
         openPanel('#panel-history');
         await fillHistory();
     });
+    $('#btn-open-rules').addEventListener('click', () => {
+        closePanels();
+        openPanel('#panel-rules');
+        loadRules($('#rules'), state.entry);
+    });
 }
 
 // ---------------------------------------------------------------- a distance
@@ -652,6 +657,9 @@ function attachRelay(session, { matchId, side, chatKey = null, chatKeyId = null,
         if (typeof v !== 'boolean' || v === takeback.file) return;
         takeback.file = v;
         syncTakeBack();
+        // Le reglage du fichier peut ouvrir (ou fermer) la reprise en cours de
+        // partie : l'historique entre ou sort de la barre avec elle.
+        syncBarButtons();
     };
     state.remoteTakeback = () => resolveAllowTakeback(takeback.file, takeback.link);
     const onRemote = async (env, reason) => {

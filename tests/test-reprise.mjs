@@ -10,7 +10,7 @@ import assert from 'node:assert/strict';
 import { shouldApplyEnvelope, resolveAllowTakeback, takebackFromParam } from '../js/remote/protocol.js';
 import { buildInviteLink, parseInviteLink } from '../js/remote/invite.js';
 import { RelayChannel } from '../js/remote/relay-channel.js';
-import { historyHint, canRollback } from '../js/history.js';
+import { historyHint, canRollback, barLayout } from '../js/history.js';
 
 const env = (turns, key, time, extra = {}) => ({
     matchDetails: Object.assign({ matchId: 'm', gameName: 'classic-chess', nbTurns: turns }, extra),
@@ -183,4 +183,27 @@ test('canal : notre reprise tient face a une lecture partie avant elle', async (
     assert.equal(await ch.pollOnce(), false);
     assert.equal(ch.lastTurns, 1);
     assert.deepEqual(applied, [[3, 'new']]);
+});
+
+test('barre : l\'historique revient a distance quand la reprise est permise, quatre icones au plus', () => {
+    const count = (l) => [l.history, l.chat, l.rules].filter(Boolean).length + 1; // + options
+    // Local : historique, regles, options.
+    assert.deepEqual(barLayout({ playing: true }),
+        { history: true, chat: false, rules: true, openHistory: false, openRules: false });
+    // Distant, reprise interdite : pas d'historique dans la barre, liste par les options.
+    const off = barLayout({ playing: true, remote: true, chat: true, takeback: false });
+    assert.equal(off.history, false);
+    assert.equal(off.openHistory, true);
+    assert.equal(off.rules, true);
+    // Distant, reprise permise, avec discussion : historique visible, regles dans les options.
+    const on = barLayout({ playing: true, remote: true, chat: true, takeback: true });
+    assert.equal(on.history, true);
+    assert.equal(on.chat, true);
+    assert.equal(on.rules, false);
+    assert.equal(on.openRules, true);
+    assert.equal(on.openHistory, false);
+    // Sans discussion (pas de cle), la place suffit : les regles restent.
+    const noChat = barLayout({ playing: true, remote: true, chat: false, takeback: true });
+    assert.equal(noChat.history && noChat.rules, true);
+    for (const l of [off, on, noChat, barLayout({ playing: true })]) assert.ok(count(l) <= 3, 'jamais plus de trois icones + retour');
 });

@@ -96,3 +96,28 @@ export function historyHint({ remote = false, allowTakeback = false, moves = 0 }
     if (allowTakeback) return 'In an online game, you can take back your last move on your turn.';
     return 'Going back is unavailable in an online game.';
 }
+
+/**
+ * Qui occupe la barre de la partie.
+ *
+ * QUATRE ICONES AU PLUS, retour compris : a 390 px, une cinquieme mange le
+ * titre du jeu. En local : historique, regles, options. A distance : discussion,
+ * regles, options — l'historique n'y servait a rien tant que revenir en arriere
+ * y etait interdit, la liste restait atteignable depuis les options.
+ *
+ * Quand la partie a distance PERMET la reprise de coup, « Reprendre » vit dans
+ * le panneau des coups : l'historique revient donc dans la barre. S'il y
+ * retrouve la discussion, ce sont les REGLES qui passent dans les options —
+ * elles ne changent pas en cours de partie, alors que la discussion porte un
+ * badge et la reprise se joue a notre tour.
+ *
+ * @returns {{history:boolean, chat:boolean, rules:boolean,
+ *            openHistory:boolean, openRules:boolean}} true = visible
+ */
+export function barLayout({ playing = false, remote = false, chat = false, takeback = false } = {}) {
+    if (!playing) return { history: false, chat: false, rules: true, openHistory: false, openRules: false };
+    const history = !remote || takeback;
+    const withChat = remote && chat;
+    const rules = !(history && withChat);
+    return { history, chat: withChat, rules, openHistory: !history, openRules: !rules };
+}
