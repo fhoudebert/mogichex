@@ -110,7 +110,7 @@ export class RelayChannel {
         if (!env || typeof env.key !== 'string' || !Number.isFinite(env.time)) return;
         const last = this.lastRemote;
         if (!last || last.key !== env.key || env.time > last.time) {
-            this.lastRemote = { key: env.key, time: env.time };
+            this.lastRemote = { key: env.key, time: env.time, turns: envelopeTurnsOf(env) };
         }
     }
 

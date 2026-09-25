@@ -10,6 +10,7 @@ import assert from 'node:assert/strict';
 import { shouldApplyEnvelope, resolveAllowTakeback, takebackFromParam } from '../js/remote/protocol.js';
 import { buildInviteLink, parseInviteLink } from '../js/remote/invite.js';
 import { RelayChannel } from '../js/remote/relay-channel.js';
+import { historyHint, canRollback } from '../js/history.js';
 
 const env = (turns, key, time, extra = {}) => ({
     matchDetails: Object.assign({ matchId: 'm', gameName: 'classic-chess', nbTurns: turns }, extra),
@@ -37,7 +38,7 @@ test('verdict : moins de coups mais copie DEJA VUE ou plus ancienne = relecture 
 test('verdict : plus de coups toujours appliques, meme avec une horloge en retard', () => {
     // Cle fixe (Tabulon, joclymatch) + changement d'appareil : la date ne doit
     // pas bloquer un coup.
-    const v = shouldApplyEnvelope(env(4, 'tabulon', 1), ctx(3, { key: 'tabulon', time: 999 }));
+    const v = shouldApplyEnvelope(env(4, 'tabulon', 1), ctx(3, { key: 'tabulon', time: 999, turns: 3 }));
     assert.equal(v.apply, true);
     assert.equal(v.reason, 'new');
     assert.equal(shouldApplyEnvelope(env(3, 'tabulon', 50), ctx(3)).reason, 'stale');
@@ -149,4 +150,37 @@ test('canal : le reglage s\'apprend meme d\'une enveloppe qui n\'apporte aucun c
     assert.equal(await ch.pollOnce({ wait: false }), false);
     assert.deepEqual(seen, [true]);
     assert.deepEqual(applied, []);
+});
+
+test('historique : a distance, la phrase suit le reglage de la partie', () => {
+    assert.equal(historyHint({ remote: true, allowTakeback: true, moves: 3 }),
+        'In an online game, you can take back your last move on your turn.');
+    assert.equal(historyHint({ remote: true, allowTakeback: false, moves: 3 }),
+        'Going back is unavailable in an online game.');
+    assert.equal(historyHint({ remote: false, moves: 3 }), 'Tap a move to go back to that position.');
+    assert.equal(historyHint({ remote: true, allowTakeback: true, moves: 0 }), 'No move played yet.');
+    // La liste, elle, reste inerte a distance : seule la reprise est permise.
+    assert.equal(canRollback({ remote: true, moves: 3 }), false);
+});
+
+test('verdict : apres NOTRE reprise, une copie en retard de l\'enveloppe adverse ne la defait pas', () => {
+    // Tabulon avait joue le 3e coup (date 20) ; nous reprenons -> 1 coup chez nous.
+    const seen = { key: 'tabulon', time: 20, turns: 3 };
+    assert.equal(shouldApplyEnvelope(env(3, 'tabulon', 20), ctx(1, seen)).reason, 'stale');
+    // Mais le vrai coup suivant de Tabulon, joue sur la position reprise, passe.
+    assert.equal(shouldApplyEnvelope(env(2, 'tabulon', 30), ctx(1, seen)).reason, 'new');
+});
+
+test('canal : notre reprise tient face a une lecture partie avant elle', async () => {
+    const relay = fakeRelay();
+    const applied = [];
+    const ch = channelOn(relay, applied);
+    const theirs = env(3, 'tabulon', 20);
+    relay.write(theirs);
+    await ch.pollOnce({ wait: false });
+    await ch.publish(env(1, 'moi', 21));          // reprise : notre coup et la reponse
+    relay.stored = theirs;                        // la lecture en vol rend l'ancien fichier
+    assert.equal(await ch.pollOnce(), false);
+    assert.equal(ch.lastTurns, 1);
+    assert.deepEqual(applied, [[3, 'new']]);
 });

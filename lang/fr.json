@@ -150,5 +150,6 @@
   "Messages are unavailable: this relay has no fileio.php.": "Messages indisponibles : ce relai n'a pas de fileio.php.",
   "This conversation is not protected.": "Cette conversation n'est pas protégée.",
   "Allow taking back moves": "Autoriser la reprise de coup",
-  "Your opponent took back a move.": "Votre adversaire a repris un coup."
+  "Your opponent took back a move.": "Votre adversaire a repris un coup.",
+  "In an online game, you can take back your last move on your turn.": "En partie à distance, vous pouvez reprendre votre dernier coup, à votre tour."
 }

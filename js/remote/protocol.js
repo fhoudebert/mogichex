@@ -15,7 +15,7 @@
  *
  * @param {object} env enveloppe { matchDetails, matchdata, time, key }
  * @param {{selfKey:string, lastTurns:number, gameName?:string,
- *          lastRemote?:{key:string, time:number}|null}} ctx
+ *          lastRemote?:{key:string, time:number, turns:number}|null}} ctx
  * @returns {{apply:boolean, reason:string, turns:number}}
  *
  * Les refus comptent :
@@ -52,18 +52,22 @@ export function shouldApplyEnvelope(env, ctx) {
         return { apply: false, reason: 'own', turns };
     }
     const lastTurns = ctx.lastTurns || 0;
-    // Plus de coups : toujours applique, comme avant. La date n'est pas
-    // consultee ici — Tabulon et joclymatch signent d'une cle FIXE, et un
-    // adversaire qui change d'appareil (horloge en retard) verrait sinon son
-    // coup ignore.
+    // Copie d'une enveloppe adverse deja prise en compte, ou plus ancienne :
+    // une lecture partie AVANT notre derniere ecriture et arrivee apres. Apres
+    // une reprise a nous, elle porte PLUS de coups que ce qu'on a — sans ce
+    // test elle defaisait la reprise (mesure au navigateur). Les deux criteres
+    // ensemble : un adversaire a cle fixe (Tabulon, joclymatch) qui change
+    // d'appareil, horloge en retard, joue tout de meme PLUS de coups que ce
+    // qu'on a deja vu de lui, et son coup passe.
+    const last = ctx.lastRemote;
+    if (last && env.key === last.key && Number.isFinite(env.time)
+        && env.time <= last.time && turns <= (last.turns ?? Infinity)) {
+        return { apply: false, reason: 'stale', turns };
+    }
     if (turns > lastTurns) {
         return { apply: true, reason: 'new', turns };
     }
     if (turns === lastTurns) {
-        return { apply: false, reason: 'stale', turns };
-    }
-    const last = ctx.lastRemote;
-    if (last && env.key === last.key && Number.isFinite(env.time) && env.time <= last.time) {
         return { apply: false, reason: 'stale', turns };
     }
     return { apply: true, reason: 'takeback', turns };

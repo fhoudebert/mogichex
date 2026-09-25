@@ -22,7 +22,7 @@ import { PeerChannel } from './remote/peer-channel.js';
 import { resolveAllowTakeback, shouldApplyEnvelope } from './remote/protocol.js';
 import { FAV_KEY, sanitizeFavorites, toggleFavorite } from './favorites.js';
 import { CLOCK_PRESETS, presetById, formatClock, Clock } from './clock.js';
-import { moveRows, canRollback } from './history.js';
+import { moveRows, canRollback, historyHint } from './history.js';
 import { ChatChannel } from './remote/chat-channel.js';
 import { generateChatKey, makeSealer } from './remote/chat-sealer.js';
 import { KIND, PRESENCE, countUnread, canNudge, NUDGE_MIN_INTERVAL_MS } from './remote/chat-protocol.js';
@@ -329,7 +329,11 @@ async function syncTakeBack() {
     }
     try {
         const moves = await s.match.getPlayedMoves();
-        btn.hidden = !(moves.length > 0 && s.isHuman(await s.match.getTurn()));
+        // A distance, « notre dernier coup ET sa reponse » : il faut deux coups
+        // au moins. Avec un seul — celui de l'adversaire, quand on joue B —
+        // reprendre defairait SON coup, pas le notre.
+        const min = state.remote ? 2 : 1;
+        btn.hidden = !(moves.length >= min && s.isHuman(await s.match.getTurn()));
     } catch {
         btn.hidden = true;
     }
@@ -440,13 +444,18 @@ async function fillHistory() {
         return;
     }
     const moves = await s.playedMoveStrings();
+    // Aller a un coup quelconque de la liste : jamais a distance.
     const allowed = canRollback({ remote: !!state.remote, moves: moves.length });
-    $('#btn-take-back').hidden = !allowed;
-    hint.textContent = !moves.length
-        ? t('No move played yet.')
-        : allowed
-          ? t('Tap a move to go back to that position.')
-          : t('Going back is unavailable in an online game.');
+    // « Reprendre » suit SA propre regle (syncTakeBack) : a distance il est
+    // permis quand la partie l'autorise et que c'est notre tour. Le masquer ici
+    // sur le seul fait que la partie est distante le grisait meme dans une
+    // partie ouverte par Tabulon avec la reprise permise.
+    await syncTakeBack();
+    hint.textContent = t(historyHint({
+        remote: !!state.remote,
+        allowTakeback: !!(state.remoteTakeback && state.remoteTakeback()),
+        moves: moves.length,
+    }));
 
     for (const row of moveRows(moves)) {
         const li = document.createElement('li');

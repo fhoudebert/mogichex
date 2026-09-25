@@ -77,3 +77,22 @@ export function rollbackTarget(n, count, humanCount) {
 export function canRollback({ remote = false, moves = 0 } = {}) {
     return !remote && moves > 0;
 }
+
+/**
+ * La phrase sous la liste des coups.
+ *
+ * En partie a distance, la liste reste INERTE — revenir a une position
+ * quelconque que l'adversaire a deja depassee desynchroniserait les deux
+ * plateaux. Mais quand la partie permet la reprise (reglage de l'invitation,
+ * pose par Tabulon, joclymatch ou mogichex), « Reprendre » vaut, lui : il defait
+ * notre dernier coup et la reponse, a notre tour, et PUBLIE la position. Dire
+ * « indisponible » a cote d'un bouton actif serait faux.
+ *
+ * @returns {string} cle de traduction (texte anglais)
+ */
+export function historyHint({ remote = false, allowTakeback = false, moves = 0 } = {}) {
+    if (!(moves > 0)) return 'No move played yet.';
+    if (!remote) return 'Tap a move to go back to that position.';
+    if (allowTakeback) return 'In an online game, you can take back your last move on your turn.';
+    return 'Going back is unavailable in an online game.';
+}
