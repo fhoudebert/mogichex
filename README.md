@@ -94,7 +94,7 @@ variant with online play removed.
 
 ## Host it yourself
 
-mogichex is static files plus two small PHP scripts. Shared hosting is enough; no Node, no
+mogichex is static files plus three small PHP scripts. Shared hosting is enough; no Node, no
 database, no daemon.
 
 **1.** Copy the app somewhere, and a [Jocly](https://github.com/fhoudebert/jocly2) build next to
@@ -106,10 +106,17 @@ your-site/
 └── jocly/dist/        ← jocly2 built with: npx gulp build
 ```
 
-**2.** Copy `deploy/signal.php`, `deploy/match.php`, `deploy/.htaccess` and
+**2.** Copy `deploy/signal.php`, `deploy/match.php`, `deploy/fileio.php`, `deploy/.htaccess` and
 `deploy/signalconf.php.example` (renamed to `signalconf.php`) into the mogichex folder.
 
 That's it. The app finds the game engine and the relay by itself, and remembers where they were.
+
+**Your relay also serves Tabulon.** `fileio.php` speaks the dialect that
+[Tabulon](https://github.com/fhoudebert/tabulon) and
+[joclymatch](https://github.com/fhoudebert/joclymatch) use, over the very same match files — a
+Tabulon player joins a match hosted here without changing anything on their side, chat included.
+It is a translator, not a second store: the game actions are handed to `match.php`, which stays the
+only thing that touches a match file.
 
 **Two things the `.htaccess` does that matter:**
 
@@ -147,7 +154,7 @@ cd - && ln -s ../jocly2/dist/browser dist
 npm run build      # catalogue + service worker stamp + tests
 npm run serve      # http://localhost:8080
 npm test           # 161 assertions
-npm run test:php   # 28 assertions (requires php-cli)
+npm run test:php   # 52 assertions (requires php-cli)
 ```
 
 [DEVELOPMENT.md](DEVELOPMENT.md) has the technical detail: how the catalogue is built, how the

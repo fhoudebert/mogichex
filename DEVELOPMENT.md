@@ -553,8 +553,8 @@ https://biscandine.fr/variantes/jocly/dist/   le dist partagé (moteur sous dist
 ```
 
 **Aucune configuration n'est nécessaire.** Déposer `deploy/signal.php`, `deploy/match.php`,
-`deploy/.htaccess` et `deploy/signalconf.php.example` (renommé en `signalconf.php`) dans
-`variantes/mogichex/`, et c'est tout :
+`deploy/fileio.php`, `deploy/.htaccess` et `deploy/signalconf.php.example` (renommé en
+`signalconf.php`) dans `variantes/mogichex/`, et c'est tout :
 
 - le **dist** est trouvé en `../jocly/dist/browser/` (racine `../jocly/dist` + suffixe `browser`) ;
 - le **relai** est trouvé en `.` — le répertoire de mogichex lui-même.
@@ -586,7 +586,7 @@ index.html   manifest.webmanifest   sw.js
 css/   js/   lang/   app/catalog.json   i/
 ```
 
-Plus, au même endroit, les quatre fichiers de `deploy/` — `match.php`, `signal.php`, `.htaccess`,
+Plus, au même endroit, les cinq fichiers de `deploy/` — `match.php`, `fileio.php`, `signal.php`, `.htaccess`,
 et `signalconf.php.example` renommé en `signalconf.php` — déposés **à plat** dans le répertoire de
 mogichex, pas dans un sous-dossier `deploy/` : le relai est cherché en `.`.
 
@@ -627,7 +627,8 @@ n'a rien à faire en ligne.
 | Signalisation WebRTC | `deploy/signal.php` | nul |
 | STUN | serveurs publics | nul |
 | TURN | **aucun** — voir ci-dessous | nul |
-| Repli de transport | relai HTTP (`fileio.php` de joclymatch) | nul |
+| Repli de transport | relai HTTP (`deploy/match.php`) | nul |
+| Relai pour Tabulon | `deploy/fileio.php` | nul |
 
 **Pas de TURN, et c'est un choix, pas un renoncement.** Un mutualisé ne peut pas héberger de
 coturn (démon permanent, ports UDP). Mais au tour par tour, un coup pèse quelques centaines
@@ -639,6 +640,48 @@ déploiera (service tiers, Metered ou Cloudflare) que si l'usage prouve le besoi
 aucune signalisation possible. Et surtout, le mutualisé donne la **maîtrise des en-têtes
 HTTP**, donc COOP/COEP, donc l'isolation cross-origin — précisément ce qui manquait à Tabulon
 sous `tauri://` et qui débloquerait fairy-stockfish multi-thread. Pages reste un bon miroir.
+
+### `deploy/fileio.php` — le relai vu par Tabulon
+
+**mogichex sert de relai à une partie Tabulon↔Tabulon ou Tabulon↔mogichex.** L'enveloppe était
+déjà commune — toute partie à distance passant par un relai emploie chez Tabulon le codec
+`jocly-simple-match`, donc `{matchDetails, matchdata, time, key}`, exactement ce que `match.php`
+stocke. Il manquait deux choses, et seulement deux.
+
+**Le dialecte HTTP.** Tabulon poste `gameioaction/gameid/gamedata` là où `match.php` lit
+`action/mid/data`. `fileio.php` traduit, puis **délègue** à `match.php` — il ne réimplémente ni
+l'écriture atomique, ni l'attente longue, ni le balayage. Dupliquer cette logique voudrait dire la
+tenir à jour en deux endroits pour toujours, ce que l'en-tête de `match.php` met justement en
+garde de faire avec le stockage.
+
+**Le nom du fichier n'est pas négociable.** `parseInvitationUrl()` de Tabulon déduit l'adresse du
+relai en remplaçant le dernier segment du lien par `fileio.php`, **en dur**. Un lien mogichex
+(`…/mogichex/index.html?game=…`) mène donc à `…/mogichex/fileio.php`. Il faut un fichier de ce nom ;
+autant qu'il soit la traduction. Conséquence : **un joueur Tabulon rejoint une partie mogichex sans
+une ligne de changement de son côté.**
+
+**La discussion, que `match.php` ne connaît pas.** `chatioaction=save|load` est servi ici, avec
+l'ajout d'une ligne côté serveur — les deux joueurs écrivent dans le même fichier
+`<mid>-chat.jsonl`, et il n'y a donc aucune concurrence à éviter. C'est le format qu'emploient
+joclymatch et, depuis peu, Tabulon. Le client de mogichex, lui, écrit encore son fil selon le
+schéma à deux clés `<mid>-ca` / `-cb` : **des trois applications, c'est la seule restée hors du fil
+commun**, et c'est ce qui reste à faire pour que la discussion Tabulon↔mogichex fonctionne.
+
+Trois détails qui se paient une fois :
+
+- **`.jsonl`, pas `.json`** : le contenu est une ligne par message, pas un document. Et comme le
+  balayage de `match.php` ne regarde que les `.json`, `fileio.php` balaie les siens ;
+- **un `drop` efface aussi le fil.** Un `drop` passé directement à `match.php` ne le sait pas et
+  laissera le fil au balayage — assumé, `match.php` n'a pas à apprendre un format qu'il ne sert pas ;
+- **`X-File-Mtime` est posé par `header_register_callback`**, en copiant `X-Match-Mtime` juste avant
+  l'envoi des en-têtes. C'est `match.php` qui connaît la date d'écriture ; la recalculer ici serait
+  une seconde vérité à maintenir.
+
+Vérifié de bout en bout avec le **vrai** canal de Tabulon contre ce relai : partie déposée et
+relue, enveloppe jugée exploitable par le code de mogichex lui-même, deux joueurs Tabulon dans le
+même fil, présence comprise. Plus 24 vérifications PHP (`npm run test:php`), dont le refus des
+traversées de répertoire **sur ce chemin aussi** — la traduction ayant lieu avant la délégation,
+elle ouvrirait sinon une porte que `match.php` ferme.
 
 ### `deploy/signal.php`
 
