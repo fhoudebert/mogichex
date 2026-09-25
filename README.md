@@ -156,8 +156,8 @@ cd - && ln -s ../jocly2/dist/browser dist
 
 npm run build      # catalogue + service worker stamp + tests
 npm run serve      # http://localhost:8080
-npm test           # 166 assertions
-npm run test:php   # 52 assertions (requires php-cli)
+npm test           # 167 assertions
+npm run test:php   # 57 assertions (requires php-cli)
 ```
 
 [DEVELOPMENT.md](DEVELOPMENT.md) has the technical detail: how the catalogue is built, how the

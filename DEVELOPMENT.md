@@ -600,7 +600,7 @@ fausse en silence.
 | | |
 |---|---|
 | `tools/` | fabrique le catalogue, l'APK, l'estampille du service worker. Ne tourne que chez vous |
-| `tests/` | 166 assertions Node et 52 PHP. `tests/*.php` sont des **exécutables** : les téléverser, c'est offrir des points d'entrée qui écrivent sur le disque |
+| `tests/` | 167 assertions Node et 57 PHP. `tests/*.php` sont des **exécutables** : les téléverser, c'est offrir des points d'entrée qui écrivent sur le disque |
 | `data/` | `phone-ineligible.json` est lu par le **build**, jamais par le navigateur — il est déjà cuit dans `catalog.json` |
 | `android/` | projet Capacitor, 1,8 Mo, sans objet sur le web |
 | `package.json`, `DEVELOPMENT.md`, `README.md`, `.gitignore` | rien ne les lit à l'exécution |
@@ -688,6 +688,23 @@ commencée avant ce changement a ses messages sous `-ca` / `-cb` ; sans ce
 rattrapage, la conversation en cours disparaîtrait de l'écran le jour de la
 mise à jour — et une partie par correspondance dure des jours. On n'y écrit
 jamais.
+
+**Le fil plein fait de la place, il ne se ferme pas.** Une partie par correspondance dure des
+semaines : atteindre le plafond est la fin normale du fichier, pas un cas rare — mesuré, sur un
+plafond de 3 Ko, 36 messages passent et les suivants étaient refusés, la conversation figée au
+milieu d'une partie qui, elle, continuait. `fileio.php` retire donc les plus anciens messages pour
+loger les nouveaux, par lignes entières et sous verrou exclusif, en descendant à 75 % du plafond
+d'un coup pour ne pas réécrire le fichier à chaque message. Même règle que joclymatch, et le fil
+étant commun aux deux, il ne pouvait pas en aller autrement : deux relais qui se comporteraient
+différemment sur le même format seraient un piège pour qui change d'hébergement. Reste un seul
+refus, distinct : un message à lui seul plus gros que le fil entier, que rien à retirer ne
+logerait.
+
+**Le client FUSIONNE au lieu de remplacer.** Conséquence directe de ce qui précède : remplacer le
+fil par ce que le serveur rend faisait disparaître de l'écran le début d'une conversation qu'on
+avait sous les yeux — mesuré, le message numéro 1 s'efface sans un mot. Ce qui a été lu est gardé.
+C'est déjà ce que fait joclymatch, qui n'enlève jamais une bulle de son panneau ; ce qui disparaît
+n'est perdu que pour qui arrive après.
 
 **Un relai sans `fileio.php` arrête la boucle et le dit.** C'est une
 installation incomplète, pas une panne passagère : réessayer indéfiniment ne la
@@ -1245,7 +1262,7 @@ tests/                       Node pur + PHP réel
 ## Tests
 
 ```sh
-npm test                      # 166 assertions, Node pur
+npm test                      # 167 assertions, Node pur
 ```
 
 Ce qui est testable l'est : construction du catalogue, champs localisés, filtrage,

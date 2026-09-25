@@ -2294,3 +2294,27 @@ test('discussion : sans cle, le clair est une PERMISSION, pas un defaut', async 
     assert.equal(avecPermission.locked, undefined);
     assert.equal(avecPermission.body, 'bonjour');
 });
+
+test('discussion : ce qu on a lu reste a l ecran quand le relai fait de la place', async () => {
+    // Le relai retire les plus anciens messages quand le fil est plein.
+    // Remplacer le fil par ce que le serveur rend faisait disparaitre de
+    // l'ecran le debut d'une conversation qu'on avait sous les yeux.
+    let fil = [1, 2, 3].map((n) => ({ data: {
+        msg: 'message ' + n, player: -1, time: 1748100000000 + n, key: 'k' + n } }));
+    const chan = new ChatChannel({
+        relayUrl: '.', matchId: '1748100000000-AbCdEfGhIjKlMn', side: 1, allowClear: true,
+        fetchImpl: async () => ({ ok: true, headers: { get: () => '0' },
+            text: async () => JSON.stringify({ messages: fil }) }),
+    });
+    chan.theirs = await chan.read();
+    assert.equal(chan.conversation.length, 3);
+
+    // Le relai fait de la place : les deux premiers disparaissent du fichier.
+    fil = fil.slice(2).concat([{ data: {
+        msg: 'message 4', player: -1, time: 1748100000004, key: 'k4' } }]);
+    chan.theirs = mergeThreads(chan.theirs, await chan.read());
+    assert.equal(chan.conversation.length, 4, 'les anciens restent, le nouveau s ajoute');
+    assert.ok(chan.conversation.some((m) => m.body === 'message 1'),
+        'le tout premier est toujours la');
+    assert.ok(chan.conversation.some((m) => m.body === 'message 4'));
+});

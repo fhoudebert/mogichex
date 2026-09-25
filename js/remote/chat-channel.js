@@ -267,7 +267,22 @@ export class ChatChannel {
     async loop() {
         while (this.running) {
             try {
-                this.theirs = await this.read();
+                /*
+                 * ON FUSIONNE, ON NE REMPLACE PAS.
+                 *
+                 * Le relai retire les plus anciens messages quand le fil est
+                 * plein (voir deploy/fileio.php). Remplacer le fil par ce que
+                 * le serveur rend faisait alors DISPARAITRE de l'ecran le
+                 * debut d'une conversation qu'on avait sous les yeux — mesure
+                 * faite : le message numero 1 s'efface sans un mot.
+                 *
+                 * Ce qu'on a lu, on le garde. C'est deja ce que fait
+                 * joclymatch, qui n'enleve jamais une bulle de son panneau ;
+                 * ce qui disparait n'est perdu que pour qui arrive apres.
+                 * mergeThreads deduplique par identifiant, donc relire le fil
+                 * entier a chaque tour ne coute rien.
+                 */
+                this.theirs = mergeThreads(this.theirs, await this.read());
                 this.failures = 0;
                 this.publish();
                 await sleep(this.longPolling === false ? IDLE_POLL_MS : POLL_MS);

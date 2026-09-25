@@ -121,27 +121,50 @@ $fil = json_decode($body, true);
 check('une ligne abimee est sautee, le reste passe',
     is_array($fil) && isset($fil['messages']) && count($fil['messages']) === 2);
 
-// --- plafond ------------------------------------------------------------------
-// On remplit jusqu'au plafond, puis on verifie que le message SUIVANT est
-// refuse plutot que le debut du fil tronque : perdre le debut d'une
-// conversation sans le dire serait pire que refuser la suite en le disant.
+// --- plafond : on fait de la PLACE, on ne ferme pas le fil ---------------------
+//
+// Une partie par correspondance dure des semaines : atteindre le plafond est
+// la fin normale du fichier, pas un cas rare. Le fil etait alors ferme, et la
+// conversation figee au milieu d'une partie qui continuait.
 $gros = $mid . '-plein';
-$bourrage = json_encode(array('data' => array('msg' => str_repeat('x', 4000), 'player' => 1,
-    'time' => 1, 'key' => 'cc')));
-$acceptes = 0;
-for ($i = 0; $i < 80; $i++) {
-    list($body,) = request(array('chatioaction' => 'save', 'gameid' => $gros, 'chatmsg' => $bourrage));
-    $rep = json_decode($body, true);
-    if (isset($rep['error'])) { break; }
-    $acceptes++;
+function bourrage($n) {
+    return json_encode(array('data' => array('msg' => str_repeat('x', 3000), 'player' => 1,
+        'time' => 1000 + $n, 'key' => 'k' . $n)));
 }
-check('le fil se remplit puis refuse', $acceptes > 0 && $acceptes < 80);
-list($body, $code) = request(array('chatioaction' => 'save', 'gameid' => $gros, 'chatmsg' => $bourrage));
-check('le refus est un 413 nomme', $code === 413
-    && json_decode($body, true)['error'] === 'chat log full');
+$trimTotal = 0;
+$refus = 0;
+for ($i = 0; $i < 120; $i++) {
+    list($body,) = request(array('chatioaction' => 'save', 'gameid' => $gros, 'chatmsg' => bourrage($i)));
+    $rep = json_decode($body, true);
+    if (isset($rep['error'])) { $refus++; continue; }
+    $trimTotal += isset($rep['trimmed']) ? $rep['trimmed'] : 0;
+}
+check('aucun message n\'est refuse une fois le plafond atteint', $refus === 0);
+check('des messages ont ete retires pour faire de la place', $trimTotal > 0);
+
 list($body,) = request(array('chatioaction' => 'load', 'gameid' => $gros));
-check('et ce qui etait dit reste lisible',
-    count(json_decode($body, true)['messages']) === $acceptes);
+$fil = json_decode($body, true);
+check('le fil reste lisible d\'un bout a l\'autre',
+    isset($fil['messages']) && count($fil['messages']) > 0);
+check('et il tient sous le plafond', filesize($tmp . $gros . '-chat.jsonl') <= 262144);
+// Ce sont bien les PLUS ANCIENS qui partent : le dernier envoye doit etre la,
+// le premier non.
+$cles = array_map(function ($m) { return $m['data']['key']; }, $fil['messages']);
+check('le dernier message envoye est present', in_array('k119', $cles, true));
+check('et le tout premier a disparu', !in_array('k0', $cles, true));
+// Un message coupe en deux rendrait le fil illisible pour les deux joueurs :
+// on ne retire que des lignes entieres.
+check('aucune ligne n\'a ete coupee au milieu',
+    count($fil['messages']) === count($cles));
+
+// Un message a lui seul plus gros que le fil entier : rien a retirer n'y
+// changerait quoi que ce soit. Refus distinct, parce qu'il n'appelle pas la
+// meme reaction — raccourcir, et non attendre.
+$enorme = json_encode(array('data' => array('msg' => str_repeat('y', 300000), 'player' => 1,
+    'time' => 1, 'key' => 'zz')));
+list($body, $code) = request(array('chatioaction' => 'save', 'gameid' => $gros, 'chatmsg' => $enorme));
+check('un message plus gros que le fil entier est refuse a part',
+    $code === 413 && json_decode($body, true)['error'] === 'chat message too large');
 
 // --- effacement ---------------------------------------------------------------
 list($body,) = request(array('gameioaction' => 'drop', 'gameid' => $mid));

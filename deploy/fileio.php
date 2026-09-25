@@ -52,6 +52,35 @@ if (!isset($matchTTL)) {
 if (!isset($chatMaxBytes)) {
     $chatMaxBytes = 262144;
 }
+/*
+ * ET UNE FOIS PLEIN ? ON FAIT DE LA PLACE.
+ *
+ * Le fil etait alors FERME : tout message suivant recevait un 413, et les deux
+ * joueurs se retrouvaient avec une conversation figee au milieu d'une partie
+ * qui, elle, continuait. Pour une partie par correspondance qui dure des
+ * semaines, c'est la fin normale du fichier, pas un cas rare — mesure : sur un
+ * plafond de 3 Ko, 36 messages passent et les suivants sont refuses.
+ *
+ * Les messages les plus anciens sont donc retires pour loger les nouveaux. La
+ * conversation vivante compte plus que son debut. Meme regle que joclymatch,
+ * et le fil etant commun aux deux, il ne pouvait pas en aller autrement : deux
+ * relais qui se comporteraient differemment sur le meme format seraient un
+ * piege pour qui change d'hebergement.
+ *
+ * $chatTrimOldest = false retablit l'ancien refus, pour un hebergement qui
+ * prefererait archiver.
+ */
+if (!isset($chatTrimOldest)) {
+    $chatTrimOldest = true;
+}
+/*
+ * On ne descend pas JUSTE sous la borne : le fichier entier serait alors
+ * reecrit a chaque message des qu'il est plein. On retire un quart d'un coup,
+ * et la reecriture n'a lieu qu'une fois par quart.
+ */
+if (!isset($chatTrimTo)) {
+    $chatTrimTo = (int) ($chatMaxBytes * 0.75);
+}
 if (!isset($signalOrigins)) {
     $signalOrigins = array(
         'https://fhoudebert.github.io',
@@ -149,28 +178,80 @@ if (isset($_POST['chatioaction'])) {
         if (!is_dir($matchPath)) {
             @mkdir($matchPath, 0775, true);
         }
-        clearstatcache(true, $fn);
-        $current = file_exists($fn) ? filesize($fn) : 0;
-        // On refuse le message plutot que de tronquer le fil : perdre le debut
-        // d'une conversation sans le dire est pire que refuser la suite en le
-        // disant. Le client sait traiter ce 413 (code `chat-full`).
-        if ($current + strlen($msg) + 1 > $chatMaxBytes) {
-            fioFail('chat log full', 413);
+        $line = $msg . "\n";
+        // Un message a lui seul plus gros que le fil entier : rien a retirer
+        // n'y changerait quoi que ce soit. C'est le seul refus qui reste, et
+        // il porte sur CE message et non sur le fil — d'ou un libelle
+        // different, les deux n'appelant pas la meme reaction : raccourcir,
+        // ou rien.
+        if (strlen($line) > $chatMaxBytes) {
+            fioFail('chat message too large', 413);
         }
-        $fp = @fopen($fn, 'ab');
+        /*
+         * TOUT SOUS UN VERROU EXCLUSIF.
+         *
+         * L'ajout seul pouvait s'en passer : une ecriture courte en mode 'a'
+         * est atomique. Retirer les premiers messages ne l'est pas — c'est
+         * lire, recomposer, reecrire — et un ajout de l'adversaire tombant au
+         * milieu serait perdu. Le meme verrou couvre donc les deux. La lecture
+         * du fil ne le prend pas : elle ne fait que lire.
+         *
+         * 'c+' ouvre en lecture-ecriture sans tronquer et cree le fichier au
+         * besoin : c'est ce qui permet de prendre le verrou AVANT de decider
+         * quoi que ce soit.
+         */
+        $fp = @fopen($fn, 'c+');
         if ($fp === false) {
             fioFail('cannot write chat file', 500);
         }
-        // LOCK_EX : deux joueurs peuvent ecrire au meme instant, et un ajout
-        // non verrouille peut entrelacer deux lignes sur un systeme de
-        // fichiers reseau — ce qui casse exactement ce que le refus des sauts
-        // de ligne protege.
         @flock($fp, LOCK_EX);
-        fwrite($fp, $msg . "\n");
+        $stat = fstat($fp);
+        $size = $stat ? $stat['size'] : 0;
+        $dropped = 0;
+        if ($size + strlen($line) > $chatMaxBytes) {
+            if (!$chatTrimOldest) {
+                @flock($fp, LOCK_UN);
+                fclose($fp);
+                fioFail('chat log full', 413);
+            }
+            $target = $chatTrimTo;
+            if ($target > $chatMaxBytes - strlen($line)) {
+                $target = $chatMaxBytes - strlen($line);
+            }
+            if ($target < 0) {
+                $target = 0;
+            }
+            rewind($fp);
+            $content = stream_get_contents($fp);
+            $lines = array();
+            foreach (explode("\n", $content) as $one) {
+                if ($one !== '') {
+                    $lines[] = $one;
+                }
+            }
+            // On retire par le DEBUT, un message a la fois, jusqu'a tenir sous
+            // la cible. Un message est une ligne : le fil reste lisible a tout
+            // moment, jamais coupe au milieu d'un JSON.
+            $kept = $size;
+            while ($kept > $target && count($lines) > 0) {
+                $gone = array_shift($lines);
+                $kept -= strlen($gone) + 1;
+                $dropped++;
+            }
+            $rewritten = count($lines) ? implode("\n", $lines) . "\n" : '';
+            ftruncate($fp, 0);
+            rewind($fp);
+            fwrite($fp, $rewritten);
+        }
+        fseek($fp, 0, SEEK_END);
+        fwrite($fp, $line);
+        fflush($fp);
         @flock($fp, LOCK_UN);
         fclose($fp);
         fioSweepChat();
-        echo json_encode(array('ok' => true));
+        // `trimmed` : combien de messages ont ete retires pour loger celui-ci.
+        // Un client qui l'ignore ne perd rien.
+        echo json_encode(array('ok' => true, 'trimmed' => $dropped));
         exit;
     }
 
