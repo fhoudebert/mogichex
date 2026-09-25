@@ -10,7 +10,6 @@ import assert from 'node:assert/strict';
 import { shouldApplyEnvelope, resolveAllowTakeback, takebackFromParam } from '../js/remote/protocol.js';
 import { buildInviteLink, parseInviteLink } from '../js/remote/invite.js';
 import { RelayChannel } from '../js/remote/relay-channel.js';
-import { isForcedPass } from '../js/game.js';
 import { historyHint, canRollback, barLayout } from '../js/history.js';
 
 const env = (turns, key, time, extra = {}) => ({
@@ -207,15 +206,4 @@ test('barre : l\'historique revient a distance quand la reprise est permise, qua
     const noChat = barLayout({ playing: true, remote: true, chat: false, takeback: true });
     assert.equal(noChat.history && noChat.rules, true);
     for (const l of [off, on, noChat, barLayout({ playing: true })]) assert.ok(count(l) <= 3, 'jamais plus de trois icones + retour');
-});
-
-
-test('prelude : seule une passe vide et unique est jouee pour l\'adversaire', () => {
-    assert.equal(isForcedPass([{}]), true, 'passe du prelude (Timurid, Capablanca)');
-    assert.equal(isForcedPass([{ setup: 0 }, { setup: 1 }]), false, 'choix d\'arrangement : a lui');
-    assert.equal(isForcedPass([{ setup: 3 }]), false, 'choix persistant rejoue : reste a lui');
-    assert.equal(isForcedPass([{ f: 12, t: 28 }]), false, 'coup unique qui deplace une piece : a lui');
-    assert.equal(isForcedPass([{}, {}]), false);
-    assert.equal(isForcedPass([]), false);
-    assert.equal(isForcedPass(null), false);
 });

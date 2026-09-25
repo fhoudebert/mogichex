@@ -69,6 +69,11 @@ function openPanel(id) {
     p.setAttribute('aria-hidden', 'false');
 }
 function closePanels() {
+    // Rendre le focus AVANT de cacher : un bouton d'un panneau ferme (le
+    // « Demarrer » de l'invitation) garderait le focus sous aria-hidden, ce
+    // que le navigateur refuse et signale en console.
+    const focused = document.activeElement;
+    if (focused && focused.closest && focused.closest('.panel')) focused.blur();
     for (const p of document.querySelectorAll('.panel')) {
         p.classList.remove('is-open');
         p.setAttribute('aria-hidden', 'true');

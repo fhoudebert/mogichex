@@ -113,26 +113,6 @@ export function takeBackTarget(playedCount, humanCount) {
     return Math.max(0, playedCount - 2);
 }
 
-/**
- * Le « coup » de l'adversaire qui n'en est pas un : la passe du prelude.
- *
- * Un jeu a prelude (Timurid, Capablanca...) s'ouvre sur DEUX demi-coups : A
- * choisit l'arrangement, puis B « passe » — l'etape suivante du prelude n'a
- * rien a demander, et jocly n'y offre qu'un seul coup, vide ({}). La vue de
- * jocly le joue d'elle-meme pour qui a le trait. Mais a distance, ce trait
- * est chez l'adversaire : A, qui venait de choisir, attendait que B rejoigne
- * la partie pour qu'une passe sans aucun choix soit jouee — la ou, sans
- * prelude, A joue son premier coup tout de suite.
- *
- * Seul cas retenu : UN coup legal, et vide. Un coup unique qui deplace une
- * piece reste a l'adversaire, meme s'il est force.
- */
-export function isForcedPass(moves) {
-    if (!Array.isArray(moves) || moves.length !== 1) return false;
-    const m = moves[0];
-    return !!m && typeof m === 'object' && !Array.isArray(m) && Object.keys(m).length === 0;
-}
-
 export class GameSession {
     /**
      * @param {HTMLElement} area conteneur du plateau
@@ -252,26 +232,6 @@ export class GameSession {
         await this.match.setViewOptions(patch);
         this.viewOptions = Object.assign({}, this.viewOptions, patch);
         await this.rearm();
-    }
-
-    /**
-     * Joue, a la place de l'adversaire distant, les passes de prelude qu'il
-     * n'a pas a choisir (voir isForcedPass). Rend le nombre de passes jouees.
-     */
-    async playRemoteForcedPasses() {
-        const match = this.match;
-        let played = 0;
-        // Borne : un prelude a quelques etapes, jamais une boucle.
-        while (played < 4 && match === this.match && !this.aborted) {
-            if ((await match.getTurn()) !== this.remoteSide) break;
-            const finished = await match.getFinished();
-            if (finished && finished.finished) break;
-            const moves = await match.getPossibleMoves();
-            if (!isForcedPass(moves)) break;
-            await match.playMove(moves[0]);
-            played++;
-        }
-        return played;
     }
 
     isHuman(player) {
@@ -463,19 +423,18 @@ export class GameSession {
                     const human = this.isHuman(player);
                     if (this.hooks.onTurn) this.hooks.onTurn(player, human);
                     if (human) {
-                        return match.userTurn().then(async () => {
+                        return match.userTurn().then(() => {
                             // Le coup local vient d'etre joue : c'est ICI, et
                             // pas dans le gestionnaire de clic (il n'y en a
                             // pas, l'interaction appartient a jocly), qu'on
                             // peut publier l'etat pour l'adversaire.
                             if (this.mode === 'remote' && this.hooks.onLocalMove) {
-                                // Passe de prelude de l'adversaire jouee AVANT
-                                // de publier : une seule ecriture, qui contient
-                                // deja la passe. Publier l'etat intermediaire
-                                // laisserait l'adversaire la jouer aussi, et sa
-                                // copie tardive pourrait ecraser notre coup
-                                // suivant.
-                                await this.playRemoteForcedPasses();
+                                // UN coup local, UNE publication. Tabulon suit
+                                // la partie coup par coup (il attend nbTurns+1
+                                // exactement) : un etat qui en avance de deux
+                                // le laisse en attente pour toujours. C'est
+                                // pourquoi la passe du prelude reste jouee par
+                                // l'adversaire, chez lui, comme le fait Tabulon.
                                 return this.hooks.onLocalMove();
                             }
                         });
