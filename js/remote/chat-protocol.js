@@ -99,7 +99,7 @@ export function chatMidFor(matchId, side) {
  * fichier inchange). Deux messages ecrits dans la meme milliseconde par le
  * meme joueur ne doivent pas se confondre, d'ou la part aleatoire.
  */
-function messageId(rand) {
+function messageKey(rand) {
     const bytes = new Uint8Array(8);
     rand(bytes);
     return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
@@ -137,7 +137,17 @@ export function newMessage({
     if (kind === KIND.PRESENCE && !PRESENCE_VALUES.includes(state))
         throw new Error('newMessage: etat de presence inconnu : ' + state);
 
-    const msg = { v: THREAD_VERSION, kind, side, at, id: messageId(rand) };
+    /*
+     * L'IDENTIFIANT EST `<horodatage>-<aleatoire>`, et cette forme n'est pas
+     * cosmetique : le fil commun transporte `time` et `key` separement, et
+     * l'identifiant s'en reconstruit a la lecture. Une forme quelconque — un
+     * simple hexadecimal, ce qu'elle etait — ne se reconstruit PAS : le
+     * message revenu du serveur portait alors un autre identifiant que celui
+     * affiche, la deduplication ne voyait plus le lien, et chaque message
+     * apparaissait DEUX fois (mesure : six a l'ecran pour quatre sur le
+     * relai).
+     */
+    const msg = { v: THREAD_VERSION, kind, side, at, id: at + '-' + messageKey(rand) };
     if (kind === KIND.CHAT && quick) msg.quick = String(quick);
     else if (kind === KIND.CHAT) msg.body = String(body);
     if (kind === KIND.PRESENCE) msg.state = state;
@@ -156,11 +166,20 @@ export function newMessage({
  * de partir en clair. Presence et messages rapides passent : ils ne portent
  * aucun texte.
  */
-export async function encodeThread(messages, { sealer = null } = {}) {
+export async function encodeThread(messages, { sealer = null, allowClear = false } = {}) {
     if (!Array.isArray(messages)) throw new Error('encodeThread: liste attendue');
     const out = [];
     for (const m of messages) {
         if (!requiresSeal(m)) {
+            out.push(m);
+            continue;
+        }
+        // `allowClear` est une PERMISSION EXPLICITE, jamais deduite de
+        // l'absence de scelleur : un scelleur qui n'a pas pu se construire —
+        // cle abimee, aleatoire indisponible — ne vaut pas autorisation
+        // d'ecrire en clair. C'est exactement ainsi qu'une protection se perd
+        // sans que personne ne l'ait decide.
+        if (!sealer && allowClear) {
             out.push(m);
             continue;
         }
@@ -183,7 +202,87 @@ export async function encodeThread(messages, { sealer = null } = {}) {
  * l'utilisateur voit qu'un message existe et qu'il lui manque la cle, ce qui
  * vaut mieux qu'un trou silencieux dans la conversation.
  */
-export async function decodeThread(text, { sealer = null } = {}) {
+/**
+ * Un message interne vers la ligne deposee dans le fil COMMUN.
+ *
+ * Le fil est celui de joclymatch : un objet par ligne, aux champs
+ * `{msg, player, pseudo, time, key}`. Nos champs a nous — `kind`, `quick`,
+ * `state`, `enc` — s'y ajoutent en FACULTATIF. Un client qui les ignore n'en
+ * souffre pas : `kind` absent vaut `chat`, et les trois applications sautent en
+ * silence ce qu'elles ne savent pas rendre.
+ *
+ * `player` et `side` portent deja la meme chose (1 / -1) : c'est le seul
+ * endroit ou les deux formats se rejoignaient sans rien faire.
+ *
+ * UN MESSAGE RAPIDE DOIT RESTER LISIBLE par qui ne connait pas `quick`. Le
+ * champ voyage comme identifiant et se traduit chez le lecteur ; un client qui
+ * l'ignore affiche `msg`, qui vaudrait la chaine vide — donc une bulle VIDE
+ * dans son fil. On y met donc le libelle traduit, dans NOTRE langue faute de
+ * connaitre la sienne, ce qui vaut mieux que rien. Rien n'est trahi : un
+ * message rapide ne porte aucun texte personnel, c'est precisement ce qui lui
+ * permet de circuler sans cle.
+ */
+export function toRelayMessage(msg, seal = null, quickText = null) {
+    const [time, key] = String(msg.id).split('-');
+    let corps = seal !== null ? seal : (msg.body ?? '');
+    if (seal === null && msg.quick && typeof quickText === 'string' && quickText.length)
+        corps = quickText;
+    const out = {
+        msg: corps,
+        player: msg.side,
+        time: Number(time) || msg.at,
+        key: key || '',
+    };
+    if (msg.kind && msg.kind !== KIND.CHAT) out.kind = msg.kind;
+    if (msg.quick) out.quick = msg.quick;
+    if (msg.state) out.state = msg.state;
+    if (seal !== null) out.enc = 1;
+    return out;
+}
+
+/**
+ * L'inverse : une ligne du fil commun vers notre forme interne.
+ *
+ * Rend null sur ce qui n'est pas exploitable, plutot que de lever : le fil est
+ * partage, et une ligne venue d'un client inconnu ne doit pas faire tomber la
+ * lecture des autres.
+ */
+export function fromRelayMessage(line) {
+    const d = line && typeof line === 'object' ? (line.data || line) : null;
+    if (!d || typeof d !== 'object') return null;
+    if (d.player !== 1 && d.player !== -1) return null;
+    if (!Number.isFinite(d.time)) return null;
+    const out = {
+        v: 1,
+        kind: typeof d.kind === 'string' ? d.kind : KIND.CHAT,
+        side: d.player,
+        at: d.time,
+        id: String(d.time) + '-' + String(d.key || ''),
+    };
+    if (typeof d.quick === 'string') out.quick = d.quick;
+    if (typeof d.state === 'string') out.state = d.state;
+    if (typeof d.msg === 'string' && !out.quick) out.body = d.msg;
+    if (d.enc) out.enc = 1;
+    // Le pseudo de joclymatch : conserve tel quel. Le joueur qui s'est donne un
+    // nom doit s'afficher sous ce nom, pas sous « Votre adversaire ».
+    if (typeof d.pseudo === 'string' && d.pseudo.length) out.pseudo = d.pseudo;
+    return out;
+}
+
+/**
+ * Reporte le pseudo sur le message reconstruit.
+ *
+ * decodeThread rebatit chaque message a partir d'une liste FIXE de champs —
+ * c'est ce qui empeche un client inconnu d'injecter n'importe quoi. Le pseudo
+ * est recopie ici, et nulle part ailleurs, pour que cette liste reste la seule
+ * porte d'entree.
+ */
+function withPseudo(out, source) {
+    if (typeof source.pseudo === 'string' && source.pseudo.length) out.pseudo = source.pseudo;
+    return out;
+}
+
+export async function decodeThread(text, { sealer = null, allowClear = false } = {}) {
     if (typeof text !== 'string' || !text.trim()) return [];
     let data;
     try {
@@ -209,16 +308,28 @@ export async function decodeThread(text, { sealer = null } = {}) {
         } else if (m.kind === KIND.CHAT) {
             if (typeof m.quick === 'string') {
                 if (!QUICK_RE.test(m.quick)) continue;
-                out.push(Object.assign(head, { quick: m.quick }));
+                out.push(withPseudo(Object.assign(head, { quick: m.quick }), m));
                 continue;
             }
             if (typeof m.body !== 'string') continue;
             if (!m.enc) {
-                // En clair alors que le genre exige un scellement : garde,
-                // verrouille. Refuser l'affichage effacerait la trace d'un
-                // correspondant mal configure ; l'afficher tel quel laisserait
-                // croire que le canal protege quelque chose.
-                out.push(Object.assign(head, { body: null, locked: true, reason: 'unsealed' }));
+                // Pas de sceau. Deux situations, et une seule est un probleme.
+                //
+                // `allowClear` dit que CETTE partie n'est pas protegee — une
+                // invitation sans cle, typiquement un lien joclymatch. Le
+                // message est alors normal, et le refuser priverait le joueur
+                // de tout ce que son correspondant lui ecrit.
+                //
+                // Sans cette permission, le message est GARDE mais verrouille :
+                // refuser l'affichage effacerait la trace d'un correspondant
+                // mal configure, l'afficher tel quel laisserait croire que le
+                // canal protege quelque chose.
+                if (allowClear) {
+                    out.push(withPseudo(Object.assign(head, { body: m.body }), m));
+                    continue;
+                }
+                out.push(withPseudo(
+                    Object.assign(head, { body: null, locked: true, reason: 'unsealed' }), m));
                 continue;
             }
             let body = null;
@@ -227,15 +338,16 @@ export async function decodeThread(text, { sealer = null } = {}) {
             } catch {
                 body = null;
             }
-            out.push(
+            out.push(withPseudo(
                 body === null
                     ? Object.assign(head, {
                           body: null,
                           locked: true,
                           reason: sealer ? 'badKey' : 'noKey',
                       })
-                    : Object.assign(head, { body })
-            );
+                    : Object.assign(head, { body }),
+                m
+            ));
         }
         // Genre inconnu : ignore en silence. C'est ce qui permettra d'en
         // ajouter un quatrieme sans casser les clients d'aujourd'hui.

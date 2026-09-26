@@ -553,8 +553,8 @@ https://biscandine.fr/variantes/jocly/dist/   le dist partagé (moteur sous dist
 ```
 
 **Aucune configuration n'est nécessaire.** Déposer `deploy/signal.php`, `deploy/match.php`,
-`deploy/.htaccess` et `deploy/signalconf.php.example` (renommé en `signalconf.php`) dans
-`variantes/mogichex/`, et c'est tout :
+`deploy/fileio.php`, `deploy/.htaccess` et `deploy/signalconf.php.example` (renommé en
+`signalconf.php`) dans `variantes/mogichex/`, et c'est tout :
 
 - le **dist** est trouvé en `../jocly/dist/browser/` (racine `../jocly/dist` + suffixe `browser`) ;
 - le **relai** est trouvé en `.` — le répertoire de mogichex lui-même.
@@ -586,7 +586,7 @@ index.html   manifest.webmanifest   sw.js
 css/   js/   lang/   app/catalog.json   i/
 ```
 
-Plus, au même endroit, les quatre fichiers de `deploy/` — `match.php`, `signal.php`, `.htaccess`,
+Plus, au même endroit, les cinq fichiers de `deploy/` — `match.php`, `fileio.php`, `signal.php`, `.htaccess`,
 et `signalconf.php.example` renommé en `signalconf.php` — déposés **à plat** dans le répertoire de
 mogichex, pas dans un sous-dossier `deploy/` : le relai est cherché en `.`.
 
@@ -600,7 +600,7 @@ fausse en silence.
 | | |
 |---|---|
 | `tools/` | fabrique le catalogue, l'APK, l'estampille du service worker. Ne tourne que chez vous |
-| `tests/` | 161 assertions Node et 14 PHP. `tests/*.php` sont des **exécutables** : les téléverser, c'est offrir des points d'entrée qui écrivent sur le disque |
+| `tests/` | 180 assertions Node et 57 PHP. `tests/*.php` sont des **exécutables** : les téléverser, c'est offrir des points d'entrée qui écrivent sur le disque |
 | `data/` | `phone-ineligible.json` est lu par le **build**, jamais par le navigateur — il est déjà cuit dans `catalog.json` |
 | `android/` | projet Capacitor, 1,8 Mo, sans objet sur le web |
 | `package.json`, `DEVELOPMENT.md`, `README.md`, `.gitignore` | rien ne les lit à l'exécution |
@@ -627,7 +627,8 @@ n'a rien à faire en ligne.
 | Signalisation WebRTC | `deploy/signal.php` | nul |
 | STUN | serveurs publics | nul |
 | TURN | **aucun** — voir ci-dessous | nul |
-| Repli de transport | relai HTTP (`fileio.php` de joclymatch) | nul |
+| Repli de transport | relai HTTP (`deploy/match.php`) | nul |
+| Relai pour Tabulon | `deploy/fileio.php` | nul |
 
 **Pas de TURN, et c'est un choix, pas un renoncement.** Un mutualisé ne peut pas héberger de
 coturn (démon permanent, ports UDP). Mais au tour par tour, un coup pèse quelques centaines
@@ -639,6 +640,116 @@ déploiera (service tiers, Metered ou Cloudflare) que si l'usage prouve le besoi
 aucune signalisation possible. Et surtout, le mutualisé donne la **maîtrise des en-têtes
 HTTP**, donc COOP/COEP, donc l'isolation cross-origin — précisément ce qui manquait à Tabulon
 sous `tauri://` et qui débloquerait fairy-stockfish multi-thread. Pages reste un bon miroir.
+
+### La discussion vit dans le fil commun
+
+**Les deux joueurs écrivent dans le même fichier**, que le serveur complète
+ligne par ligne (`chatioaction` de `deploy/fileio.php`). C'est le format que
+parlent aussi joclymatch et Tabulon : un joueur mogichex et un joueur Tabulon
+dans la même partie se lisent l'un l'autre.
+
+Cela remplace le schéma précédent — deux clés de partie ordinaires,
+`<mid>-ca` / `-cb`, chacune réécrite en entier à chaque message. Il évitait la
+concurrence sans rien demander au serveur, mais il **isolait** : personne
+d'autre ne lisait ce fil. Tabulon en est parti pour la même raison.
+
+**La discussion passe donc par `fileio.php`, pas par `match.php`.** Elle est
+désormais un format partagé ; elle appartient au point d'entrée partagé.
+`match.php` reste ce qu'il est — le stockage des parties de mogichex, qu'une
+seule chose touche.
+
+Quatre décisions, dont trois ont été trouvées en faisant réellement dialoguer
+les deux applications :
+
+- **L'identifiant est `<horodatage>-<aléatoire>`.** Le fil transporte `time` et
+  `key` séparément, et l'identifiant s'en reconstruit à la lecture. Tant qu'il
+  était un simple hexadécimal, il ne se reconstruisait pas : le message revenu
+  du serveur en portait un autre que celui affiché, la déduplication ne voyait
+  plus le lien, et **chaque message apparaissait deux fois** — six à l'écran
+  pour quatre sur le relai.
+- **Un message rapide part avec son libellé traduit dans `msg`.** Le champ
+  `quick` voyage comme identifiant et se traduit chez le lecteur ; un client
+  qui l'ignore affiche `msg`, qui valait la chaîne vide — donc une **bulle
+  vide** dans son fil. Rien n'est trahi : un message rapide ne porte aucun
+  texte personnel, c'est précisément ce qui lui permet de circuler sans clé.
+- **Le `pseudo` reçu est conservé.** `decodeThread` rebâtit chaque message à
+  partir d'une liste fixe de champs — c'est ce qui empêche un client inconnu
+  d'injecter n'importe quoi — et jetait le nom que le joueur d'en face s'était
+  donné.
+- **`allowClear` est une permission explicite, jamais déduite.** Une partie
+  sans clé n'est pas une partie mal configurée : c'est une invitation qui n'en
+  portait pas, typiquement un lien joclymatch. Mais un scelleur qui n'a pas pu
+  se construire — clé abîmée, aléatoire indisponible — ne vaut pas autorisation
+  d'écrire en clair. C'est exactement ainsi qu'une protection se perd sans que
+  personne ne l'ait décidé.
+
+**Les anciens fils sont relus une fois, en lecture seule.** Une partie
+commencée avant ce changement a ses messages sous `-ca` / `-cb` ; sans ce
+rattrapage, la conversation en cours disparaîtrait de l'écran le jour de la
+mise à jour — et une partie par correspondance dure des jours. On n'y écrit
+jamais.
+
+**Le fil plein fait de la place, il ne se ferme pas.** Une partie par correspondance dure des
+semaines : atteindre le plafond est la fin normale du fichier, pas un cas rare — mesuré, sur un
+plafond de 3 Ko, 36 messages passent et les suivants étaient refusés, la conversation figée au
+milieu d'une partie qui, elle, continuait. `fileio.php` retire donc les plus anciens messages pour
+loger les nouveaux, par lignes entières et sous verrou exclusif, en descendant à 75 % du plafond
+d'un coup pour ne pas réécrire le fichier à chaque message. Même règle que joclymatch, et le fil
+étant commun aux deux, il ne pouvait pas en aller autrement : deux relais qui se comporteraient
+différemment sur le même format seraient un piège pour qui change d'hébergement. Reste un seul
+refus, distinct : un message à lui seul plus gros que le fil entier, que rien à retirer ne
+logerait.
+
+**Le client FUSIONNE au lieu de remplacer.** Conséquence directe de ce qui précède : remplacer le
+fil par ce que le serveur rend faisait disparaître de l'écran le début d'une conversation qu'on
+avait sous les yeux — mesuré, le message numéro 1 s'efface sans un mot. Ce qui a été lu est gardé.
+C'est déjà ce que fait joclymatch, qui n'enlève jamais une bulle de son panneau ; ce qui disparaît
+n'est perdu que pour qui arrive après.
+
+**Un relai sans `fileio.php` arrête la boucle et le dit.** C'est une
+installation incomplète, pas une panne passagère : réessayer indéfiniment ne la
+corrigera pas, et une discussion muette sans explication se lit comme un défaut
+de l'application.
+
+### `deploy/fileio.php` — le relai vu par Tabulon
+
+**mogichex sert de relai à une partie Tabulon↔Tabulon ou Tabulon↔mogichex.** L'enveloppe était
+déjà commune — toute partie à distance passant par un relai emploie chez Tabulon le codec
+`jocly-simple-match`, donc `{matchDetails, matchdata, time, key}`, exactement ce que `match.php`
+stocke. Il manquait deux choses, et seulement deux.
+
+**Le dialecte HTTP.** Tabulon poste `gameioaction/gameid/gamedata` là où `match.php` lit
+`action/mid/data`. `fileio.php` traduit, puis **délègue** à `match.php` — il ne réimplémente ni
+l'écriture atomique, ni l'attente longue, ni le balayage. Dupliquer cette logique voudrait dire la
+tenir à jour en deux endroits pour toujours, ce que l'en-tête de `match.php` met justement en
+garde de faire avec le stockage.
+
+**Le nom du fichier n'est pas négociable.** `parseInvitationUrl()` de Tabulon déduit l'adresse du
+relai en remplaçant le dernier segment du lien par `fileio.php`, **en dur**. Un lien mogichex
+(`…/mogichex/index.html?game=…`) mène donc à `…/mogichex/fileio.php`. Il faut un fichier de ce nom ;
+autant qu'il soit la traduction. Conséquence : **un joueur Tabulon rejoint une partie mogichex sans
+une ligne de changement de son côté.**
+
+**La discussion, que `match.php` ne connaît pas.** `chatioaction=save|load` est servi ici, avec
+l'ajout d'une ligne côté serveur — les deux joueurs écrivent dans le même fichier
+`<mid>-chat.jsonl`, et il n'y a donc aucune concurrence à éviter. C'est le format qu'emploient
+joclymatch et, depuis peu, Tabulon. Le client de mogichex y écrit désormais lui aussi — voir la section précédente.
+
+Trois détails qui se paient une fois :
+
+- **`.jsonl`, pas `.json`** : le contenu est une ligne par message, pas un document. Et comme le
+  balayage de `match.php` ne regarde que les `.json`, `fileio.php` balaie les siens ;
+- **un `drop` efface aussi le fil.** Un `drop` passé directement à `match.php` ne le sait pas et
+  laissera le fil au balayage — assumé, `match.php` n'a pas à apprendre un format qu'il ne sert pas ;
+- **`X-File-Mtime` est posé par `header_register_callback`**, en copiant `X-Match-Mtime` juste avant
+  l'envoi des en-têtes. C'est `match.php` qui connaît la date d'écriture ; la recalculer ici serait
+  une seconde vérité à maintenir.
+
+Vérifié de bout en bout avec le **vrai** canal de Tabulon contre ce relai : partie déposée et
+relue, enveloppe jugée exploitable par le code de mogichex lui-même, deux joueurs Tabulon dans le
+même fil, présence comprise. Plus 24 vérifications PHP (`npm run test:php`), dont le refus des
+traversées de répertoire **sur ce chemin aussi** — la traduction ayant lieu avant la délégation,
+elle ouvrirait sinon une porte que `match.php` ferme.
 
 ### `deploy/signal.php`
 
@@ -1151,7 +1262,7 @@ tests/                       Node pur + PHP réel
 ## Tests
 
 ```sh
-npm test                      # 161 assertions, Node pur
+npm test                      # 180 assertions, Node pur
 ```
 
 Ce qui est testable l'est : construction du catalogue, champs localisés, filtrage,

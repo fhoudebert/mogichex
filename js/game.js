@@ -429,6 +429,12 @@ export class GameSession {
                             // pas, l'interaction appartient a jocly), qu'on
                             // peut publier l'etat pour l'adversaire.
                             if (this.mode === 'remote' && this.hooks.onLocalMove) {
+                                // UN coup local, UNE publication. Tabulon suit
+                                // la partie coup par coup (il attend nbTurns+1
+                                // exactement) : un etat qui en avance de deux
+                                // le laisse en attente pour toujours. C'est
+                                // pourquoi la passe du prelude reste jouee par
+                                // l'adversaire, chez lui, comme le fait Tabulon.
                                 return this.hooks.onLocalMove();
                             }
                         });

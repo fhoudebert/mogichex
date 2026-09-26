@@ -14,17 +14,31 @@
  * Faut-il appliquer l'enveloppe recue ?
  *
  * @param {object} env enveloppe { matchDetails, matchdata, time, key }
- * @param {{selfKey:string, lastTurns:number, gameName?:string}} ctx
+ * @param {{selfKey:string, lastTurns:number, gameName?:string,
+ *          lastRemote?:{key:string, time:number, turns:number}|null}} ctx
  * @returns {{apply:boolean, reason:string, turns:number}}
  *
- * Les trois refus comptent :
+ * Les refus comptent :
  *   - une enveloppe vide, c'est ce que match.php rend pour une partie jamais
  *     sauvegardee ({}) — la prendre pour un etat jouable planterait load() ;
  *   - notre propre enveloppe nous revient a chaque relecture (on ecrit et on
  *     lit le meme fichier) : sans le test sur la cle, on se rechargerait soi-
  *     meme en boucle, ce qui interromprait le tour de l'utilisateur ;
- *   - une enveloppe qui n'apporte pas de coup nouveau ferait clignoter le
- *     plateau pour rien.
+ *   - MOINS de coups, mais une enveloppe de l'adversaire deja appliquee ou
+ *     plus ancienne qu'elle (meme cle, date inferieure ou egale) : c'est une
+ *     relecture en retard — une attente longue partie avant notre coup, ou
+ *     le relai qui repasse derriere le canal pair-a-pair. Depuis que moins
+ *     de coups peut vouloir dire « reprise », c'est ce test qui ecarte ces
+ *     relectures ;
+ *   - une enveloppe qui porte AUTANT de coups que ce qu'on a : rien de neuf,
+ *     elle ferait clignoter le plateau pour rien.
+ *
+ * MOINS de coups que ce qu'on a n'est PAS un refus : c'est une REPRISE de
+ * l'adversaire (Tabulon, joclymatch, ou mogichex lui-meme). L'ignorer
+ * bloquait la partie : le coup suivant de l'adversaire, joue sur la position
+ * reprise, portait lui aussi moins de coups que ce qu'on avait, et il etait
+ * ignore a son tour — chaque camp attendait l'autre, sur deux plateaux
+ * differents.
  */
 export function shouldApplyEnvelope(env, ctx) {
     const turns = envelopeTurns(env);
@@ -37,10 +51,52 @@ export function shouldApplyEnvelope(env, ctx) {
     if (ctx.selfKey && env.key === ctx.selfKey) {
         return { apply: false, reason: 'own', turns };
     }
-    if (turns <= (ctx.lastTurns || 0)) {
+    const lastTurns = ctx.lastTurns || 0;
+    // Copie d'une enveloppe adverse deja prise en compte, ou plus ancienne :
+    // une lecture partie AVANT notre derniere ecriture et arrivee apres. Apres
+    // une reprise a nous, elle porte PLUS de coups que ce qu'on a — sans ce
+    // test elle defaisait la reprise (mesure au navigateur). Les deux criteres
+    // ensemble : un adversaire a cle fixe (Tabulon, joclymatch) qui change
+    // d'appareil, horloge en retard, joue tout de meme PLUS de coups que ce
+    // qu'on a deja vu de lui, et son coup passe.
+    const last = ctx.lastRemote;
+    if (last && env.key === last.key && Number.isFinite(env.time)
+        && env.time <= last.time && turns <= (last.turns ?? Infinity)) {
         return { apply: false, reason: 'stale', turns };
     }
-    return { apply: true, reason: 'new', turns };
+    if (turns > lastTurns) {
+        return { apply: true, reason: 'new', turns };
+    }
+    if (turns === lastTurns) {
+        return { apply: false, reason: 'stale', turns };
+    }
+    return { apply: true, reason: 'takeback', turns };
+}
+
+/**
+ * Le reglage « reprise de coup permise » d'une partie a distance.
+ *
+ * LE FICHIER FAIT FOI, le lien annonce — meme regle que Tabulon : le fichier
+ * du relai est le meme pour les deux joueurs et survit a un rechargement, un
+ * lien a pu etre tronque ou retouche. Quand personne ne dit rien, INTERDIT :
+ * l'adversaire peut etre un mogichex d'avant ce reglage, qui ne suivrait pas
+ * une reprise (voir shouldApplyEnvelope). RECEVOIR une reprise, en revanche,
+ * ne depend jamais de ce reglage : on suit toujours l'adversaire, sinon les
+ * plateaux divergent.
+ * @param {boolean|null} fileValue
+ * @param {boolean|null} linkValue
+ */
+export function resolveAllowTakeback(fileValue, linkValue) {
+    if (typeof fileValue === 'boolean') return fileValue;
+    if (typeof linkValue === 'boolean') return linkValue;
+    return false;
+}
+
+/** `tb` d'un lien : '1' -> true, '0' -> false, autre chose -> null. */
+export function takebackFromParam(value) {
+    if (value === '1') return true;
+    if (value === '0') return false;
+    return null;
 }
 
 /** Nombre de coups porte par une enveloppe (0 si absent ou illisible). */

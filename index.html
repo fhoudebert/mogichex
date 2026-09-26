@@ -94,11 +94,10 @@
             <header class="bar">
                 <button class="icon-btn back" data-back data-t-label aria-label="Back to games">‹</button>
                 <h2 id="game-title" class="bar-title"></h2>
-                <!-- Quatre icones au plus, et jamais cinq : a 390 px, la
-                     cinquieme mange le titre. Historique et discussion ne
-                     coexistent jamais — le retour arriere est interdit des
-                     qu'un camp est distant, et c'est precisement la que la
-                     discussion existe. -->
+                <!-- Quatre icones au plus, retour compris : a 390 px, la
+                     cinquieme mange le titre. Qui s'affiche : barLayout()
+                     (js/history.js) — si historique ET discussion sont la,
+                     les regles passent dans les options. -->
                 <button id="btn-history" class="icon-btn" hidden data-t-label aria-label="Moves">≡</button>
                 <button id="btn-chat" class="icon-btn" hidden data-t-label aria-label="Messages">✉</button>
                 <button id="btn-rules-game" class="icon-btn" data-t-label aria-label="Rules">?</button>
@@ -232,6 +231,7 @@
                      la LIRE ne change aucune position, c'est y revenir qui est
                      interdit. -->
                 <button id="btn-open-history" class="secondary wide" hidden data-t>Moves</button>
+                <button id="btn-open-rules" class="secondary wide" hidden data-t>Rules</button>
                 <button id="btn-restart" class="secondary wide" data-t>Restart game</button>
             </div>
         </aside>
@@ -245,6 +245,9 @@
             <div class="settings-body">
                 <p class="hint" data-t>Send this link to your opponent. You keep this device.</p>
                 <input id="invite-link" type="text" readonly>
+                <label class="switch row">
+                    <input id="invite-takeback" type="checkbox"><span data-t>Allow taking back moves</span>
+                </label>
                 <div class="detail-actions">
                     <button id="btn-copy-invite" class="secondary" data-t>Copy link</button>
                     <button id="btn-start-remote" class="primary" data-t>Start</button>
