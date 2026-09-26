@@ -32,8 +32,10 @@ a filter you can't turn off feels like a bug.
 internet** — the last one can be switched off entirely, for a build that never touches the network.
 
 **Play by invitation.** Pick *another player, over the internet*, send the link, and you're in.
-Links are interchangeable with [joclymatch](https://github.com/fhoudebert/joclymatch): one of its
-links opens here on the right game and the right side.
+Links use the [joclymatch](https://github.com/fhoudebert/joclymatch) format, and a
+[Tabulon](https://github.com/fhoudebert/tabulon) player can join your game from the desktop
+without changing anything on their side. You choose, when inviting, whether taking back moves is
+allowed.
 
 **Three to six strength levels** depending on the game, up to **Expert** — the
 [Fairy-Stockfish](https://github.com/fairy-stockfish/Fairy-Stockfish) engine, wherever jocly
@@ -42,9 +44,9 @@ playing weaker.
 
 **English and French.** Adding a language means dropping one file in `lang/` — no code to touch.
 
-**Take back, restart, sounds, notation, move hints, board style, view from either side.** Take back
-and restart are hidden in online games: replaying a move your opponent already has would desync
-both boards.
+**Take back, restart, sounds, notation, move hints, board style, view from either side.** In online
+games, restart is hidden, and take back is only offered if the invitation allowed it — then, on
+your turn, it undoes your last move and your opponent's reply, and their board follows.
 
 **Favourites.** Star a game and it gets its own section, pinned at the top of the list and open by
 default — the twelve families stay exactly where they were.
@@ -54,15 +56,15 @@ games only: two devices don't see the same instant, and two pendulums showing tw
 than no pendulum.
 
 **The move list, and a way back.** Tap any move to return to that position. Reading the list works
-in online games; going back doesn't, for the same reason take back doesn't.
+in online games; jumping back to an arbitrary position doesn't — your opponent has already moved on
+from it.
 
 **A word to your opponent.** In online games, a handful of one-tap messages and presence states —
 *well played*, *your turn*, *stepping away*. They travel as identifiers and are shown in each
 player's own language, so two people with no language in common still understand each other, and
-nothing personal ever reaches the relay. The thread itself is the shared one, so a
-[Tabulon](https://github.com/fhoudebert/tabulon) or
-[joclymatch](https://github.com/fhoudebert/joclymatch) player in the same game reads you and you
-read them.
+nothing personal ever reaches the relay. The thread uses the shared joclymatch format, so a
+[Tabulon](https://github.com/fhoudebert/tabulon) player in the same game reads you and you read
+them.
 
 **Nudged, not nagged.** A single "your turn" tap that can notify your opponent even when the app
 isn't on screen — with a five-minute cooldown built into the protocol, not bolted on. Permission is
@@ -118,6 +120,7 @@ That's it. The app finds the game engine and the relay by itself, and remembers 
 [Tabulon](https://github.com/fhoudebert/tabulon) and
 [joclymatch](https://github.com/fhoudebert/joclymatch) use, over the very same match files — a
 Tabulon player joins a match hosted here without changing anything on their side, chat included.
+(A joclymatch *server* keeps its own match files: a game is played on one relay or the other.)
 It is a translator, not a second store: the game actions are handed to `match.php`, which stays the
 only thing that touches a match file.
 
@@ -156,7 +159,7 @@ cd - && ln -s ../jocly2/dist/browser dist
 
 npm run build      # catalogue + service worker stamp + tests
 npm run serve      # http://localhost:8080
-npm test           # 167 assertions
+npm test           # 180 assertions
 npm run test:php   # 57 assertions (requires php-cli)
 ```
 

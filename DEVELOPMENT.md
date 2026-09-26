@@ -600,7 +600,7 @@ fausse en silence.
 | | |
 |---|---|
 | `tools/` | fabrique le catalogue, l'APK, l'estampille du service worker. Ne tourne que chez vous |
-| `tests/` | 167 assertions Node et 57 PHP. `tests/*.php` sont des **exécutables** : les téléverser, c'est offrir des points d'entrée qui écrivent sur le disque |
+| `tests/` | 180 assertions Node et 57 PHP. `tests/*.php` sont des **exécutables** : les téléverser, c'est offrir des points d'entrée qui écrivent sur le disque |
 | `data/` | `phone-ineligible.json` est lu par le **build**, jamais par le navigateur — il est déjà cuit dans `catalog.json` |
 | `android/` | projet Capacitor, 1,8 Mo, sans objet sur le web |
 | `package.json`, `DEVELOPMENT.md`, `README.md`, `.gitignore` | rien ne les lit à l'exécution |
@@ -1262,7 +1262,7 @@ tests/                       Node pur + PHP réel
 ## Tests
 
 ```sh
-npm test                      # 167 assertions, Node pur
+npm test                      # 180 assertions, Node pur
 ```
 
 Ce qui est testable l'est : construction du catalogue, champs localisés, filtrage,
