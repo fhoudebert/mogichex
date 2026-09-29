@@ -2,18 +2,18 @@
  "catalogVersion": 1,
  "source": {
   "repo": "jocly2",
-  "commit": "c50c12d501c4e8b92196314bba8af7f3934294ff",
-  "builtAt": "2026-09-13T12:09:50.103Z"
+  "commit": "5ada4f8e98f08825b1565af2ab5bcf2f83760de8",
+  "builtAt": "2026-09-29T06:43:41.362Z"
  },
  "counts": {
-  "games": 129,
+  "games": 130,
   "modules": 13,
-  "phone": 116,
+  "phone": 117,
   "tablet": 13,
   "obsolete": 0,
   "byModule": {
    "checkers": 8,
-   "chessbase": 84,
+   "chessbase": 85,
    "fourinarow": 5,
    "go": 3,
    "hunt": 1,
@@ -287,7 +287,8 @@
    "name": "kids-draughts",
    "module": "checkers",
    "title": {
-    "en": "Kids Draughts"
+    "en": "Kids Draughts",
+    "fr": "Dames pour enfants"
    },
    "summary": {
     "en": "A version for kids of checkers on a 6x6 board.",
@@ -515,13 +516,14 @@
    "name": "thai-draughts",
    "module": "checkers",
    "title": {
-    "en": "Thai Draughts"
+    "en": "Thai Draughts",
+    "fr": "Dames Thaï"
    },
    "summary": {
     "en": "Checkers according to Thai rules.",
     "fr": "Les dames selon les règles thaïlandaises."
    },
-   "thumbnail": "draughts8-thumb3d.png",
+   "thumbnail": "thumbnail-checkers-thai.png",
    "rules": {
     "en": "rules-thai-draughts.html"
    },
@@ -697,7 +699,8 @@
    },
    "thumbnail": "res/rules/capa10x8/capablanca-thumb.png",
    "rules": {
-    "en": "res/rules/capa10x8/capablanca-rules.html"
+    "en": "res/rules/capa10x8/capablanca-rules.html",
+    "fr": "res/rules/capa10x8/capablanca-rules_fr.html"
    },
    "credits": {
     "en": "res/rules/capa10x8/capablanca-credits.html"
@@ -765,7 +768,7 @@
     "fr": "res/rules/standard/threecheck-rules_fr.html"
    },
    "credits": {
-    "en": "famous/credits.html"
+    "en": "res/rules/famous/credits.html"
    },
    "skins": [
     {
@@ -895,7 +898,8 @@
    },
    "thumbnail": "res/rules/amazon/amazon-thumb.png",
    "rules": {
-    "en": "res/rules/amazon/amazon-rules.html"
+    "en": "res/rules/amazon/amazon-rules.html",
+    "fr": "res/rules/amazon/amazon-rules_fr.html"
    },
    "credits": {
     "en": "res/rules/amazon/amazon-credits.html"
@@ -1017,7 +1021,8 @@
    },
    "thumbnail": "res/rules/brusky/brusky-thumb.png",
    "rules": {
-    "en": "res/rules/brusky/brusky-rules.html"
+    "en": "res/rules/brusky/brusky-rules.html",
+    "fr": "res/rules/brusky/brusky-rules_fr.html"
    },
    "credits": {
     "en": "res/rules/brusky/brusky-credits.html"
@@ -1339,7 +1344,8 @@
    },
    "thumbnail": "res/rules/mini/attack-thumb.png",
    "rules": {
-    "en": "res/rules/mini/attack-rules.html"
+    "en": "res/rules/mini/attack-rules.html",
+    "fr": "res/rules/mini/attack-rules_fr.html"
    },
    "credits": {
     "en": "res/rules/mini/attack-credits.html"
@@ -1656,7 +1662,7 @@
     "fr": "res/rules/cube/cubic-rules_fr.html"
    },
    "credits": {
-    "en": "famous/credits.html"
+    "en": "res/rules/famous/credits.html"
    },
    "skins": [
     {
@@ -1712,7 +1718,8 @@
    },
    "thumbnail": "res/rules/cylinder/cylinder-thumb.png",
    "rules": {
-    "en": "res/rules/cylinder/cylinder-rules.html"
+    "en": "res/rules/cylinder/cylinder-rules.html",
+    "fr": "res/rules/cylinder/cylinder-rules_fr.html"
    },
    "credits": {
     "en": "res/rules/cylinder/cylinder-credits.html"
@@ -1770,7 +1777,8 @@
    },
    "thumbnail": "res/rules/devasa/devasa-thumb.png",
    "rules": {
-    "en": "res/rules/devasa/devasa-rules.html"
+    "en": "res/rules/devasa/devasa-rules.html",
+    "fr": "res/rules/devasa/devasa-rules_fr.html"
    },
    "credits": {
     "en": "res/rules/devasa/devasa-credits.html"
@@ -1828,7 +1836,8 @@
    },
    "thumbnail": "res/rules/demi/demi-thumb.png",
    "rules": {
-    "en": "res/rules/demi/demi-rules.html"
+    "en": "res/rules/demi/demi-rules.html",
+    "fr": "res/rules/demi/demi-rules_fr.html"
    },
    "credits": {
     "en": "res/rules/demi/demi-credits.html"
@@ -1892,7 +1901,8 @@
    },
    "thumbnail": "res/rules/dukerutland/dukerutland-thumb.png",
    "rules": {
-    "en": "res/rules/dukerutland/dukerutland-rules.html"
+    "en": "res/rules/dukerutland/dukerutland-rules.html",
+    "fr": "res/rules/dukerutland/dukerutland-rules_fr.html"
    },
    "credits": {
     "en": "res/rules/dukerutland/dukerutland-credits.html"
@@ -2068,7 +2078,8 @@
    },
    "thumbnail": "res/rules/gigachess/gigachess-thumb.png",
    "rules": {
-    "en": "res/rules/gigachess/gigachess-rules.html"
+    "en": "res/rules/gigachess/gigachess-rules.html",
+    "fr": "res/rules/gigachess/gigachess-rules_fr.html"
    },
    "credits": {
     "en": "res/rules/gigachess/gigachess-credits.html"
@@ -2244,7 +2255,8 @@
    },
    "thumbnail": "res/rules/decimal/grand-thumb.png",
    "rules": {
-    "en": "res/rules/decimal/grand-rules.html"
+    "en": "res/rules/decimal/grand-rules.html",
+    "fr": "res/rules/decimal/grand-rules_fr.html"
    },
    "credits": {
     "en": "res/rules/decimal/grand-credits.html"
@@ -2425,7 +2437,8 @@
    },
    "thumbnail": "res/rules/amazon/gustav3-thumb.png",
    "rules": {
-    "en": "res/rules/amazon/gustav3-rules.html"
+    "en": "res/rules/amazon/gustav3-rules.html",
+    "fr": "res/rules/amazon/gustav3-rules_fr.html"
    },
    "credits": {
     "en": "res/rules/amazon/gustav3-credits.html"
@@ -2620,7 +2633,7 @@
     "fr": "res/rules/standard/horde-rules_fr.html"
    },
    "credits": {
-    "en": "famous/credits.html"
+    "en": "res/rules/famous/credits.html"
    },
    "skins": [
     {
@@ -2817,12 +2830,13 @@
     "en": "Kaiserspiel"
    },
    "summary": {
-    "en": "Tressau, 1840",
-    "fr": "Tressau, 1840"
+    "en": "Kaiser's game, Tressau, 1840",
+    "fr": "Jeu du Kaiser, Tressau, 1840"
    },
    "thumbnail": "res/rules/tressau/kaisergame-thumb.png",
    "rules": {
-    "en": "res/rules/tressau/kaisergame-rules.html"
+    "en": "res/rules/tressau/kaisergame-rules.html",
+    "fr": "res/rules/tressau/kaisergame-rules_fr.html"
    },
    "credits": {
     "en": "res/rules/tressau/kaisergame-credits.html"
@@ -2946,7 +2960,7 @@
     "fr": "res/rules/standard/knightmate_fr.html"
    },
    "credits": {
-    "en": "famous/credits.html"
+    "en": "res/rules/famous/credits.html"
    },
    "skins": [
     {
@@ -3080,7 +3094,8 @@
    },
    "thumbnail": "res/rules/duodecimal/leychessalpha-thumb.png",
    "rules": {
-    "en": "res/rules/duodecimal/leychessalpha-rules.html"
+    "en": "res/rules/duodecimal/leychessalpha-rules.html",
+    "fr": "res/rules/duodecimal/leychessalpha-rules_fr.html"
    },
    "credits": {
     "en": "res/rules/duodecimal/leychessalpha-credits.html"
@@ -3138,7 +3153,8 @@
    },
    "thumbnail": "res/rules/mini/los-alamos-thumb.png",
    "rules": {
-    "en": "res/rules/mini/los-alamos-rules.html"
+    "en": "res/rules/mini/los-alamos-rules.html",
+    "fr": "res/rules/mini/los-alamos-rules_fr.html"
    },
    "credits": {
     "en": "res/rules/mini/los-alamos-credits.html"
@@ -3205,10 +3221,7 @@
     "en": "res/rules/standard/losing-rules.html",
     "fr": "res/rules/standard/losing-rules_fr.html"
    },
-   "credits": {
-    "en": "res/rules/standard/credits.html",
-    "fr": "res/rules/standard/credits-fr.html"
-   },
+   "credits": null,
    "skins": [
     {
      "name": "skin3d",
@@ -3400,7 +3413,8 @@
    },
    "thumbnail": "res/rules/mccooey/mccooey-thumb.png",
    "rules": {
-    "en": "res/rules/mccooey/mccooey-rules.html"
+    "en": "res/rules/mccooey/mccooey-rules.html",
+    "fr": "res/rules/mccooey/mccooey-rules_fr.html"
    },
    "credits": {
     "en": "res/rules/mccooey/mccooey-credits.html"
@@ -3593,7 +3607,8 @@
    },
    "thumbnail": "res/rules/mini/mini4x4-thumb.png",
    "rules": {
-    "en": "res/rules/mini/mini4x4-rules.html"
+    "en": "res/rules/mini/mini4x4-rules.html",
+    "fr": "res/rules/mini/mini4x4-rules_fr.html"
    },
    "credits": {
     "en": "res/rules/mini/mini4x4-credits.html"
@@ -3656,7 +3671,8 @@
    },
    "thumbnail": "res/rules/mini/minichess4x5-thumb.png",
    "rules": {
-    "en": "res/rules/mini/minichess4x5-rules.html"
+    "en": "res/rules/mini/minichess4x5-rules.html",
+    "fr": "res/rules/mini/minichess4x5-rules_fr.html"
    },
    "credits": {
     "en": "res/rules/mini/minichess4x5-credits.html"
@@ -3720,7 +3736,8 @@
    },
    "thumbnail": "res/rules/mini/minichess5x5-thumb.png",
    "rules": {
-    "en": "res/rules/mini/minichess5x5-rules.html"
+    "en": "res/rules/mini/minichess5x5-rules.html",
+    "fr": "res/rules/mini/minichess5x5-rules_fr.html"
    },
    "credits": {
     "en": "res/rules/mini/minichess5x5-credits.html"
@@ -3902,7 +3919,8 @@
    },
    "thumbnail": "res/rules/circular/circular-thumb.png",
    "rules": {
-    "en": "res/rules/circular/circular-rules.html"
+    "en": "res/rules/circular/circular-rules.html",
+    "fr": "res/rules/circular/circular-rules_fr.html"
    },
    "credits": {
     "en": "res/rules/circular/circular-credits.html"
@@ -4098,7 +4116,7 @@
    "skins": [
     {
      "name": "skin3d",
-     "title": "3D ClaDssic",
+     "title": "3D Classic",
      "is3d": true
     },
     {
@@ -4312,7 +4330,8 @@
    },
    "thumbnail": "res/rules/rollerball/rollerball-thumb.png",
    "rules": {
-    "en": "res/rules/rollerball/rollerball-rules.html"
+    "en": "res/rules/rollerball/rollerball-rules.html",
+    "fr": "res/rules/rollerball/rollerball-rules_fr.html"
    },
    "credits": {
     "en": "res/rules/rollerball/rollerball-credits.html"
@@ -4370,10 +4389,11 @@
    },
    "thumbnail": "res/rules/standard/romanchenko-thumb.png",
    "rules": {
-    "en": "res/rules/standard/romanchenko-rules.html"
+    "en": "res/rules/standard/romanchenko-rules.html",
+    "fr": "res/rules/standard/romanchenko-rules_fr.html"
    },
    "credits": {
-    "en": "standard/romanchenko-credits.html"
+    "en": "res/rules/standard/romanchenko-credits.html"
    },
    "skins": [
     {
@@ -4476,6 +4496,68 @@
    "tier": "phone"
   },
   {
+   "name": "seirawan-chess",
+   "module": "chessbase",
+   "title": {
+    "en": "Seirawan++ Chess",
+    "fr": "Échecs Seirawan++"
+   },
+   "summary": {
+    "en": "Chess with two uncommon pieces waiting to enter the game",
+    "fr": "Les échecs, plus deux pièces peu courantes qui attendent d’entrer en jeu."
+   },
+   "thumbnail": "res/rules/famous/seirawan-thumbnail.png",
+   "rules": {
+    "fr": "res/rules/famous/seirawan_fr.html"
+   },
+   "credits": null,
+   "skins": [
+    {
+     "name": "skin3d",
+     "title": "3D Classic",
+     "is3d": true
+    },
+    {
+     "name": "skin2d",
+     "title": "2D Classic",
+     "is3d": false
+    }
+   ],
+   "defaultSkin": "skin2d",
+   "defaultSkinIs2d": true,
+   "ratio": 1,
+   "switchable": true,
+   "levels": [
+    {
+     "label": "Easy",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Fast [1sec]",
+     "isDefault": true,
+     "ai": "uct"
+    },
+    {
+     "label": "Medium",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Strong",
+     "isDefault": false,
+     "ai": "uct"
+    },
+    {
+     "label": "Expert",
+     "isDefault": false,
+     "ai": "fairy-stockfish"
+    }
+   ],
+   "obsolete": false,
+   "tier": "phone"
+  },
+  {
    "name": "seireigi",
    "module": "chessbase",
    "title": {
@@ -4551,7 +4633,8 @@
    },
    "thumbnail": "res/rules/shafran/shafran-thumb.png",
    "rules": {
-    "en": "res/rules/shafran/shafran-rules.html"
+    "en": "res/rules/shafran/shafran-rules.html",
+    "fr": "res/rules/shafran/shafran-rules_fr.html"
    },
    "credits": {
     "en": "res/rules/shafran/shafran-credits.html"
@@ -4736,7 +4819,7 @@
     "en": "The ancestor of Shogi, with a drunk elephant - with or without drops",
     "fr": "L'ancêtre du Shogi, avec un éléphant ivre - avec ou sans parachutage"
    },
-   "thumbnail": "res/rules/shogi/shogi-thumb.png",
+   "thumbnail": "res/rules/shogi/kotaishi-thumb.png",
    "rules": {
     "en": "res/rules/shogi/kotaishi-rules.html",
     "fr": "res/rules/shogi/kotaishi-rules_fr.html"
@@ -5054,12 +5137,13 @@
     "en": "Sultanspiel"
    },
    "summary": {
-    "en": "Tressau, 1840",
-    "fr": "Tressau, 1840"
+    "en": "Sultan's game, Tressau, 1840",
+    "fr": "Jeu du Sultan, Tressau, 1840"
    },
    "thumbnail": "res/rules/tressau/sultangame-thumb.png",
    "rules": {
-    "en": "res/rules/tressau/sultangame-rules.html"
+    "en": "res/rules/tressau/sultangame-rules.html",
+    "fr": "res/rules/tressau/sultangame-rules_fr.html"
    },
    "credits": {
     "en": "res/rules/tressau/sultangame-credits.html"
@@ -5117,7 +5201,8 @@
    },
    "thumbnail": "res/rules/standard/sweet16-thumb.png",
    "rules": {
-    "en": "res/rules/standard/sweet16-rules.html"
+    "en": "res/rules/standard/sweet16-rules.html",
+    "fr": "res/rules/standard/sweet16-rules_fr.html"
    },
    "credits": {
     "en": "res/rules/standard/sweet16-credits.html"
@@ -5303,7 +5388,8 @@
    },
    "thumbnail": "res/rules/terachess/terachess-thumb.png",
    "rules": {
-    "en": "res/rules/terachess/terachess-rules.html"
+    "en": "res/rules/terachess/terachess-rules.html",
+    "fr": "res/rules/terachess/terachess-rules_fr.html"
    },
    "credits": {
     "en": "res/rules/terachess/terachess-credits.html"
@@ -5490,7 +5576,8 @@
    },
    "thumbnail": "res/rules/amazon/tutti-frutti-thumb.png",
    "rules": {
-    "en": "res/rules/amazon/tutti-frutti-rules.html"
+    "en": "res/rules/amazon/tutti-frutti-rules.html",
+    "fr": "res/rules/amazon/tutti-frutti-rules_fr.html"
    },
    "credits": {
     "en": "res/rules/amazon/tutti-frutti-credits.html"
@@ -5722,7 +5809,8 @@
    },
    "thumbnail": "res/rules/wildebeest/wildebeest-thumb.png",
    "rules": {
-    "en": "res/rules/wildebeest/wildebeest-rules.html"
+    "en": "res/rules/wildebeest/wildebeest-rules.html",
+    "fr": "res/rules/wildebeest/wildebeest-rules_fr.html"
    },
    "credits": {
     "en": "res/rules/wildebeest/wildebeest-credits.html"
@@ -7076,8 +7164,8 @@
     "fr": "Marelle à 6"
    },
    "summary": {
-    "en": "An old board game, plain or flying",
-    "fr": "Jeu du moulin classique ou avec saut"
+    "en": "An old board game, plain",
+    "fr": "Jeu du moulin classique"
    },
    "thumbnail": "mensmorris6-thumb3d.png",
    "rules": {
@@ -7142,8 +7230,8 @@
     "fr": "Marelle à 7"
    },
    "summary": {
-    "en": "An old board game, plain or flying",
-    "fr": "Jeu du moulin classique ou avec saut"
+    "en": "An old board game",
+    "fr": "Jeu du moulin classique"
    },
    "thumbnail": "mensmorris7-thumb3d.png",
    "rules": {
@@ -7338,7 +7426,8 @@
    },
    "thumbnail": "thumb-reversi.png",
    "rules": {
-    "en": "rules-reversi.html"
+    "en": "rules-reversi.html",
+    "fr": "rules-reversi_fr.html"
    },
    "credits": {
     "en": "credits.html"
@@ -7396,7 +7485,8 @@
    },
    "thumbnail": "thumb-reversi10.png",
    "rules": {
-    "en": "rules-reversi10.html"
+    "en": "rules-reversi10.html",
+    "fr": "rules-reversi10_fr.html"
    },
    "credits": {
     "en": "credits.html"
@@ -7454,7 +7544,8 @@
    },
    "thumbnail": "thumb-reversi4.png",
    "rules": {
-    "en": "rules-reversi4.html"
+    "en": "rules-reversi4.html",
+    "fr": "rules-reversi4_fr.html"
    },
    "credits": {
     "en": "credits.html"
@@ -7512,7 +7603,8 @@
    },
    "thumbnail": "thumb-reversi6.png",
    "rules": {
-    "en": "rules-reversi6.html"
+    "en": "rules-reversi6.html",
+    "fr": "rules-reversi6_fr.html"
    },
    "credits": {
     "en": "credits.html"
@@ -7570,7 +7662,8 @@
    },
    "thumbnail": "thumb-cross.png",
    "rules": {
-    "en": "rules-cross.html"
+    "en": "rules-cross.html",
+    "fr": "rules-cross_fr.html"
    },
    "credits": {
     "en": "credits.html"
@@ -7628,7 +7721,8 @@
    },
    "thumbnail": "thumb-cross10.png",
    "rules": {
-    "en": "rules-cross10.html"
+    "en": "rules-cross10.html",
+    "fr": "rules-cross10_fr.html"
    },
    "credits": {
     "en": "credits.html"
@@ -7686,7 +7780,8 @@
    },
    "thumbnail": "thumb-turnover.png",
    "rules": {
-    "en": "rules-turnover.html"
+    "en": "rules-turnover.html",
+    "fr": "rules-turnover_fr.html"
    },
    "credits": {
     "en": "credits.html"
