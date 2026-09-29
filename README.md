@@ -94,7 +94,8 @@ available **offline**; ones you haven't will need a connection the first time.
 **Android APKs are published** on the [releases page](https://github.com/fhoudebert/mogichex/releases),
 in two variants: **multiplayer**, which plays over the internet against another player, and
 **offline**, with online play removed — no relay is looked up and the app makes no outgoing
-request at all.
+request at all. Both ship without the 3D piece sets, which is what keeps them under 40 MB; a
+full build with 3D is one command away.
 
 You can also build your own. [android/README.md](android/README.md) covers the whole thing: how to
 set up the Capacitor project and the signing keystore once, then the exact commands for each
@@ -165,7 +166,7 @@ cd - && ln -s ../jocly2/dist/browser dist
 
 npm run build      # catalogue + service worker stamp + tests
 npm run serve      # http://localhost:8080
-npm test           # 180 assertions
+npm test           # 182 assertions
 npm run test:php   # 57 assertions (requires php-cli)
 ```
 

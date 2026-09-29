@@ -18,6 +18,7 @@
     "build": "npm run catalog && npm run stamp && npm test",
     "serve": "node tools/serve.mjs",
     "android": "node tools/build-android.mjs --jocly ../jocly2",
+    "android:3d": "node tools/build-android.mjs --jocly ../jocly2 --3d",
     "android:light": "node tools/build-android.mjs --jocly ../jocly2 --no-3d",
     "android:offline": "node tools/build-android.mjs --jocly ../jocly2 --no-3d --offline"
   },

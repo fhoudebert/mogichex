@@ -2318,3 +2318,25 @@ test('discussion : ce qu on a lu reste a l ecran quand le relai fait de la place
         'le tout premier est toujours la');
     assert.ok(chan.conversation.some((m) => m.body === 'message 4'));
 });
+
+test('android : --3d et --no-3d se contredisent au lieu d etre arbitres', () => {
+    // Les deux variantes multijoueur se distinguaient par `android` et
+    // `android:light`, deux noms dont aucun ne prononce le mot « 3D » : on
+    // pouvait construire l allegee en croyant faire la complete et ne s en
+    // apercevoir qu a la taille du paquet. `--3d` nomme l intention ; les deux
+    // ensemble sont une contradiction, pas un ordre de priorite a deviner.
+    const r = spawnSync(process.execPath,
+        [path.join(root, 'tools', 'build-android.mjs'), '--3d', '--no-3d'],
+        { encoding: 'utf8', timeout: 20000 });
+    assert.match((r.stdout || '') + (r.stderr || ''), /se contredisent/);
+    assert.equal(r.status, 2);
+});
+
+test('android : la 3D est conservee par defaut, et le script le dit', () => {
+    const src = readFileSync(path.join(root, 'tools', 'build-android.mjs'), 'utf8');
+    assert.ok(/const keep3d = !flag\('no-3d'\)/.test(src), 'defaut = conservee');
+    // La TAILLE du contenu produit est le seul indice qui distingue les deux
+    // variantes une fois l APK construit : le compte rendu doit la donner.
+    assert.ok(src.includes('contenu web'), 'le compte rendu donne la taille');
+    assert.ok(src.includes('function dirBytes('), 'et sait la calculer');
+});

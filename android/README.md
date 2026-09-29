@@ -12,13 +12,25 @@ toutes, puis les commandes prêtes à l'emploi.
 
 ## Deux variantes, deux usages
 
-| Commande | Jeu à distance | 3D | `www` |
-|---|---|---|---|
-| `npm run android` | oui | oui | **~75 Mo** |
-| `npm run android:light` | oui | non | **~52 Mo** |
-| `npm run android:offline` | non | non | **~52 Mo** |
+| Commande | Jeu à distance | 3D | `www` | APK attendu |
+|---|---|---|---|---|
+| `npm run android:3d` | oui | **oui** | ~69 Mo | ~52 Mo |
+| `npm run android` | oui | oui | ~69 Mo | ~52 Mo |
+| `npm run android:light` | oui | non | ~47 Mo | **~35 Mo** |
+| `npm run android:offline` | non | non | ~47 Mo | ~35 Mo |
 
-Les APK publiés sont la variante **multijoueur** et la variante **hors ligne**.
+`android` et `android:3d` font la même chose : **la 3D est conservée par défaut**. Le second
+existe pour que la commande dise ce qu'elle produit — `android` et `android:light` ne prononcent
+ni l'un ni l'autre le mot « 3D », de quoi construire la variante allégée en croyant faire la
+complète et ne s'en apercevoir qu'à la taille du paquet.
+
+C'est d'ailleurs comme cela qu'on reconnaît une variante déjà construite : **l'APK multijoueur
+publié en 1.10 pèse 38,1 Mo**, ce qui correspond à `android:light` et non à `android`. Le compte
+rendu du script donne la taille du contenu web à chaque build, et *Réglages › À propos* ne dit
+rien de la 3D — la taille est le seul indice.
+
+`--3d` et `--no-3d` ensemble sont une contradiction, pas un ordre de priorité à deviner : le
+script s'arrête.
 
 `--offline` retire l'adversaire **« un autre joueur par Internet »** : l'option disparaît de la
 liste, aucun relai n'est cherché, et l'application n'émet **aucune requête sortante**. Une
@@ -91,10 +103,13 @@ utilisé du tout.
 | `.gltf/.bin/.obj/.mtl` | 18,4 Mo | **Seulement avec `--no-3d`.** |
 | textures 3D de `chessbase/res` | 15,4 Mo | **Seulement avec `--no-3d`** : `*normalmap.jpg`, `*diffusemap.jpg`, `*normal.jpg`, `*diffuse.jpg` et les répertoires `*diffusemaps`. Elles ne sont référencées que depuis des blocs `mesh` + `materials` des `*-view.js`, c'est-à-dire des pièces tridimensionnelles. |
 
-| Variante | `www` |
-|---|---|
-| complète | **~75 Mo** |
-| `--no-3d` | **~52 Mo** |
+| Variante | `www` | compressé |
+|---|---|---|
+| complète | **69,1 Mo** | ~51,5 Mo |
+| `--no-3d` | **47,4 Mo** | ~34,7 Mo |
+
+Mesuré sur le catalogue courant. La colonne compressée approche la charge utile de l'APK : c'est
+elle qu'il faut comparer au poids du fichier téléchargé.
 
 Deux pièges rencontrés en construisant ce filtre, et corrigés :
 
@@ -239,10 +254,12 @@ L'APK est dans `android/app/build/outputs/apk/debug/app-debug.apk`.
 **Toujours les trois étapes, et toujours depuis la racine.** Le contenu web est figé dans le
 paquet : changer une option du script sans resynchroniser ni réassembler ne change rien à l'APK.
 
+Penser à **vider** le répertoire www
+
 ## Multijoueur — déploiement de référence
 
 ```sh
-npm run android              # régénère www
+npm run android:3d           # régénère www, 3D comprise
 npx cap sync android         # copie www dans le projet natif
 cd android && ./gradlew assembleRelease
 cd ..                        # ← revenir à la racine avant la prochaine variante
@@ -251,13 +268,24 @@ cd ..                        # ← revenir à la racine avant la prochaine varia
 ## Multijoueur — votre propre hébergement
 
 ```sh
-npm run android -- --site https://exemple.fr/mogichex
+npm run android:3d -- --site https://exemple.fr/mogichex
 npx cap sync android
 cd android && ./gradlew assembleRelease
 cd ..
 ```
 
 Le `--` est nécessaire : il dit à npm de passer ce qui suit au script plutôt que de l'interpréter.
+
+## Multijoueur allégé — sans la 3D
+
+C'est la variante publiée : ~35 Mo au lieu de ~52.
+
+```sh
+npm run android:light
+npx cap sync android
+cd android && ./gradlew assembleRelease
+cd ..
+```
 
 ## Hors ligne
 
@@ -272,7 +300,7 @@ cd ..
 
 ## Variantes du contenu web
 
-Le tableau des tailles est en tête de ce document. Deux options utiles au script, après `--` : `--skip-jocly-build` réutilise un dist déjà construit,
+Le tableau des commandes et des tailles est en tête de ce document. Deux options utiles au script, après `--` : `--skip-jocly-build` réutilise un dist déjà construit,
 et `--jocly <chemin>` si jocly2 n'est pas dans `../jocly2`.
 
 ## L'APK produit
@@ -303,6 +331,10 @@ La plateforme est déjà là : passez à l'étape suivante. Ne pas accepter la s
 **Le script refuse d'écrire dans un projet natif.** `tools/build-android.mjs` efface son dossier
 de sortie avant de le remplir. Si on le pointe sur `android/`, il s'arrête au lieu d'emporter la
 configuration Gradle et la signature.
+
+**L'APK est plus léger que prévu, ou plus lourd.** C'est la 3D. Le compte rendu du script donne
+la taille du contenu web à chaque build (`contenu web : …`) ; ~69 Mo avec, ~47 Mo sans. Rien dans
+l'application ne le dit une fois installée.
 
 **Le lien d'invitation commence par `https://localhost`.** Le contenu web n'a pas été
 resynchronisé après le build, ou l'APK date d'avant `--site`. Réglages › À propos dit quelle
