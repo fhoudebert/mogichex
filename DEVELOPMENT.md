@@ -309,8 +309,13 @@ port est le discriminant** : une coquille native n'en a jamais, un serveur local
 Une seule option, au moment de fabriquer le paquet Android :
 
 ```sh
-node tools/build-android.mjs --jocly ../jocly2 --site https://exemple.fr/mogichex
+npm run android -- --site https://exemple.fr/mogichex
 ```
+
+(ou `node tools/build-android.mjs --jocly ../jocly2 --site …` directement ; le `--` de npm sert à
+passer l'option au script plutôt qu'à npm). Les recettes complètes — création du projet Capacitor,
+keystore, et les trois commandes de chaque variante — sont dans
+[`android/README.md`](android/README.md).
 
 Sans elle, la valeur par défaut est celle du déploiement de référence,
 `https://www.biscandine.fr/variantes/mogichex`. L'option est **vérifiée avant le build** — une

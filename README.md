@@ -91,9 +91,15 @@ It's a Progressive Web App, so there's no store to go through.
 It then behaves like any other app: full screen, its own icon. Games you've already played stay
 available **offline**; ones you haven't will need a connection the first time.
 
-An **Android APK** is available : [Download apk](https://github.com/fhoudebert/mogichex/releases/download/1.0/mogichex.apk).
-It can also be built — see [android/README.md](android/README.md), including a fully **offline**
-variant with online play removed.
+**Android APKs are published** on the [releases page](https://github.com/fhoudebert/mogichex/releases),
+in two variants: **multiplayer**, which plays over the internet against another player, and
+**offline**, with online play removed — no relay is looked up and the app makes no outgoing
+request at all.
+
+You can also build your own. [android/README.md](android/README.md) covers the whole thing: how to
+set up the Capacitor project and the signing keystore once, then the exact commands for each
+variant — including `--site`, which points the build at **your** deployment so invitation links
+lead to your server rather than to the reference one.
 
 ---
 
