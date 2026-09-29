@@ -20,6 +20,7 @@
 // charge au build pour eviter l'oubli.
 
 const SHELL_VERSION = '202609290643-f517100';
+
 const SHELL_CACHE = 'mogichex-shell-' + SHELL_VERSION;
 const DIST_CACHE = 'mogichex-dist-' + SHELL_VERSION;
 
