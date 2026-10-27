@@ -123,6 +123,28 @@ Avec `--no-3d`, les skins 3D sont aussi retirés du **catalogue** : proposer une
 échouerait au chargement serait pire que ne pas la proposer. Le script s'arrête si un jeu se
 retrouvait sans aucun skin 2D.
 
+## Rotation de l'écran
+
+**La rotation est automatique sans rien installer.** Le gabarit Android de Capacitor ne pose aucun
+`android:screenOrientation` sur l'activité et déclare `configChanges="orientation|screenSize|…"` :
+quand on tourne le téléphone, l'activité n'est pas recréée, la WebView est redimensionnée, et
+Jocly réinscrit le plateau. En paysage, l'écran de partie passe la barre et le statut dans une
+colonne à gauche pour laisser toute la hauteur au plateau (mesuré sur 844 × 390 : plateau de
+390 px de côté au lieu de 304).
+
+Cela suit **le réglage de rotation automatique du téléphone** : si l'utilisateur l'a verrouillé
+dans les paramètres rapides, l'application reste en portrait — comme toute application Android.
+
+Le greffon **`@capacitor/screen-orientation`** sert à l'inverse : *Réglages › Orientation de
+l'écran* propose **Automatique / Portrait / Paysage**, pour figer l'application. « Automatique »
+appelle `unlock()`, qui rend exactement l'état d'origine. Le réglage n'apparaît **que** si le
+greffon est présent dans l'APK : il est en `devDependencies`, et `npx cap sync android` l'ajoute
+au projet natif — un projet créé avant ce changement n'a besoin que de cette resynchronisation.
+
+Pour tourner **malgré** le verrou du système (déconseillé : cela contredit un choix explicite de
+l'utilisateur), il faudrait `android:screenOrientation="fullSensor"` sur l'`<activity>` de
+`android/app/src/main/AndroidManifest.xml` — le greffon ne sait pas le demander.
+
 ## Licence : ce que l'APK doit embarquer
 
 mogichex est sous **AGPL-3.0 ou ultérieure**, la bibliothèque Jocly sous AGPL-3.0, le moteur
@@ -152,7 +174,7 @@ d'ajouter la plateforme si `android/` contient déjà un projet, et propose de s
 `./android` — ce qui détruirait tout.
 
 ```sh
-npm install --save-dev @capacitor/cli @capacitor/core @capacitor/android
+npm install --save-dev @capacitor/cli @capacitor/core @capacitor/android @capacitor/screen-orientation
 npx cap init mogichex fr.biscandine.mogichex --web-dir www
 npx cap add android
 ```

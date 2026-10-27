@@ -35,6 +35,10 @@ html, body {
     flex-direction: column;
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
+    /* En paysage, l'encoche et la barre de navigation passent sur les COTES :
+       sans ces deux marges, le bouton retour se glisse sous l'encoche. */
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
 }
 .screen.is-active { display: flex; }
 
@@ -159,6 +163,7 @@ button.wide { width: 100%; margin-top: 1.25rem; flex: 0 0 auto; }
     background: var(--bg);
     transform: translateY(100%); transition: transform .18s ease-out;
     padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right);
 }
 .panel.is-open { transform: none; }
 .rules, .settings-body { flex: 1 1 auto; overflow-y: auto; padding: 1rem; }
@@ -296,4 +301,44 @@ button.wide { width: 100%; margin-top: 1.25rem; flex: 0 0 auto; }
 @media (min-width: 900px) {
     .catalog { column-width: 24rem; column-gap: 0; }
     .module { break-inside: avoid; }
+}
+
+/* ---- partie en paysage ----
+   Telephone tourne : la hauteur devient la ressource rare. En colonne, barre +
+   statut + horloge mangent ~110 px sur ~360, et le plateau — que jocly inscrit
+   dans le plus petit cote — tombe a ~250 px. On range donc tout ce qui n'est
+   pas le plateau dans une colonne a GAUCHE, et le plateau prend toute la
+   hauteur.
+
+   `max-height` et pas seulement `orientation` : une tablette en paysage a la
+   hauteur qu'il faut, et sa disposition en colonne reste la meilleure.
+
+   Aucune balise ne change : les elements gardent leur ordre et leurs
+   identifiants, seule la grille les place. Un element masque (horloge,
+   avertissement) ne prend pas de ligne. */
+@media (orientation: landscape) and (max-height: 540px) {
+    #screen-game.is-active {
+        display: grid;
+        grid-template-columns: 14rem minmax(0, 1fr);
+        grid-template-rows: auto auto auto auto minmax(0, 1fr);
+    }
+    #screen-game > * { grid-column: 1; min-width: 0; }
+    #screen-game > .board { grid-column: 2; grid-row: 1 / -1; }
+
+    /* La barre se replie : titre sur sa propre ligne, puis les icones. Le
+       retour et quatre icones font 5 x 44 px = 220 px, d'ou les 14 rem. */
+    #screen-game > .bar {
+        flex-wrap: wrap; align-content: flex-start; gap: 0;
+        padding: .25rem; border-bottom: 0;
+    }
+    #screen-game > .bar .bar-title {
+        order: -1; flex: 1 0 100%; padding: .2rem .3rem .1rem;
+        font-size: .95rem; white-space: normal;
+    }
+    /* Un filet separe la colonne du plateau : la .bar perd sa bordure basse,
+       qui n'a plus de sens en colonne. */
+    #screen-game > .board { border-left: 1px solid var(--line); }
+    /* Les deux compteurs l'un sous l'autre : cote a cote, 7 rem chacun ne
+       laissent plus la place au libelle. */
+    #screen-game > .clock { flex-direction: column; border-bottom: 0; }
 }

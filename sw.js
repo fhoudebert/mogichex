@@ -40,6 +40,7 @@ const SHELL = [
     './js/clock.js',
     './js/history.js',
     './js/notify.js',
+    './js/orientation.js',
     './js/game.js',
     './js/remote/chat-channel.js',
     './js/remote/chat-protocol.js',

@@ -27,6 +27,7 @@ import { ChatChannel } from './remote/chat-channel.js';
 import { generateChatKey, makeSealer } from './remote/chat-sealer.js';
 import { KIND, PRESENCE, countUnread, canNudge, NUDGE_MIN_INTERVAL_MS } from './remote/chat-protocol.js';
 import { shouldNotify, notificationFor, nudgeCooldown, formatCooldown } from './notify.js';
+import { ORIENTATION_KEY, sanitizeOrientation, orientationBackend, applyOrientation } from './orientation.js';
 
 const $ = (sel) => document.querySelector(sel);
 const state = {
@@ -1306,6 +1307,22 @@ async function main() {
         availableLocales().map((l) => ({ value: l.code, label: l.label })),
         getLocale()
     );
+    // Orientation : n'apparait que si le greffon natif est la. Appliquee des
+    // le demarrage, car le verrou pose par setRequestedOrientation() ne
+    // survit pas a la fermeture de l'application.
+    const orientation = orientationBackend(window);
+    if (orientation) {
+        const sel = $('#sel-orientation');
+        sel.value = sanitizeOrientation(pref(ORIENTATION_KEY, 'auto'));
+        $('#field-orientation').hidden = false;
+        applyOrientation(sel.value, orientation);
+        sel.addEventListener('change', (e) => {
+            const v = sanitizeOrientation(e.target.value);
+            setPref(ORIENTATION_KEY, v);
+            applyOrientation(v, orientation);
+        });
+    }
+
     $('#sel-lang').addEventListener('change', async (e) => {
         await setLocale(e.target.value);
         setPref('locale', e.target.value);

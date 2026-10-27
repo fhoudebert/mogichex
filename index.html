@@ -267,6 +267,17 @@
                     <label for="sel-lang" data-t>Language</label>
                     <select id="sel-lang"></select>
                 </div>
+                <!-- Propose SEULEMENT dans l'application Android, ou le greffon
+                     natif sait figer l'ecran (voir js/orientation.js). La
+                     rotation automatique, elle, n'a besoin d'aucun reglage. -->
+                <div class="field" id="field-orientation" hidden>
+                    <label for="sel-orientation" data-t>Screen orientation</label>
+                    <select id="sel-orientation">
+                        <option value="auto" data-t>Automatic</option>
+                        <option value="portrait" data-t>Portrait</option>
+                        <option value="landscape" data-t>Landscape</option>
+                    </select>
+                </div>
                 <section class="about-block">
                     <h3 data-t>About</h3>
                     <p id="about" class="about"></p>

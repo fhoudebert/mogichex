@@ -2340,3 +2340,56 @@ test('android : la 3D est conservee par defaut, et le script le dit', () => {
     assert.ok(src.includes('contenu web'), 'le compte rendu donne la taille');
     assert.ok(src.includes('function dirBytes('), 'et sait la calculer');
 });
+
+// ---- orientation de l'ecran (greffon @capacitor/screen-orientation) ----
+import { sanitizeOrientation, orientationBackend, applyOrientation, ORIENTATIONS } from '../js/orientation.js';
+
+test('orientation : sans greffon natif, aucun moyen — le reglage reste cache', () => {
+    assert.equal(orientationBackend({}), null);
+    assert.equal(orientationBackend({ Capacitor: {} }), null);
+    assert.equal(orientationBackend({ Capacitor: { Plugins: {} } }), null);
+    // Un mandataire incomplet ne compte pas : mieux vaut pas d'option qu'une
+    // option qui leve une exception au premier changement.
+    assert.equal(orientationBackend({ Capacitor: { Plugins: { ScreenOrientation: { lock() {} } } } }), null);
+});
+
+test('orientation : auto DEVERROUILLE, portrait/paysage verrouillent, valeur inconnue = auto', async () => {
+    const calls = [];
+    const win = {
+        Capacitor: {
+            Plugins: {
+                ScreenOrientation: {
+                    lock: async (o) => calls.push(['lock', o.orientation]),
+                    unlock: async () => calls.push(['unlock']),
+                },
+            },
+        },
+    };
+    const b = orientationBackend(win);
+    assert.ok(b);
+    assert.equal(await applyOrientation('portrait', b), true);
+    assert.equal(await applyOrientation('landscape', b), true);
+    assert.equal(await applyOrientation('auto', b), true);
+    // Une preference corrompue ne doit jamais figer l'ecran par accident.
+    assert.equal(await applyOrientation('sideways', b), true);
+    assert.deepEqual(calls, [['lock', 'portrait'], ['lock', 'landscape'], ['unlock'], ['unlock']]);
+    assert.equal(sanitizeOrientation(null), 'auto');
+    assert.deepEqual(ORIENTATIONS, ['auto', 'portrait', 'landscape']);
+});
+
+test('orientation : une erreur du greffon n\'interrompt pas l\'application', async () => {
+    const b = { lock: async () => { throw new Error('refuse'); }, unlock: async () => {} };
+    assert.equal(await applyOrientation('landscape', b), false);
+    assert.equal(await applyOrientation('auto', null), false);
+});
+
+test('orientation : chaque option du reglage est une valeur connue et traduite', () => {
+    const html = readFileSync(path.join(root, 'index.html'), 'utf8');
+    const sel = html.slice(html.indexOf('<select id="sel-orientation">'), html.indexOf('</select>', html.indexOf('<select id="sel-orientation">')));
+    const values = [...sel.matchAll(/value="([^"]+)"/g)].map((m) => m[1]);
+    assert.deepEqual(values, ORIENTATIONS);
+    const fr = JSON.parse(readFileSync(path.join(root, 'lang', 'fr.json'), 'utf8'));
+    for (const k of ['Screen orientation', 'Automatic', 'Portrait', 'Landscape']) {
+        assert.ok(fr[k], 'traduction fr manquante : ' + k);
+    }
+});
