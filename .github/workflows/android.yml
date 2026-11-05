@@ -88,9 +88,16 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
+      # Paquets donnés explicitement : la valeur par défaut de l'action,
+      # « tools platform-tools », réclame le paquet « tools », retiré du dépôt
+      # de Google — sdkmanager répond « Failed to find package 'tools' » et
+      # l'étape échoue. (« Wrong version in preinstalled sdkmanager », juste
+      # avant, n'est qu'une information : l'action télécharge sa version.)
+      # Garder build-tools;36.0.0 aligné sur BUILD_TOOLS ci-dessus.
       - uses: android-actions/setup-android@v3
-      - name: SDK Android 36
-        run: sdkmanager "platforms;android-36" "build-tools;${BUILD_TOOLS}"
+        with:
+          packages: "platform-tools platforms;android-36 build-tools;36.0.0"
+          log-accepted-android-sdk-licenses: false
       - uses: gradle/actions/setup-gradle@v4
 
       - name: Dépendances jocly2
