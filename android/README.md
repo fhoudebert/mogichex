@@ -181,7 +181,7 @@ Ne sont **pas** versionnés, parce que générés ou propres à une machine : le
 `local.properties` (chemin du SDK de la machine), les APK, et tout ce qui touche à la signature.
 
 `app/build.gradle` est le gabarit de Capacitor, avec R8 activé en release (`minifyEnabled`,
-`shrinkResources`, d'où `proguard-rules.pro` qui doit être présent) et, en **dernière** ligne,
+`shrinkResources` ; `proguard-rules.pro`, versionné, ne contient que les commentaires du gabarit) et, en **dernière** ligne,
 `apply from: 'mogichex.gradle'`. Tout ce qui touche à la signature et à la version est dans
 **`app/mogichex.gradle`** : une mise à jour de Capacitor qui régénère `build.gradle` ne demande
 que de remettre R8 et cette ligne. `npx cap sync` ne touche ni à l'un ni à l'autre (vérifié) ; il
@@ -235,26 +235,35 @@ keytool -genkey -v -keystore ~/secrets/mogichex.keystore -alias mogichex \
 `.gitignore` du gabarit Capacitor, lui, laisse cette règle en commentaire — mais maintenant
 qu'`android/` est versionné, un keystore qui y dort n'est qu'à un `git add -f` du dépôt public.
 
-## 2.4 Déclarer la signature — sans `keystore.properties`
+## 2.4 Déclarer la signature : `keystore.properties` sur le poste, l'environnement dans le CI
 
-`keystore.properties` n'est **plus lu**. `app/mogichex.gradle` prend quatre réglages, dans les
-**propriétés Gradle** (`-PNOM=…`, ou `~/.gradle/gradle.properties`), sinon dans les **variables
-d'environnement** du même nom :
+`app/mogichex.gradle` prend la signature dans **une** des deux sources suivantes, jamais dans
+un mélange des deux :
 
-| Réglage | |
-|---|---|
-| `MOGICHEX_KEYSTORE_FILE` | chemin du keystore — absolu, ou relatif à `android/` |
-| `MOGICHEX_KEYSTORE_PASSWORD` | mot de passe du magasin |
-| `MOGICHEX_KEY_ALIAS` | alias de la clé — défaut `mogichex` |
-| `MOGICHEX_KEY_PASSWORD` | mot de passe de la clé — défaut : celui du magasin (règle du PKCS12) |
-
-Sur le poste, le plus simple est **`~/.gradle/gradle.properties`** — le fichier de
-l'utilisateur, dans son répertoire personnel, jamais dans le dépôt :
+1. **les réglages `MOGICHEX_*`**, lus dans les propriétés Gradle (`-PNOM=…`, ou
+   `~/.gradle/gradle.properties`), sinon dans les variables d'environnement du même nom.
+   C'est ce que fait le CI ;
+2. à défaut, **`android/keystore.properties`**, au format historique, inchangé :
 
 ```properties
-MOGICHEX_KEYSTORE_FILE=/home/vous/secrets/mogichex.keystore
-MOGICHEX_KEYSTORE_PASSWORD=…
+storeFile=../mogichex.keystore
+storePassword=…
+keyAlias=mogichex
+keyPassword=…
 ```
+
+`storeFile` reste relatif à `android/app/`, d'où le `../` pour un keystore rangé dans
+`android/`. Ce fichier et le keystore sont **ignorés par git** (`keystore.properties`,
+`*.keystore`, `*.jks` dans `.gitignore`, vérifié par `git check-ignore`). Le CI n'en a pas ;
+si un poste a les deux sources, **l'environnement l'emporte**, ce qui permet de signer une fois
+avec une autre clé sans toucher au fichier.
+
+| Réglage `MOGICHEX_*` | équivalent dans `keystore.properties` | |
+|---|---|---|
+| `MOGICHEX_KEYSTORE_FILE` | `storeFile` | chemin du keystore : relatif à `android/` (resp. `android/app/`), ou absolu |
+| `MOGICHEX_KEYSTORE_PASSWORD` | `storePassword` | mot de passe du magasin |
+| `MOGICHEX_KEY_ALIAS` | `keyAlias` | défaut `mogichex` |
+| `MOGICHEX_KEY_PASSWORD` | `keyPassword` | défaut : celui du magasin (règle du PKCS12) |
 
 **Pas dans `android/gradle.properties`** : ce fichier-là est versionné. La construction s'arrête
 si elle y trouve un mot de passe de signature, plutôt que de le laisser partir au prochain
@@ -264,26 +273,14 @@ Comportement, vérifié pour chaque cas :
 
 | Situation | Résultat |
 |---|---|
-| rien de défini | debug normal ; release **non signée** (`app-release-unsigned.apk`) avec un avertissement |
-| tout défini | `app-release.apk` signé, et une ligne `mogichex : release signée avec …, version …` |
-| chemin faux, ou mot de passe absent | arrêt immédiat, message qui nomme le réglage en cause |
+| aucune source | debug normal ; release **non signée** (`app-release-unsigned.apk`) avec un avertissement |
+| `keystore.properties` seul | `app-release.apk` signé ; ligne `mogichex : release signée avec … (via android/keystore.properties)` |
+| `MOGICHEX_*` (avec ou sans `keystore.properties`) | `app-release.apk` signé ; ligne `… (via MOGICHEX_KEYSTORE_FILE)` |
+| keystore introuvable, ou mot de passe absent | arrêt immédiat, message qui nomme la source en cause |
 | mauvais mot de passe | `assembleRelease` échoue (« keystore password was incorrect ») ; `assembleDebug` passe |
 
-Android Studio (*Build → Generate Signed Bundle / APK*) reste possible et ne demande aucun de ces
-réglages.
-
-### Migrer depuis `keystore.properties`
-
-`app/build.gradle` ne lit plus `keystore.properties` (chargement du fichier, bloc
-`signingConfigs` et `signingConfig` du `release` retirés). Sur chaque poste :
-
-1. recopier `storeFile` et `storePassword` (et `keyAlias`/`keyPassword` s'ils diffèrent des
-   défauts) de `android/keystore.properties` dans `~/.gradle/gradle.properties`, sous les noms
-   ci-dessus. Attention au chemin : il était relatif à `android/app/` (d'où
-   `../mogichex.keystore`) ; il est maintenant relatif à `android/`, ou mieux **absolu**, vers un
-   emplacement hors du dépôt ;
-2. supprimer `android/keystore.properties` (il contient les mots de passe en clair) ;
-3. vérifier avec le §2.5.
+La ligne `via …` dit toujours quelle source a servi. Android Studio (*Build → Generate Signed
+Bundle / APK*) reste possible et ne demande aucun de ces réglages.
 
 ## 2.5 Vérifier que tout est en place
 

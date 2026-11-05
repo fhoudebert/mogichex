@@ -3,12 +3,16 @@
 // Appliqué par app/build.gradle, en dernière ligne :
 //     apply from: 'mogichex.gradle'
 //
-// Ce fichier est VERSIONNÉ et ne contient aucun secret. Il remplace
-// keystore.properties : les quatre réglages de signature sont lus, dans cet
-// ordre, dans
-//   1. les propriétés Gradle : -PNOM=… en ligne de commande, ou
-//      ~/.gradle/gradle.properties (le fichier de l'UTILISATEUR, hors dépôt) ;
-//   2. les variables d'environnement du même nom (c'est ce que fait le CI).
+// Ce fichier est VERSIONNÉ et ne contient aucun secret. La signature vient
+// d'UNE des deux sources suivantes, jamais d'un mélange :
+//   1. les réglages MOGICHEX_* ci-dessous, lus dans les propriétés Gradle
+//      (-PNOM=…, ou ~/.gradle/gradle.properties) puis dans les variables
+//      d'environnement du même nom — c'est ce que fait le CI ;
+//   2. à défaut, android/keystore.properties sur le poste (IGNORÉ par git),
+//      au format historique : storeFile (relatif à android/app/), storePassword,
+//      keyAlias, keyPassword.
+// Ainsi un poste garde son keystore.properties, et le CI, qui n'en a pas,
+// signe par l'environnement ; s'il y a les deux, l'environnement l'emporte.
 //
 //   MOGICHEX_KEYSTORE_FILE      chemin du keystore (absolu, ou relatif à android/)
 //   MOGICHEX_KEYSTORE_PASSWORD  mot de passe du magasin
@@ -16,7 +20,7 @@
 //   MOGICHEX_KEY_PASSWORD       mot de passe de la clé (défaut : celui du magasin,
 //                               ce qui est la règle pour un keystore PKCS12)
 //
-// Sans MOGICHEX_KEYSTORE_FILE, rien n'est signé en release : Gradle produit
+// Sans aucune des deux sources, rien n'est signé en release : Gradle produit
 // app-release-unsigned.apk. Le debug, lui, ne dépend jamais de ces réglages.
 //
 // Version : versionName vient de package.json (source unique), versionCode en
@@ -64,17 +68,38 @@ android {
 }
 
 // --- signature ---------------------------------------------------------------
+def ksSource = null, ksFile = null, ksPassword = null, ksAlias = null, ksKeyPassword = null
 def storePath = mogichexSetting('MOGICHEX_KEYSTORE_FILE')
+def legacyProps = rootProject.file('keystore.properties')
 if (storePath) {
-    def ksFile = rootProject.file(storePath)   // un chemin absolu reste absolu
-    def ksPassword = mogichexSetting('MOGICHEX_KEYSTORE_PASSWORD')
-    def ksAlias = mogichexSetting('MOGICHEX_KEY_ALIAS') ?: 'mogichex'
-    def ksKeyPassword = mogichexSetting('MOGICHEX_KEY_PASSWORD') ?: ksPassword
+    ksSource = 'MOGICHEX_KEYSTORE_FILE'
+    ksFile = rootProject.file(storePath)          // relatif à android/ ; un absolu reste absolu
+    ksPassword = mogichexSetting('MOGICHEX_KEYSTORE_PASSWORD')
+    ksAlias = mogichexSetting('MOGICHEX_KEY_ALIAS')
+    ksKeyPassword = mogichexSetting('MOGICHEX_KEY_PASSWORD')
+} else if (legacyProps.isFile()) {
+    ksSource = 'android/keystore.properties'
+    def p = new Properties()
+    legacyProps.withInputStream { p.load(it) }
+    def blank = { v -> (v == null || v.toString().isEmpty()) ? null : v.toString() }
+    if (!blank(p.getProperty('storeFile'))) {
+        throw new GradleException("android/keystore.properties ne contient pas storeFile.")
+    }
+    ksFile = project.file(p.getProperty('storeFile'))   // relatif à android/app/, comme avant
+    ksPassword = blank(p.getProperty('storePassword'))
+    ksAlias = blank(p.getProperty('keyAlias'))
+    ksKeyPassword = blank(p.getProperty('keyPassword'))
+}
+
+if (ksSource) {
+    ksAlias = ksAlias ?: 'mogichex'
+    ksKeyPassword = ksKeyPassword ?: ksPassword
     if (!ksFile.isFile()) {
-        throw new GradleException("MOGICHEX_KEYSTORE_FILE désigne ${ksFile}, qui n'existe pas.")
+        throw new GradleException("${ksSource} désigne le keystore ${ksFile}, qui n'existe pas.")
     }
     if (!ksPassword) {
-        throw new GradleException("MOGICHEX_KEYSTORE_FILE est défini mais pas MOGICHEX_KEYSTORE_PASSWORD.")
+        throw new GradleException("${ksSource} : mot de passe du magasin absent " +
+            "(MOGICHEX_KEYSTORE_PASSWORD, ou storePassword dans keystore.properties).")
     }
     android {
         signingConfigs {
@@ -91,12 +116,13 @@ if (storePath) {
             }
         }
     }
-    logger.lifecycle("mogichex : release signée avec ${ksFile.name} (alias ${ksAlias}), version ${mogichexVersionName} (${mogichexVersionCode})")
+    logger.lifecycle("mogichex : release signée avec ${ksFile.name} (alias ${ksAlias}, via ${ksSource}), " +
+                     "version ${mogichexVersionName} (${mogichexVersionCode})")
 } else {
     gradle.taskGraph.whenReady { graph ->
         if (graph.allTasks.any { it.name.toLowerCase().contains('release') }) {
-            logger.warn("mogichex : MOGICHEX_KEYSTORE_FILE non défini — APK release NON SIGNÉ " +
-                        "(app-release-unsigned.apk), inutilisable tel quel. Voir android/README.md.")
+            logger.warn("mogichex : ni MOGICHEX_KEYSTORE_FILE ni android/keystore.properties — APK release " +
+                        "NON SIGNÉ (app-release-unsigned.apk), inutilisable tel quel. Voir android/README.md.")
         }
     }
 }

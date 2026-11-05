@@ -38,11 +38,11 @@ package-lock.json
 /problems
 
 # --- Signature : jamais dans le depot ---------------------------------------
-# Les reglages passent par ~/.gradle/gradle.properties ou l'environnement
-# (voir android/app/mogichex.gradle). Le gabarit Capacitor laisse *.keystore
-# en commentaire : c'est cette regle-ci qui protege un keystore range sous
-# android/. keystore.properties n'est plus lu, mais un ancien fichier peut
-# trainer sur un poste avec les mots de passe en clair : il reste ignore.
+# android/app/mogichex.gradle lit la signature dans l'environnement (CI) ou,
+# sur le poste, dans android/keystore.properties : ce fichier porte les mots
+# de passe en clair, il ne doit JAMAIS etre versionne. Le gabarit Capacitor
+# laisse *.keystore en commentaire : c'est cette regle-ci qui protege un
+# keystore range sous android/.
 *.keystore
 *.jks
 keystore.properties
