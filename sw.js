@@ -53,6 +53,7 @@ const SHELL = [
     './js/remote/peer-channel.js',
     './js/remote/protocol.js',
     './js/remote/relay-channel.js',
+    './js/remote/relay-drop.js',
     './js/remote/relay-locator.js',
     './js/remote/signalling.js',
     './app/catalog.json',

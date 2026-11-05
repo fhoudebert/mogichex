@@ -2440,3 +2440,59 @@ test('addressWithoutKey : retire k et kid du fragment, garde le reste', () => {
     assert.equal(p.matchId, '1-AbCdEfGhIjKlMn');
     assert.equal(p.chatKey, null);
 });
+
+// ── Effacement d'une partie terminée ─────────────────────────────────────────
+
+import { FinishWatch, dropRequest, sendRelayDrop } from '../js/remote/relay-drop.js';
+
+test('FinishWatch : fin REÇUE d’une partie vue en cours → armé', () => {
+    const w = new FinishWatch();
+    assert.equal(w.noteRemoteState(false), false, 'partie en cours : rien');
+    assert.equal(w.noteRemoteState(true), true, 'puis le coup final arrive : armé');
+    assert.equal(w.take(), true);
+    assert.equal(w.take(), false, 'un seul envoi');
+});
+
+test('FinishWatch : partie rouverte DÉJÀ finie → jamais armé (le dernier coup est peut-être le nôtre)', () => {
+    const w = new FinishWatch();
+    assert.equal(w.noteRemoteState(true), false);
+    assert.equal(w.take(), false);
+});
+
+test('FinishWatch : notre coup local puis l’état final de l’adversaire → armé', () => {
+    const w = new FinishWatch();
+    w.noteLocalMove();
+    assert.equal(w.noteRemoteState(true), true);
+});
+
+test('FinishWatch : une reprise après la fin désarme', () => {
+    const w = new FinishWatch();
+    w.noteRemoteState(false);
+    w.noteRemoteState(true);
+    assert.equal(w.noteRemoteState(false), false, 'la partie revit');
+    assert.equal(w.take(), false);
+});
+
+test('dropRequest : par fileio.php (partie ET fil), sinon par match.php', () => {
+    const a = dropRequest('https://relai.fr/mogichex/', '1700000000000-AbCdEfGhIjKlMn');
+    assert.equal(a.url, 'https://relai.fr/mogichex/fileio.php');
+    assert.equal(a.body.toString(), 'gameioaction=drop&gameid=1700000000000-AbCdEfGhIjKlMn');
+    const b = dropRequest('https://relai.fr/mogichex', 'partie-1', { viaFileio: false });
+    assert.equal(b.url, 'https://relai.fr/mogichex/match.php');
+    assert.equal(b.body.toString(), 'action=drop&mid=partie-1');
+    assert.equal(dropRequest('', 'x'), null);
+    assert.equal(dropRequest('https://r.fr', ''), null);
+});
+
+test('sendRelayDrop : beacon d’abord, fetch keepalive en repli, rien sans requête', () => {
+    const req = dropRequest('https://r.fr', 'partie-1');
+    const sent = [];
+    assert.equal(sendRelayDrop(req, { beacon: (u, b) => { sent.push([u, String(b)]); return true; } }), 'beacon');
+    assert.deepEqual(sent, [['https://r.fr/fileio.php', 'gameioaction=drop&gameid=partie-1']]);
+    let init = null;
+    const how = sendRelayDrop(req, { beacon: () => false, fetchImpl: (u, i) => { init = i; return Promise.resolve(); } });
+    assert.equal(how, 'fetch');
+    assert.equal(init.keepalive, true, 'keepalive : la requête survit à la page');
+    assert.equal(init.method, 'POST');
+    assert.equal(sendRelayDrop(null, { beacon: () => true }), null);
+});

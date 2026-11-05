@@ -804,6 +804,26 @@ que les deux applications restent lisibles l'une par l'autre le jour où on le v
 un fichier vide ou tronqué. Mesuré : 4 lectures incomplètes sur ~1100 sans `rename()`, **0 avec**.
 Attente longue optionnelle bornée à 20 s, comme `signal.php`.
 
+**Une partie finie s'efface du relai** (`js/remote/relay-drop.js`). Quand un état
+**reçu** termine la partie, l'effacement est armé ; il part **en quittant la partie**
+(retour au catalogue, le cas courant sur téléphone) ou **à la fermeture de la page**
+(`pagehide`), par `navigator.sendBeacon` — une requête ordinaire lancée à la fermeture
+n'a aucune garantie de partir. Par `fileio.php` (`gameioaction=drop`), qui efface la
+partie **et** le fil ; par `match.php` (`action=drop`) quand `fileio.php` n'est pas
+déployé, puisqu'il n'y a alors pas de fil.
+
+- **Seul celui qui a reçu le dernier coup** efface : il sait que les deux côtés ont vu
+  la fin. Celui qui l'a joué ne le sait pas. Même règle que Tabulon et joclymatch.
+- **Et seulement si CETTE page a vu la partie en cours** : la première lecture d'une
+  partie rouverte passe par le même chemin qu'un coup reçu, et si elle y est déjà
+  finie, le dernier coup est peut-être le nôtre, joué lors d'une visite précédente.
+- Une reprise de coup après la fin **désarme**. Le joueur est prévenu (`#notice`).
+- Mesuré dans Chromium contre un vrai relai PHP : effacement à la fermeture et au
+  retour au catalogue ; rien d'effacé pour une partie rouverte déjà finie ni pour une
+  partie en cours fermée. Sous Capacitor, `pagehide` peut ne pas venir si le système
+  tue l'application : le retour au catalogue couvre le cas courant, la durée de vie du
+  relai (`$matchTTL`) le reste.
+
 ### CORS
 
 Nécessaire seulement si l'application n'est pas servie depuis le même domaine que le relai
