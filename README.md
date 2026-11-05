@@ -76,7 +76,8 @@ nothing arrives until you open it again — no push server involved, by design.
 **And you can just type.** Free text is sealed with XChaCha20-Poly1305 before it leaves the phone;
 the relay only ever holds opaque bytes. The key rides in the invitation link's *fragment*, which
 browsers never send to any server — so the link is the secret: share it the way you'd share a door
-code, and don't expect it to outlive the game. Same format as
+code, and don't expect it to outlive the game. Once read, the key leaves the address bar (it is kept
+for the tab only, so a reload still works). Same format as
 [Tabulon](https://github.com/fhoudebert/tabulon), so a message written here opens there.
 
 ---

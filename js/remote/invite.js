@@ -272,3 +272,67 @@ export function isUsableEnvelope(env) {
         env.matchdata
     );
 }
+
+// ── La clé hors de la barre d'adresse ───────────────────────────────────────
+//
+// POURQUOI. Laissée dans le fragment, la clé reste dans l'adresse affichée :
+// elle se voit en partage d'écran, elle accompagne une adresse recopiée
+// depuis la barre pour la donner à quelqu'un d'autre, elle reste dans les
+// entrées précédent/suivant de l'onglet. Le lien reçu, lui, la garde : c'est
+// par lui qu'on rouvre la partie.
+//
+// COMMENT. Lue au chargement, elle est rangée en sessionStorage, propre à
+// l'ONGLET et effacé quand il se ferme, sous l'identifiant de la partie ; puis
+// le fragment est retiré de l'adresse (history.replaceState). Un rechargement
+// la retrouve là. Si le stockage est indisponible, le fragment est LAISSÉ :
+// perdre la clé au premier rechargement serait pire que de la voir.
+//
+// CE QUE CELA NE FAIT PAS : effacer l'historique du navigateur, qui a
+// enregistré l'adresse visitée, clé comprise (constaté sous Chromium) — au même
+// titre que le message qui contenait le lien.
+//
+// Même mécanisme, même format que joclymatch (js/chat-seal.js).
+
+export const CHAT_KEY_STORAGE = 'mogichex.chat-key:';
+
+/** Range la clé (et l'empreinte) d'une partie. Rend true si c'est fait. */
+export function rememberInviteKey(storage, matchId, { chatKey = null, chatKeyId = null } = {}) {
+    if (!storage || !matchId || (!chatKey && !chatKeyId)) return false;
+    const k = CHAT_KEY_RE.test(String(chatKey || '')) ? chatKey : null;
+    const kid = CHAT_KEY_ID_RE.test(String(chatKeyId || '')) ? chatKeyId : null;
+    if (!k && !kid) return false;
+    try {
+        storage.setItem(CHAT_KEY_STORAGE + matchId, JSON.stringify({ k, kid }));
+        return storage.getItem(CHAT_KEY_STORAGE + matchId) !== null;
+    } catch {
+        return false;
+    }
+}
+
+/** Relit ce qui a été rangé pour cette partie ; valeurs mal formées ignorées. */
+export function recallInviteKey(storage, matchId) {
+    const none = { chatKey: null, chatKeyId: null };
+    if (!storage || !matchId) return none;
+    try {
+        const v = JSON.parse(storage.getItem(CHAT_KEY_STORAGE + matchId) || 'null');
+        if (!v || typeof v !== 'object') return none;
+        return {
+            chatKey: CHAT_KEY_RE.test(String(v.k || '')) ? v.k : null,
+            chatKeyId: CHAT_KEY_ID_RE.test(String(v.kid || '')) ? v.kid : null,
+        };
+    } catch {
+        return none;
+    }
+}
+
+/** L'adresse sans `k` ni `kid` dans le fragment (le reste du fragment est gardé). */
+export function addressWithoutKey(href) {
+    const text = String(href);
+    const i = text.indexOf('#');
+    if (i < 0) return text;
+    const params = new URLSearchParams(text.slice(i + 1));
+    params.delete('k');
+    params.delete('kid');
+    const rest = params.toString();
+    return text.slice(0, i) + (rest ? '#' + rest : '');
+}

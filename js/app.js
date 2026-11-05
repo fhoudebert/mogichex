@@ -15,6 +15,9 @@ import {
     buildEnvelope,
     makeId,
     inviteBaseFrom,
+    rememberInviteKey,
+    recallInviteKey,
+    addressWithoutKey,
 } from './remote/invite.js';
 import { RelayChannel } from './remote/relay-channel.js';
 import { locateRelay, RELAY_ROOTS } from './remote/relay-locator.js';
@@ -1345,6 +1348,20 @@ async function main() {
     // serait perdue. On lit les deux.
     const invite = parseInviteLink(location.search + location.hash);
     if (invite) {
+        // La cle quitte la barre d'adresse une fois lue (voir invite.js) :
+        // rangee dans l'onglet, puis retiree -- seulement si le rangement a
+        // marche. Sans fragment (rechargement), on la retrouve la.
+        let tabStore = null;
+        try { tabStore = window.sessionStorage; } catch { tabStore = null; }
+        if (invite.chatKey || invite.chatKeyId) {
+            if (rememberInviteKey(tabStore, invite.matchId, invite)) {
+                try {
+                    history.replaceState(history.state, '', addressWithoutKey(location.href));
+                } catch { /* adresse laissee telle quelle */ }
+            }
+        } else {
+            Object.assign(invite, recallInviteKey(tabStore, invite.matchId));
+        }
         const entry = state.catalog.games.find((g) => g.name === invite.game);
         if (entry) {
             openDetail(entry);

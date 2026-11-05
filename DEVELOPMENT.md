@@ -1069,6 +1069,25 @@ Conséquence à connaître : le lien **est** le secret. Qui l'intercepte lit la
 conversation, et perdre le lien c'est perdre le fil. C'est le bon compromis pour
 une partie, pas pour un secret durable.
 
+### Une fois lue, la clé quitte la barre d'adresse
+
+Laissée dans le fragment, elle restait dans l'adresse affichée : visible en
+partage d'écran, recopiée avec l'adresse quand on la donne à quelqu'un d'autre,
+présente dans les entrées précédent/suivant de l'onglet. Au chargement,
+`app.js` la range donc en `sessionStorage` (propre à l'**onglet**, effacé à sa
+fermeture), sous l'identifiant de la partie (`mogichex.chat-key:<mid>`), puis
+retire `k` et `kid` du fragment par `history.replaceState`. Un rechargement la
+retrouve là ; un autre onglet ouvert sur l'adresse nettoyée ne l'a pas.
+
+- **Le stockage échoue** (réglage du navigateur) : le fragment est **laissé**.
+  Perdre la clé au premier rechargement serait pire que de la voir.
+- **Ce que cela ne fait pas** : effacer l'historique du navigateur. Constaté sous
+  Chromium, la base d'historique garde l'adresse visitée, clé comprise, à côté
+  de l'adresse nettoyée — exactement comme le message qui contenait le lien.
+- Fonctions pures dans `remote/invite.js` (`rememberInviteKey`,
+  `recallInviteKey`, `addressWithoutKey`), testées ; même mécanisme et même
+  format que joclymatch (`js/chat-seal.js`).
+
 ### Trois états, trois explications
 
 Le champ de saisie n'apparaît **que** si le texte peut être scellé : sans

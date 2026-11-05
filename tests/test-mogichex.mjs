@@ -53,6 +53,10 @@ import {
     buildEnvelope,
     isUsableEnvelope,
     MATCH_ID_RE,
+    rememberInviteKey,
+    recallInviteKey,
+    addressWithoutKey,
+    CHAT_KEY_STORAGE,
 } from '../js/remote/invite.js';
 import {
     orderedCandidates,
@@ -2392,4 +2396,47 @@ test('orientation : chaque option du reglage est une valeur connue et traduite',
     for (const k of ['Screen orientation', 'Automatic', 'Portrait', 'Landscape']) {
         assert.ok(fr[k], 'traduction fr manquante : ' + k);
     }
+});
+
+// ── La clé hors de la barre d'adresse ───────────────────────────────────────
+
+function tabStorage() {
+    const m = new Map();
+    return { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), map: m };
+}
+const KEY64 = '0123456789abcdef'.repeat(4);
+
+test('clé d’invitation : rangée dans l’onglet sous la partie, puis relue', () => {
+    const st = tabStorage();
+    assert.equal(rememberInviteKey(st, '1700000000000-AbCdEfGhIjKlMn', { chatKey: KEY64 }), true);
+    assert.ok(st.map.has(CHAT_KEY_STORAGE + '1700000000000-AbCdEfGhIjKlMn'));
+    assert.equal(recallInviteKey(st, '1700000000000-AbCdEfGhIjKlMn').chatKey, KEY64);
+    assert.equal(recallInviteKey(st, '1700000000000-Autre').chatKey, null, 'une autre partie n’en hérite pas');
+});
+
+test('clé d’invitation : l’empreinte Tabulon se range aussi, une valeur abîmée est ignorée', () => {
+    const st = tabStorage();
+    rememberInviteKey(st, 'partie-kid', { chatKeyId: 'aaaabbbbccccdddd' });
+    assert.equal(recallInviteKey(st, 'partie-kid').chatKeyId, 'aaaabbbbccccdddd');
+    assert.equal(rememberInviteKey(st, 'partie-x', { chatKey: 'pas une clé' }), false, 'rien de valide : rien rangé');
+    st.setItem(CHAT_KEY_STORAGE + 'abime', '{');
+    assert.deepEqual(recallInviteKey(st, 'abime'), { chatKey: null, chatKeyId: null });
+});
+
+test('clé d’invitation : stockage indisponible → on le dit, et l’adresse ne sera pas touchée', () => {
+    const plein = { getItem: () => null, setItem: () => { throw new Error('QuotaExceededError'); } };
+    assert.equal(rememberInviteKey(plein, 'partie-1', { chatKey: KEY64 }), false);
+    assert.equal(rememberInviteKey(null, 'partie-1', { chatKey: KEY64 }), false);
+});
+
+test('addressWithoutKey : retire k et kid du fragment, garde le reste', () => {
+    const base = 'https://h.fr/mogichex/index.html?game=chess&mid=1-AbCdEfGhIjKlMn&player=b';
+    assert.equal(addressWithoutKey(base + '#k=' + KEY64), base);
+    assert.equal(addressWithoutKey(base + '#kid=aaaabbbbccccdddd'), base);
+    assert.equal(addressWithoutKey(base + '#k=' + KEY64 + '&x=1'), base + '#x=1');
+    assert.equal(addressWithoutKey(base), base);
+    // L'adresse nettoyée se relit toujours comme une invitation : seule la clé manque.
+    const p = parseInviteLink(addressWithoutKey(base + '#k=' + KEY64));
+    assert.equal(p.matchId, '1-AbCdEfGhIjKlMn');
+    assert.equal(p.chatKey, null);
 });
