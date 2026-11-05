@@ -1,0 +1,344 @@
+/* mogichex — mobile d'abord.
+   Regles d'ergonomie tenues partout : cibles tactiles >= 44 px, aucun survol
+   comme seul moyen d'acces, et la zone du plateau ne defile pas (sinon un
+   glisser sur une piece fait defiler la page). */
+
+:root {
+    --bg: #16171b;
+    --bg-soft: #1f2026;
+    --line: #303239;
+    --fg: #e9e9ee;
+    --fg-dim: #a0a2ad;
+    --accent: #4a9d5f;
+    --accent-2: #5b7fd4;
+    --bar-h: 3.25rem;
+    --tap: 2.75rem;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+    margin: 0;
+    height: 100%;
+    background: var(--bg);
+    color: var(--fg);
+    font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    overscroll-behavior: none;
+}
+
+#app { height: 100%; position: relative; overflow: hidden; }
+
+.screen {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    /* En paysage, l'encoche et la barre de navigation passent sur les COTES :
+       sans ces deux marges, le bouton retour se glisse sous l'encoche. */
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+}
+.screen.is-active { display: flex; }
+
+.bar {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    min-height: var(--bar-h);
+    padding: 0 .5rem;
+    background: var(--bg-soft);
+    border-bottom: 1px solid var(--line);
+    flex: 0 0 auto;
+}
+.brand { font-size: 1.15rem; margin: 0; flex: 1; letter-spacing: .02em; }
+.bar-title { font-size: 1.05rem; margin: 0; flex: 1; font-weight: 600;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.icon-btn {
+    min-width: var(--tap); min-height: var(--tap);
+    background: none; border: 0; color: var(--fg);
+    font-size: 1.35rem; line-height: 1; border-radius: .5rem;
+}
+.icon-btn:active { background: #ffffff18; }
+.icon-btn.back { font-size: 2rem; }
+
+/* ---- recherche et filtres ---- */
+.searchbar { padding: .5rem; flex: 0 0 auto; }
+.searchbar input {
+    width: 100%; min-height: var(--tap);
+    padding: 0 .75rem; font-size: 1rem;
+    color: var(--fg); background: var(--bg-soft);
+    border: 1px solid var(--line); border-radius: .6rem;
+}
+.filterbar {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: .5rem; padding: 0 .75rem .5rem; flex: 0 0 auto;
+    color: var(--fg-dim); font-size: .85rem;
+}
+.switch { display: flex; align-items: center; gap: .4rem; min-height: var(--tap); }
+.switch input { width: 1.15rem; height: 1.15rem; }
+
+/* ---- liste des jeux ---- */
+.catalog { flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.module { border-top: 1px solid var(--line); }
+.module-head {
+    display: flex; align-items: center; gap: .6rem; width: 100%;
+    min-height: var(--tap); padding: .5rem .75rem;
+    background: var(--bg-soft); border: 0; color: var(--fg);
+    font-size: .95rem; font-weight: 600; text-align: left;
+}
+/* La casse vient du libelle (voir MODULE_LABELS) : un capitalize ici
+   rendrait « Four In A Row » et « Foot Des Manchots ». */
+.module-name { flex: 1; }
+.module-count { color: var(--fg-dim); font-weight: 400; font-size: .85rem; }
+.chevron::before { content: "▸"; display: inline-block; color: var(--fg-dim); }
+.module-head[aria-expanded="true"] .chevron::before { transform: rotate(90deg); }
+
+.games { list-style: none; margin: 0; padding: 0; }
+.game + .game { border-top: 1px solid var(--line); }
+.game-btn {
+    display: flex; align-items: center; gap: .75rem; width: 100%;
+    min-height: 4rem; padding: .5rem .75rem;
+    background: none; border: 0; color: var(--fg); text-align: left;
+}
+.game-btn:active { background: #ffffff10; }
+.thumb { width: 2.75rem; height: 2.75rem; object-fit: contain; flex: 0 0 auto; }
+.game-text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.game-title { font-weight: 600; }
+.game-summary {
+    color: var(--fg-dim); font-size: .82rem;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.tag-large { color: var(--fg-dim); font-size: 1.1rem; }
+.empty { padding: 2rem 1rem; text-align: center; color: var(--fg-dim); }
+
+/* ---- detail ---- */
+.detail-body { flex: 1 1 auto; overflow-y: auto; padding: 1rem; }
+.detail-thumb { width: 5rem; height: 5rem; object-fit: contain; }
+.detail-summary { color: var(--fg-dim); }
+.detail-actions { display: flex; gap: .75rem; margin: 1rem 0 1.5rem; }
+button.primary, button.secondary {
+    flex: 1; min-height: var(--tap); border: 0; border-radius: .6rem;
+    font-size: 1rem; font-weight: 600; color: #fff;
+}
+button.primary { background: var(--accent); }
+button.secondary { background: var(--accent-2); }
+button[disabled] { opacity: .45; }
+
+.field { display: flex; align-items: center; gap: .75rem; margin: .75rem 0; }
+.field label { flex: 0 0 8rem; color: var(--fg-dim); font-size: .9rem; }
+.switch.row { justify-content: flex-start; padding: 0 0 0 .1rem; gap: .6rem; }
+.switch.row span { font-size: .95rem; }
+/* `flex: 1` sur .primary/.secondary sert aux paires de boutons cote a cote
+   (.detail-actions, une RANGEE). Dans une colonne — le panneau de discussion —
+   le meme flex-grow etire le bouton sur toute la hauteur libre : « Relancer
+   votre adversaire » occupait 180 px. Un bouton pleine largeur n'a jamais
+   besoin de grandir sur l'axe principal. */
+button.wide { width: 100%; margin-top: 1.25rem; flex: 0 0 auto; }
+[hidden] { display: none !important; }
+
+.field select {
+    flex: 1; min-height: var(--tap); padding: 0 .5rem; font-size: 1rem;
+    color: var(--fg); background: var(--bg-soft);
+    border: 1px solid var(--line); border-radius: .5rem;
+}
+
+/* ---- partie ---- */
+.status { padding: .4rem .75rem; color: var(--fg-dim); font-size: .9rem; flex: 0 0 auto; }
+.progress { height: 3px; background: var(--line); display: none; flex: 0 0 auto; }
+.progress.is-visible { display: block; }
+.progress > span { display: block; height: 100%; width: 0; background: var(--accent); }
+.board {
+    flex: 1 1 auto; min-height: 0; position: relative;
+    /* Le plateau capte le geste : sans cela, deplacer une piece fait defiler. */
+    touch-action: none; overflow: hidden;
+}
+
+/* ---- panneaux ---- */
+.panel {
+    position: absolute; inset: 0; z-index: 10;
+    display: flex; flex-direction: column;
+    background: var(--bg);
+    transform: translateY(100%); transition: transform .18s ease-out;
+    padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right);
+}
+.panel.is-open { transform: none; }
+.rules, .settings-body { flex: 1 1 auto; overflow-y: auto; padding: 1rem; }
+.rules img { max-width: 100%; height: auto; }
+.rules table { max-width: 100%; }
+.rules a { color: var(--accent-2); }
+.about { color: var(--fg-dim); font-size: .8rem; margin: .4rem 0; }
+/* Les deux adresses tiennent sur deux lignes, et une URL longue doit pouvoir
+   se couper plutot que deborder du panneau. */
+#about-remote { white-space: pre-line; word-break: break-all; }
+.about-block { margin-top: 2rem; border-top: 1px solid var(--line); padding-top: 1rem; }
+.about-block h3 { font-size: .95rem; margin: 0 0 .5rem; color: var(--fg); }
+.about a { color: var(--accent-2); text-decoration: none; }
+.license-note { margin-top: .9rem; font-size: .75rem; line-height: 1.4; }
+.about a:active { text-decoration: underline; }
+.hint { color: var(--fg-dim); font-size: .85rem; }
+.hint.error { color: #ff8686; }
+.notice {
+    margin: 0; padding: .5rem .75rem; flex: 0 0 auto;
+    background: #4a3a10; color: #ffd98a; font-size: .82rem; line-height: 1.35;
+}
+.settings-body input[type="text"] {
+    width: 100%; min-height: var(--tap); padding: 0 .6rem; font-size: .9rem;
+    color: var(--fg); background: var(--bg-soft);
+    border: 1px solid var(--line); border-radius: .5rem;
+}
+.fatal { color: #ff8686; padding: 1rem; white-space: pre-wrap; }
+
+/* ---- favoris ----
+   L'etoile est un bouton A PART de la ligne du jeu, pas une zone de celle-ci :
+   les deux gestes sont differents (ouvrir / marquer) et doivent avoir chacun
+   leur cible de 44 px, sinon marquer un favori ouvre la fiche une fois sur
+   trois. */
+.game-btn { min-width: 0; }
+.game { display: flex; align-items: stretch; }
+.fav-btn {
+    flex: 0 0 auto; width: var(--tap); border: 0; background: none;
+    /* Ni la couleur des filets (invisible, donc l'affordance disparait) ni
+       celle du texte (elle ferait concurrence au titre du jeu, alors que
+       marquer un favori est un geste rare). */
+    color: #5c5f6a; font-size: 1.25rem; line-height: 1;
+}
+.fav-btn[aria-pressed="true"] { color: #e2b53c; }
+.fav-btn:active { background: #ffffff10; }
+
+/* ---- horloge ----
+   Deux compteurs cote a cote, en chiffres tabulaires : sans cela le libelle
+   se decale a chaque seconde et la bande entiere semble vibrer. */
+.clock {
+    display: flex; gap: .5rem; padding: .35rem .5rem; flex: 0 0 auto;
+    border-bottom: 1px solid var(--line);
+}
+.clock-side {
+    flex: 1; display: flex; align-items: baseline; justify-content: space-between;
+    gap: .5rem; padding: .2rem .55rem; border-radius: .45rem;
+    background: var(--bg-soft); color: var(--fg-dim); font-size: .85rem;
+}
+.clock-side time {
+    font-variant-numeric: tabular-nums; font-size: 1.05rem; font-weight: 600;
+    color: var(--fg);
+}
+.clock-side.is-running { background: #26332a; color: var(--fg); }
+.clock-side.is-low time { color: #ff8686; }
+
+/* ---- historique ----
+   Deux colonnes, chaque cellule numerotee : les jeux de jocly n'alternent pas
+   tous les camps, une grille « blancs / noirs » mentirait. */
+.history { list-style: none; margin: 1rem 0 0; padding: 0; }
+.history li { display: flex; gap: .5rem; }
+.history li + li { margin-top: .25rem; }
+.move-btn {
+    flex: 1; min-height: var(--tap); border: 1px solid var(--line);
+    border-radius: .5rem; background: var(--bg-soft); color: var(--fg);
+    font-size: .95rem; text-align: left; padding: 0 .6rem;
+    display: flex; align-items: center; gap: .5rem;
+}
+.move-btn:active { background: #ffffff10; }
+.move-btn[disabled] { opacity: 1; border-style: dashed; }
+.move-n { color: var(--fg-dim); font-size: .8rem; min-width: 1.8rem; }
+.move-btn.is-current { border-color: var(--accent); }
+.move-spacer { flex: 1; }
+
+/* ---- discussion ---- */
+.chat-body { display: flex; flex-direction: column; }
+/* Le fil pousse vers le BAS : une conversation de trois messages collee en
+   haut d'un ecran vide a l'air cassee, et c'est l'etat normal d'une partie par
+   correspondance. `margin-top: auto` sur le premier message plutot que
+   `justify-content: flex-end`, qui rend le debut du fil inatteignable des que
+   ca deborde. */
+.chat-thread {
+    flex: 1 1 auto; min-height: 4rem; overflow-y: auto;
+    display: flex; flex-direction: column;
+}
+.chat-thread > :first-child { margin-top: auto; }
+.chat-line {
+    margin: .3rem 0; padding: .4rem .6rem; border-radius: .6rem;
+    background: var(--bg-soft); max-width: 85%; font-size: .95rem;
+}
+.chat-line.is-mine { margin-left: auto; background: #26364f; }
+.chat-line.is-presence { background: none; color: var(--fg-dim); font-size: .85rem;
+    max-width: 100%; text-align: center; padding: .2rem; }
+.chat-line.locked { color: var(--fg-dim); font-style: italic; }
+.chat-when { color: var(--fg-dim); font-size: .7rem; margin-left: .4rem; }
+/* Le champ et son bouton sur une seule ligne : le clavier virtuel mange deja
+   la moitie de l'ecran, une ligne de plus pousserait le fil hors de vue. */
+.chat-composer { display: flex; gap: .5rem; margin-top: .75rem; }
+.chat-composer input { flex: 1 1 auto; margin: 0; }
+.chat-composer button { flex: 0 0 auto; width: var(--tap); padding: 0; font-size: 1.1rem; }
+.chat-quick { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .75rem; }
+/* Trois poids, trois intentions : un message rapide se DIT (contour accentue),
+   un etat de presence se CONSTATE (sourd). Quatre aplats pleins cote a cote
+   donnaient a « bien joue » le poids d'un bouton « jouer ». */
+.chat-quick button { flex: 1 1 45%; font-size: .9rem; padding: 0 .4rem; }
+#chat-quick button {
+    background: var(--bg-soft); color: var(--fg);
+    border: 1px solid var(--accent-2);
+}
+#chat-presence button {
+    background: var(--bg-soft); color: var(--fg-dim); font-weight: 400;
+    border: 1px solid var(--line);
+}
+.icon-btn.has-unread { position: relative; }
+.icon-btn.has-unread::after {
+    content: attr(data-unread); position: absolute; top: .35rem; right: .05rem;
+    min-width: 1.05rem; padding: 0 .18rem; border-radius: .6rem;
+    background: var(--accent); color: #fff; font-size: .62rem; line-height: 1.05rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .panel { transition: none; }
+}
+
+/* Ecran large : la liste et le detail peuvent cohabiter. Reserve a plus tard,
+   on garde ici la seule adaptation utile tout de suite. */
+@media (min-width: 900px) {
+    .catalog { column-width: 24rem; column-gap: 0; }
+    .module { break-inside: avoid; }
+}
+
+/* ---- partie en paysage ----
+   Telephone tourne : la hauteur devient la ressource rare. En colonne, barre +
+   statut + horloge mangent ~110 px sur ~360, et le plateau — que jocly inscrit
+   dans le plus petit cote — tombe a ~250 px. On range donc tout ce qui n'est
+   pas le plateau dans une colonne a GAUCHE, et le plateau prend toute la
+   hauteur.
+
+   `max-height` et pas seulement `orientation` : une tablette en paysage a la
+   hauteur qu'il faut, et sa disposition en colonne reste la meilleure.
+
+   Aucune balise ne change : les elements gardent leur ordre et leurs
+   identifiants, seule la grille les place. Un element masque (horloge,
+   avertissement) ne prend pas de ligne. */
+@media (orientation: landscape) and (max-height: 540px) {
+    #screen-game.is-active {
+        display: grid;
+        grid-template-columns: 14rem minmax(0, 1fr);
+        grid-template-rows: auto auto auto auto minmax(0, 1fr);
+    }
+    #screen-game > * { grid-column: 1; min-width: 0; }
+    #screen-game > .board { grid-column: 2; grid-row: 1 / -1; }
+
+    /* La barre se replie : titre sur sa propre ligne, puis les icones. Le
+       retour et quatre icones font 5 x 44 px = 220 px, d'ou les 14 rem. */
+    #screen-game > .bar {
+        flex-wrap: wrap; align-content: flex-start; gap: 0;
+        padding: .25rem; border-bottom: 0;
+    }
+    #screen-game > .bar .bar-title {
+        order: -1; flex: 1 0 100%; padding: .2rem .3rem .1rem;
+        font-size: .95rem; white-space: normal;
+    }
+    /* Un filet separe la colonne du plateau : la .bar perd sa bordure basse,
+       qui n'a plus de sens en colonne. */
+    #screen-game > .board { border-left: 1px solid var(--line); }
+    /* Les deux compteurs l'un sous l'autre : cote a cote, 7 rem chacun ne
+       laissent plus la place au libelle. */
+    #screen-game > .clock { flex-direction: column; border-bottom: 0; }
+}
