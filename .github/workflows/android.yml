@@ -20,12 +20,12 @@ on:
   workflow_dispatch:
     inputs:
       variant:
-        description: "light = sans 3D (publiée) · 3d = complète · offline = sans 3D ni jeu à distance"
+        description: "multiplayer-2d = jeu à distance, sans 3D (publiée) · multiplayer-3d = jeu à distance, avec 3D · offline-2d = sans jeu à distance ni 3D"
         type: choice
-        options: [light, 3d, offline]
-        default: light
+        options: [multiplayer-2d, multiplayer-3d, offline-2d]
+        default: multiplayer-2d
       site:
-        description: "Adresse publique (relai + liens d'invitation) ; ignorée en offline"
+        description: "Adresse publique (relai + liens d'invitation) ; ignorée en offline-2d"
         default: https://www.biscandine.fr/variantes/mogichex
       jocly_ref:
         description: "Branche, tag ou commit de fhoudebert/jocly2"
@@ -112,13 +112,14 @@ jobs:
       - name: Contenu web (www)
         working-directory: mogichex
         run: |
+          # La variante EST le script npm du même nom (package.json) : le CI et
+          # le poste construisent exactement la même chose. --site est sans
+          # effet en offline-2d (ni relai ni invitation).
           case "$VARIANT" in
-            3d)      set -- --3d    --site "$SITE" ;;
-            light)   set -- --no-3d --site "$SITE" ;;
-            offline) set -- --no-3d --offline ;;
-            *) echo "variante inconnue : $VARIANT"; exit 2 ;;
+            multiplayer-2d|multiplayer-3d|offline-2d) ;;
+            *) echo "::error::variante inconnue : $VARIANT"; exit 2 ;;
           esac
-          node tools/build-android.mjs --jocly ../jocly2 "$@"
+          npm run "android:$VARIANT" -- --site "$SITE"
 
       - name: Synchronisation Capacitor
         working-directory: mogichex
