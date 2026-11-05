@@ -2324,11 +2324,9 @@ test('discussion : ce qu on a lu reste a l ecran quand le relai fait de la place
 });
 
 test('android : --3d et --no-3d se contredisent au lieu d etre arbitres', () => {
-    // Les deux variantes multijoueur se distinguaient par `android` et
-    // `android:light`, deux noms dont aucun ne prononce le mot « 3D » : on
-    // pouvait construire l allegee en croyant faire la complete et ne s en
-    // apercevoir qu a la taille du paquet. `--3d` nomme l intention ; les deux
-    // ensemble sont une contradiction, pas un ordre de priorite a deviner.
+    // `--3d` nomme l intention (les scripts npm la portent dans leur nom :
+    // android:multiplayer-3d) ; les deux ensemble sont une contradiction, pas
+    // un ordre de priorite a deviner.
     const r = spawnSync(process.execPath,
         [path.join(root, 'tools', 'build-android.mjs'), '--3d', '--no-3d'],
         { encoding: 'utf8', timeout: 20000 });
@@ -2343,6 +2341,52 @@ test('android : la 3D est conservee par defaut, et le script le dit', () => {
     // variantes une fois l APK construit : le compte rendu doit la donner.
     assert.ok(src.includes('contenu web'), 'le compte rendu donne la taille');
     assert.ok(src.includes('function dirBytes('), 'et sait la calculer');
+});
+
+test('android : chaque variante a un nom explicite, le meme dans npm et dans le CI', () => {
+    // Le nom dit les deux choix : jeu a distance (multiplayer/offline) et 3D
+    // (3d/2d). Les anciens noms `android` et `android:light` ne disaient pas si
+    // la 3D etait incluse ; ils ne doivent pas revenir.
+    const pkg = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'));
+    const scripts = Object.keys(pkg.scripts).filter((k) => k === 'android' || k.startsWith('android:'));
+    const variants = scripts.map((k) => k.slice('android:'.length)).sort();
+    assert.deepEqual(variants, ['multiplayer-2d', 'multiplayer-3d', 'offline-2d']);
+    for (const v of variants) {
+        const m = /^(multiplayer|offline)-(2d|3d)$/.exec(v);
+        assert.ok(m, `nom explicite : ${v}`);
+        const cmd = pkg.scripts['android:' + v];
+        assert.equal(cmd.includes('--offline'), m[1] === 'offline', `${v} : --offline`);
+        assert.equal(cmd.includes('--no-3d'), m[2] === '2d', `${v} : --no-3d`);
+        assert.equal(/--3d\b/.test(cmd), m[2] === '3d', `${v} : --3d`);
+    }
+    // Le workflow propose exactement ces variantes et appelle le script du
+    // meme nom : le CI et le poste ne peuvent pas diverger.
+    const wf = readFileSync(path.join(root, '.github', 'workflows', 'android.yml'), 'utf8');
+    const opts = /options:\s*\[([^\]]*)\]/.exec(wf)[1].split(',').map((x) => x.trim()).sort();
+    assert.deepEqual(opts, variants);
+    assert.match(wf, /default:\s*multiplayer-2d/);
+    assert.ok(wf.includes('npm run "android:$VARIANT"'), 'le CI lance le script npm');
+});
+
+test('android : la garde du projet natif laisse le script ecraser son propre www', async () => {
+    const { looksLikeNativeProject } = await import('../tools/lib/native-guard.mjs');
+    const { mkdtempSync, mkdirSync: mk, writeFileSync: wr } = await import('node:fs');
+    const os = await import('node:os');
+    const t = mkdtempSync(path.join(os.tmpdir(), 'garde-'));
+    // Un www deja produit contient app/catalog.json : ce n est PAS un projet natif.
+    const www = path.join(t, 'www');
+    mk(path.join(www, 'app'), { recursive: true });
+    wr(path.join(www, 'app', 'catalog.json'), '{}');
+    wr(path.join(www, 'index.html'), '');
+    assert.equal(looksLikeNativeProject(www), false, 'www/app/ seul ne bloque pas');
+    // Un vrai projet natif reste protege, quel que soit le marqueur present.
+    for (const m of ['build.gradle', 'gradlew', 'settings.gradle', 'app/build.gradle']) {
+        const d = path.join(t, 'natif-' + m.replace('/', '_'));
+        mk(path.dirname(path.join(d, m)), { recursive: true });
+        wr(path.join(d, m), '');
+        assert.equal(looksLikeNativeProject(d), true, `protege par ${m}`);
+    }
+    assert.equal(looksLikeNativeProject(path.join(t, 'absent')), false);
 });
 
 // ---- orientation de l'ecran (greffon @capacitor/screen-orientation) ----

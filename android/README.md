@@ -10,24 +10,30 @@ toutes (signature et CI compris), puis les commandes prêtes à l'emploi.
 
 # 1. Informations générales
 
-## Deux variantes, deux usages
+## Trois variantes, nommées par ce qu'elles contiennent
 
-| Commande | Jeu à distance | 3D | `www` | APK attendu |
-|---|---|---|---|---|
-| `npm run android:3d` | oui | **oui** | ~69 Mo | ~52 Mo |
-| `npm run android` | oui | oui | ~69 Mo | ~52 Mo |
-| `npm run android:light` | oui | non | ~47 Mo | **~35 Mo** |
-| `npm run android:offline` | non | non | ~47 Mo | ~35 Mo |
+Le nom de chaque variante dit les deux choix qu'elle fait : **jeu à distance ou non**
+(`multiplayer` / `offline`), **pièces 3D ou non** (`3d` / `2d`). Le même nom sert au script npm,
+au choix du workflow (§2.6), au fichier APK produit par le CI
+(`mogichex-<version>-<variante>.apk`) et au compte rendu du script (`variante : …`).
 
-`android` et `android:3d` font la même chose : **la 3D est conservée par défaut**. Le second
-existe pour que la commande dise ce qu'elle produit — `android` et `android:light` ne prononcent
-ni l'un ni l'autre le mot « 3D », de quoi construire la variante allégée en croyant faire la
-complète et ne s'en apercevoir qu'à la taille du paquet.
+| Variante | Commande | Jeu à distance | 3D | `www` | APK attendu |
+|---|---|---|---|---|---|
+| **`multiplayer-2d`** (publiée) | `npm run android:multiplayer-2d` | oui | non | ~47 Mo | **~35 Mo** |
+| `multiplayer-3d` | `npm run android:multiplayer-3d` | oui | **oui** | ~69 Mo | ~52 Mo |
+| `offline-2d` | `npm run android:offline-2d` | **non** | non | ~47 Mo | ~35 Mo |
 
-C'est d'ailleurs comme cela qu'on reconnaît une variante déjà construite : **l'APK multijoueur
-publié en 1.10 pèse 38,1 Mo**, ce qui correspond à `android:light` et non à `android`. Le compte
-rendu du script donne la taille du contenu web à chaque build, et *Réglages › À propos* ne dit
-rien de la 3D — la taille est le seul indice.
+Les anciens noms `android`, `android:3d`, `android:light` et `android:offline` n'existent plus :
+`android` et `android:light` ne disaient pas si la 3D était incluse, de quoi construire une
+variante en croyant faire l'autre et ne s'en apercevoir qu'à la taille du paquet. Correspondance :
+`android:light` → `android:multiplayer-2d`, `android` et `android:3d` → `android:multiplayer-3d`,
+`android:offline` → `android:offline-2d`.
+
+On reconnaît d'ailleurs une variante déjà construite à sa taille : **l'APK multijoueur publié en
+1.10 pèse 38,1 Mo**, soit `multiplayer-2d`. *Réglages › À propos* ne dit rien de la 3D.
+
+Appelé directement, `node tools/build-android.mjs` garde la 3D par défaut ; `--3d` et `--no-3d`
+le disent explicitement.
 
 `--3d` et `--no-3d` ensemble sont une contradiction, pas un ordre de priorité à deviner : le
 script s'arrête.
@@ -58,7 +64,7 @@ valeurs de `config-android.js` :
 Une seule valeur suffit parce que `match.php` vit dans le répertoire de mogichex.
 
 ```sh
-npm run android -- --site https://exemple.fr/mogichex
+npm run android:multiplayer-2d -- --site https://exemple.fr/mogichex
 ```
 
 Par défaut : `https://www.biscandine.fr/variantes/mogichex`. L'adresse est **vérifiée avant le
@@ -285,7 +291,7 @@ Bundle / APK*) reste possible et ne demande aucun de ces réglages.
 ## 2.5 Vérifier que tout est en place
 
 ```sh
-npm run android:offline      # la variante la plus rapide
+npm run android:offline-2d   # la variante la plus rapide
 npx cap sync android
 cd android && ./gradlew assembleRelease && cd ..
 ```
@@ -297,11 +303,13 @@ afficher l'empreinte du §2.3.
 ## 2.6 Construire dans le CI (GitHub Actions)
 
 `.github/workflows/android.yml` construit un APK **à la demande** : onglet *Actions* ›
-*APK Android* › *Run workflow*, avec la variante (`light` par défaut, celle qui est publiée),
+*APK Android* › *Run workflow*, avec la variante (`multiplayer-2d` par défaut, celle qui est publiée, `multiplayer-3d` ou
+`offline-2d`),
 `--site`, la branche ou le commit de jocly2, et facultativement une release à laquelle joindre
 l'APK. Il est aussi téléchargeable 30 jours depuis la page de l'exécution.
 
-Il reprend exactement les commandes du §3, puis vérifie l'empreinte du certificat : un APK signé
+Chaque variante y appelle le script npm du même nom (`npm run android:<variante>`) : le CI et le
+poste construisent la même chose. Il reprend ensuite exactement les commandes du §3, puis vérifie l'empreinte du certificat : un APK signé
 par une autre clé **fait échouer le job** au lieu d'être publié.
 
 **L'environnement `android-release`**, à créer une fois (*Settings › Environments › New
@@ -337,11 +345,11 @@ demande les trois.
 
 | Étape | Commande | Ce qu'elle produit | Ce qu'elle ne fait pas |
 |---|---|---|---|
-| 1. contenu web | `npm run android:light` (ou `android`, `android:3d`, `android:offline`) | `www/` : dist Jocly filtré + application + `config-android.js` | **aucun APK** |
+| 1. contenu web | `npm run android:multiplayer-2d` (ou `android:multiplayer-3d`, `android:offline-2d`) | `www/` : dist Jocly filtré + application + `config-android.js` | **aucun APK** |
 | 2. copie | `npx cap sync android` | `www/` recopié dans `android/app/src/main/assets/public/` | rien de compilé |
 | 3. APK | `cd android && ./gradlew assembleRelease` | `app/build/outputs/apk/release/app-release.apk`, signé | ne régénère **pas** `www/` |
 
-- **`npm run android:light` seul ne fabrique pas d'APK** : il prépare le contenu web et s'arrête
+- **`npm run android:multiplayer-2d` seul ne fabrique pas d'APK** : il prépare le contenu web et s'arrête
   en rappelant les deux commandes suivantes.
 - **`./gradlew` seul réassemble ce qui a été copié la dernière fois** : sans les étapes 1 et 2,
   l'APK porte l'ancien contenu web, quelle que soit la variante voulue. C'est le contenu web qui
@@ -351,13 +359,9 @@ demande les trois.
   (§2.4). Sans l'un ni l'autre, l'étape 3 produit `app-release-unsigned.apk`.
 - `./gradlew assembleDebug` à l'étape 3 donne un APK de debug, sans keystore, pour essayer.
 
-Le CI (§2.6) enchaîne **exactement** ces trois étapes ; ses variantes correspondent aux scripts :
-
-| Variante du workflow | Étape 1 équivalente en local |
-|---|---|
-| `light` (défaut, publiée) | `npm run android:light` |
-| `3d` | `npm run android:3d` |
-| `offline` | `npm run android:offline` |
+Le CI (§2.6) enchaîne **exactement** ces trois étapes, et ses variantes portent les mêmes noms
+que les scripts : la variante `multiplayer-2d` du workflow lance `npm run android:multiplayer-2d`,
+et ainsi de suite.
 
 Le champ `site` du workflow vaut par défaut la même adresse que le script
 (`https://www.biscandine.fr/variantes/mogichex`) ; pour une autre, ajouter
@@ -366,41 +370,42 @@ Le champ `site` du workflow vaut par défaut la même adresse que le script
 **Toujours les trois étapes, et toujours depuis la racine.** Le contenu web est figé dans le
 paquet : changer une option du script sans resynchroniser ni réassembler ne change rien à l'APK.
 
-## Multijoueur — déploiement de référence
+## `multiplayer-2d` — jeu à distance, sans 3D (variante publiée)
 
 ```sh
-npm run android:3d           # régénère www, 3D comprise
-npx cap sync android         # copie www dans le projet natif
+npm run android:multiplayer-2d   # régénère www : jeu à distance, pièces 2D
+npx cap sync android             # copie www dans le projet natif
 cd android && ./gradlew assembleRelease
-cd ..                        # ← revenir à la racine avant la prochaine variante
+cd ..                            # ← revenir à la racine avant la prochaine variante
 ```
 
-## Multijoueur — votre propre hébergement
+~35 Mo, contre ~52 avec la 3D.
+
+## `multiplayer-2d` sur votre propre hébergement
 
 ```sh
-npm run android:3d -- --site https://exemple.fr/mogichex
+npm run android:multiplayer-2d -- --site https://exemple.fr/mogichex
 npx cap sync android
 cd android && ./gradlew assembleRelease
 cd ..
 ```
 
 Le `--` est nécessaire : il dit à npm de passer ce qui suit au script plutôt que de l'interpréter.
+`--site` s'ajoute de la même façon à `android:multiplayer-3d`.
 
-## Multijoueur allégé — sans la 3D
-
-C'est la variante publiée : ~35 Mo au lieu de ~52.
+## `multiplayer-3d` — jeu à distance, avec 3D
 
 ```sh
-npm run android:light
+npm run android:multiplayer-3d   # régénère www, pièces 3D comprises
 npx cap sync android
 cd android && ./gradlew assembleRelease
 cd ..
 ```
 
-## Hors ligne
+## `offline-2d` — sans jeu à distance, sans 3D
 
 ```sh
-npm run android:offline      # sans 3D et SANS jeu à distance
+npm run android:offline-2d       # aucune requête sortante
 npx cap sync android
 cd android && ./gradlew assembleRelease
 cd ..

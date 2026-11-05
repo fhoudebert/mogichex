@@ -93,10 +93,11 @@ It then behaves like any other app: full screen, its own icon. Games you've alre
 available **offline**; ones you haven't will need a connection the first time.
 
 **Android APKs are published** on the [releases page](https://github.com/fhoudebert/mogichex/releases),
-in two variants: **multiplayer**, which plays over the internet against another player, and
-**offline**, with online play removed — no relay is looked up and the app makes no outgoing
-request at all. Both ship without the 3D piece sets, which is what keeps them under 40 MB; a
-full build with 3D is one command away.
+in two variants, named after what they contain: **multiplayer-2d**, which plays over the
+internet against another player, and **offline-2d**, with online play removed — no relay is looked
+up and the app makes no outgoing request at all. Both ship without the 3D piece sets (hence
+`2d`), which is what keeps them under 40 MB; **multiplayer-3d**, with the 3D pieces, is one
+command away.
 
 You can also build your own. [android/README.md](android/README.md) covers the whole thing: the Capacitor
 project is in the repository, so you only declare your signing key (outside the repository), then

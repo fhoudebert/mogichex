@@ -321,7 +321,7 @@ port est le discriminant** : une coquille native n'en a jamais, un serveur local
 Une seule option, au moment de fabriquer le paquet Android :
 
 ```sh
-npm run android -- --site https://exemple.fr/mogichex
+npm run android:multiplayer-2d -- --site https://exemple.fr/mogichex
 ```
 
 (ou `node tools/build-android.mjs --jocly ../jocly2 --site …` directement ; le `--` de npm sert à
@@ -547,14 +547,17 @@ pendant la partie. Les fichiers de règles de Jocly référencent leurs images p
 
 ## Android (Capacitor)
 
-`npm run android` produit le contenu web d'une application Android : dist Jocly **limité à
+`npm run android:multiplayer-2d` (ou `android:multiplayer-3d`, `android:offline-2d`) produit le
+contenu web d'une application Android : dist Jocly **limité à
 chessbase** en production, application, catalogue restreint à ce module. La génération et la
 signature de l'APK restent indépendantes — **voir [`android/README.md`](android/README.md)**.
 
 | Variante | `www` |
 |---|---|
-| `npm run android` | 85 Mo |
-| `npm run android:light` (sans 3D) | 67 Mo |
+| `npm run android:multiplayer-3d` (anciennement `android`) | 85 Mo |
+| `npm run android:multiplayer-2d` (anciennement `android:light`, sans 3D) | 67 Mo |
+
+(Mesures de l'époque ; les tailles courantes sont dans `android/README.md`.)
 
 Sur 113 Mo de dist chessbase, le script retire les captures promotionnelles non citées par les
 règles (11,8 Mo), le moteur de dames que chessbase n'utilise pas (10,3 Mo) et les ressources VR

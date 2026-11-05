@@ -34,6 +34,7 @@ import {
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { keepFile, citedVisuals, summarize } from './lib/dist-trim.mjs';
+import { looksLikeNativeProject } from './lib/native-guard.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const argv = process.argv;
@@ -48,11 +49,12 @@ const outDir = path.resolve(root, arg('out', 'www'));
 /*
  * LA 3D EST CONSERVEE PAR DEFAUT, et `--3d` le dit a voix haute.
  *
- * L'option n'ajoute rien au resultat : elle nomme l'intention. Les deux
- * variantes multijoueur se distinguaient par `android` et `android:light`,
- * deux noms dont aucun ne prononce le mot « 3D » — de quoi construire la
- * variante allegee en croyant faire la complete, et ne s'en apercevoir qu'a la
- * taille du paquet. Avec `--3d`, la commande dit ce qu'elle produit.
+ * L'option n'ajoute rien au resultat : elle nomme l'intention. Les scripts
+ * npm portent le nom complet de la variante — android:multiplayer-2d,
+ * android:multiplayer-3d, android:offline-2d — pour qu'aucune commande ne
+ * laisse deviner si la 3D ou le jeu a distance sont inclus (les anciens noms
+ * `android` et `android:light` ne le disaient pas, et l'on ne s'en
+ * apercevait qu'a la taille du paquet).
  *
  * Les deux ensemble sont une CONTRADICTION, pas un ordre de priorite a
  * deviner : on s'arrete plutot que de trancher en silence.
@@ -142,8 +144,8 @@ function walk(dir, rel = '') {
 // Si quelqu'un le pointe sur le projet natif — `--out android`, ou un webDir
 // mal choisi — il detruirait des heures de configuration Gradle et la
 // configuration de signature. On refuse plutot que de le decouvrir apres.
-const NATIVE_MARKERS = ['build.gradle', 'gradlew', 'settings.gradle', 'app'];
-if (existsSync(outDir) && NATIVE_MARKERS.some((m) => existsSync(path.join(outDir, m)))) {
+// (Marqueurs et raison du choix : tools/lib/native-guard.mjs.)
+if (looksLikeNativeProject(outDir)) {
     console.error(
         `Refus d'ecrire dans ${outDir} : ce repertoire contient un projet Android natif.\n` +
         `Ce script efface sa sortie avant de la remplir — il detruirait votre projet.\n` +
@@ -295,6 +297,7 @@ console.log(`  3D : ${keep3d ? 'conservee' : 'retiree (--no-3d)'}`);
 // chercher, donc a ne pas la verifier.
 console.log(`  contenu web : ${mo(dirBytes(outDir))}`);
 console.log(`  jeu a distance : ${offline ? 'RETIRE (--offline)' : 'actif'}`);
+console.log(`  variante       : ${offline ? 'offline' : 'multiplayer'}-${keep3d ? '3d' : '2d'}`);
 if (!offline) {
     // AFFICHE, parce que c'est le reglage qu'on oublie et qui ne se voit qu'au
     // moment d'envoyer une invitation — trop tard, et chez l'invite.
