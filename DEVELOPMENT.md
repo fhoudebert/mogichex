@@ -80,6 +80,18 @@ points ne sont pas couverts par les tests, et les tests ne prétendent pas le co
 
 ## Mise en route (voir aussi README.md § Under the hood)
 
+**Node.js 26** est requis pour développer et construire (`.nvmrc` ; `package.json` le déclare
+dans `engines`, et `.npmrc` active `engine-strict` : `npm install` refuse une version plus
+ancienne au lieu d'avertir). Le même Node sert à construire jocly2. Deux différences avec
+Node 22, constatées au passage :
+
+- `npm test` affiche son résumé au format *spec* (`ℹ pass 186`) et non plus TAP
+  (`# pass 186`) : un script qui filtrait sur `# pass` ne trouve plus rien ;
+- npm 11.19+ bloque les scripts d'installation par défaut ; sur jocly2 cela touche le
+  `postinstall` d'esbuild, sans conséquence sur la construction. Pour faire taire
+  l'avertissement : `npm install-scripts approve esbuild` dans jocly2.
+
+
 mogichex a besoin d'un **dist Jocly** (non versionné : il pèse plusieurs dizaines de Mo, et
 un dist incohérent est la première cause de panne — voir *Pièges*). Il n'a pas à être *dans*
 mogichex : au démarrage, l'application le cherche successivement dans
@@ -605,7 +617,7 @@ fausse en silence.
 | | |
 |---|---|
 | `tools/` | fabrique le catalogue, l'APK, l'estampille du service worker. Ne tourne que chez vous |
-| `tests/` | 182 assertions Node et 57 PHP. `tests/*.php` sont des **exécutables** : les téléverser, c'est offrir des points d'entrée qui écrivent sur le disque |
+| `tests/` | 186 assertions Node et 57 PHP. `tests/*.php` sont des **exécutables** : les téléverser, c'est offrir des points d'entrée qui écrivent sur le disque |
 | `data/` | `phone-ineligible.json` est lu par le **build**, jamais par le navigateur — il est déjà cuit dans `catalog.json` |
 | `android/` | projet Capacitor, 1,8 Mo, sans objet sur le web |
 | `package.json`, `DEVELOPMENT.md`, `README.md`, `.gitignore` | rien ne les lit à l'exécution |
@@ -1267,7 +1279,7 @@ tests/                       Node pur + PHP réel
 ## Tests
 
 ```sh
-npm test                      # 182 assertions, Node pur
+npm test                      # 186 assertions, Node pur
 ```
 
 Ce qui est testable l'est : construction du catalogue, champs localisés, filtrage,

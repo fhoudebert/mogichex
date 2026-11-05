@@ -106,24 +106,35 @@ function boxFile($room, $box) {
 
 // Menage opportuniste : quelques salons perimes a chaque ecriture. Borne a 40
 // entrees pour ne pas transformer un POST en balayage de repertoire.
+// QUARANTE TIRES AU HASARD, PAS LES QUARANTE PREMIERS. readdir() rend les
+// entrees dans un ordre STABLE d'un appel a l'autre (ordre de hachage sur
+// ext4) : ne regarder que les quarante premieres revenait a regarder toujours
+// les memes, et des qu'elles etaient toutes recentes plus rien n'etait jamais
+// efface. Mesure sur ext4 (meme code dans fileio.php de joclymatch) : 300
+// parties actives et 300 expirees, 267 expirees encore la apres 1 000
+// enregistrements. Le tirage garde la borne de quarante verifications et fait
+// passer chaque fichier a son tour. scandir() ne lit que les NOMS : quelques
+// millisecondes pour dix mille fichiers.
 function sweep() {
     global $signalPath, $signalTTL;
-    $dh = @opendir($signalPath);
-    if (!$dh) {
+    $names = @scandir($signalPath);
+    if (!$names) {
         return;
     }
-    $seen = 0;
-    while (($f = readdir($dh)) !== false && $seen < 40) {
-        if (substr($f, -5) !== '.json') {
-            continue;
+    $candidates = array();
+    foreach ($names as $f) {
+        if (substr($f, -5) === '.json') {
+            $candidates[] = $f;
         }
-        $seen++;
+    }
+    shuffle($candidates);
+    $cutoff = time() - $signalTTL;
+    foreach (array_slice($candidates, 0, 40) as $f) {
         $p = $signalPath . $f;
-        if (@filemtime($p) < time() - $signalTTL) {
+        if (@filemtime($p) < $cutoff) {
             @unlink($p);
         }
     }
-    closedir($dh);
 }
 
 if ($action === 'post') {

@@ -167,6 +167,10 @@ conflit connu avec ces licences, si un portage iOS devait suivre un jour.
 À faire **une seule fois**, dans cet ordre. Toutes les commandes se lancent **depuis la racine du
 projet**, jamais depuis `android/`.
 
+Prérequis : **Node.js 26** (`.nvmrc`), **JDK 21**, et le SDK Android 36. Le gabarit de
+Capacitor 8.5 fixe AGP 8.13 et Gradle 8.14 : ne pas les monter à la main en 9.x, c'est
+Capacitor 9 qui les accompagnera.
+
 ## 2.1 Créer le projet Capacitor
 
 La plateforme se crée **avant** la première génération du contenu web : Capacitor refuse

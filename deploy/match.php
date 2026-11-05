@@ -100,24 +100,38 @@ function matchFile($mid) {
 }
 
 // Menage opportuniste, borne : pas de cron sur un mutualise.
+// QUARANTE TIRES AU HASARD, PAS LES QUARANTE PREMIERS. readdir() rend les
+// entrees dans un ordre STABLE d'un appel a l'autre (ordre de hachage sur
+// ext4) : ne regarder que les quarante premieres revenait a regarder toujours
+// les memes, et des qu'elles etaient toutes recentes plus rien n'etait jamais
+// efface. Mesure sur ext4 (meme code dans fileio.php de joclymatch) : 300
+// parties actives et 300 expirees, 267 expirees encore la apres 1 000
+// enregistrements. Le tirage garde la borne de quarante verifications et fait
+// passer chaque fichier a son tour. scandir() ne lit que les NOMS : quelques
+// millisecondes pour dix mille fichiers.
+// Les temporaires d'une ecriture atomique interrompue (<partie>.json.tmp…)
+// ne portent pas l'extension et n'etaient effaces par personne : une coupure
+// au mauvais moment laissait un fichier a vie. Meme regle que joclymatch.
 function sweep() {
     global $matchPath, $matchTTL;
-    $dh = @opendir($matchPath);
-    if (!$dh) {
+    $names = @scandir($matchPath);
+    if (!$names) {
         return;
     }
-    $seen = 0;
-    while (($f = readdir($dh)) !== false && $seen < 40) {
-        if (substr($f, -5) !== '.json') {
-            continue;
+    $candidates = array();
+    foreach ($names as $f) {
+        if (substr($f, -5) === '.json' || strpos($f, '.json.tmp') !== false) {
+            $candidates[] = $f;
         }
-        $seen++;
+    }
+    shuffle($candidates);
+    $cutoff = time() - $matchTTL;
+    foreach (array_slice($candidates, 0, 40) as $f) {
         $p = $matchPath . $f;
-        if (@filemtime($p) < time() - $matchTTL) {
+        if (@filemtime($p) < $cutoff) {
             @unlink($p);
         }
     }
-    closedir($dh);
 }
 
 $fn = matchFile($mid);

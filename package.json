@@ -5,6 +5,9 @@
   "type": "module",
   "private": true,
   "license": "AGPL-3.0-or-later",
+  "engines": {
+    "node": ">=26"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/fhoudebert/mogichex"
@@ -23,9 +26,9 @@
     "android:offline": "node tools/build-android.mjs --jocly ../jocly2 --no-3d --offline"
   },
   "devDependencies": {
-    "@capacitor/android": "^8.5.0",
-    "@capacitor/cli": "^8.5.0",
-    "@capacitor/core": "^8.5.0",
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/cli": "^8.5.3",
+    "@capacitor/core": "^8.5.3",
     "@capacitor/screen-orientation": "^8.0.2"
   }
 }

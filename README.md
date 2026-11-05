@@ -156,6 +156,7 @@ already provides.
 ## Under the hood
 
 - No build step for the app itself — plain ES modules, no framework, no bundler.
+- Development and builds need **Node.js 26** (see `.nvmrc`); `npm install` refuses older versions. The deployed app itself needs no Node at all.
 - The game catalogue is precomputed at build time, so opening the list doesn't wake the engine.
 - One coherent Jocly build per deployment, shared with other apps if you like.
 
@@ -166,7 +167,7 @@ cd - && ln -s ../jocly2/dist/browser dist
 
 npm run build      # catalogue + service worker stamp + tests
 npm run serve      # http://localhost:8080
-npm test           # 182 assertions
+npm test           # 186 assertions
 npm run test:php   # 57 assertions (requires php-cli)
 ```
 
