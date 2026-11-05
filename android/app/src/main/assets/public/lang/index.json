@@ -1,8 +1,0 @@
-{
-  "_comment": "Ajouter une langue = deposer lang/<code>.json et ajouter une entree ici.",
-  "fallback": "en",
-  "locales": [
-    { "code": "en", "label": "English" },
-    { "code": "fr", "label": "Français" }
-  ]
-}
