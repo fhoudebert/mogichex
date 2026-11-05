@@ -1,5 +1,8 @@
 <?php
 // Copier en signalconf.php a cote de signal.php et adapter.
+// L'ENREGISTRER EN UTF-8 SANS BOM (ou en ASCII, comme ce modele) : en UTF-16 --
+// ce que certains editeurs choisissent d'eux-memes -- PHP ne le lit pas, et le
+// relai tourne sur ses valeurs par defaut sans le dire.
 // Ce fichier N'A PAS de balise fermante : une ligne vide apres elle se
 // retrouverait devant le JSON et casserait le JSON.parse() du client.
 // (Panne deja rencontree sur joclymatch, diagnostiquee au caractere pres.)
@@ -13,7 +16,7 @@ $signalPath = __DIR__ . '/signals/';
 // secondes : une heure est deja tres large.
 $signalTTL = 3600;
 
-// ── Parties et discussions (match.php, fileio.php) ───────────────────────────
+// --- Parties et discussions (match.php, fileio.php) ---------------------------
 //
 // Ces deux fichiers lisent matchconf.php s'il existe, sinon CE fichier : un
 // seul fichier de configuration suffit donc pour tout le relai. Les valeurs
