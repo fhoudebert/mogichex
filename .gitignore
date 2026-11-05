@@ -6,31 +6,44 @@
 # Parties deposees par match.php quand le relai tourne depuis la racine du
 # depot (serveur PHP local). Meme raison que /signals.
 /matches
-
+/bak
 /deploy/signalconf.php
 .DS_Store
 package-lock.json
-# Le contenu web Android est genere par tools/build-android.mjs, et le projet
-# natif par « npx cap add android » : ni l'un ni l'autre n'a sa place ici.
-# android/README.md, lui, est versionne.
-# Le contenu web genere par tools/build-android.mjs (webDir de Capacitor).
+# --- Android ---------------------------------------------------------------
+# Le projet natif Capacitor (android/) et capacitor.config.json SONT versionnes :
+# icone, manifeste, version et signature (android/app/mogichex.gradle) doivent
+# etre identiques sur le poste et dans le CI. Seul ce qui est genere ou propre
+# a une machine est ignore ci-dessous. android/.gitignore (gabarit Capacitor)
+# dit la meme chose ; ces regles-ci restent pour ne pas dependre de lui.
+#
+# Contenu web produit par tools/build-android.mjs (webDir), puis recopie par
+# « npx cap sync » dans le projet natif : 50 a 90 Mo, regenere a chaque build.
 /www
 /android/www
-/android/app
-/android/build.gradle
-/android/gradle*
-/android/.gitignore
-/android/.idea
-/android/build/
-/problems
+/android/app/src/main/assets/public
+/android/app/src/main/assets/capacitor.config.json
+/android/app/src/main/assets/capacitor.plugins.json
+/android/app/src/main/res/xml/config.xml
 /android/capacitor-cordova-android-plugins
-/android/*.properties
+# Sorties et caches de Gradle / Android Studio.
 /android/.gradle
-/android/*.gradle
-/capacitor.config.json
-# Signature : jamais dans le depot.
+/android/build/
+/android/app/build/
+/android/.idea
+*.apk
+*.aab
+# Chemin du SDK de CETTE machine (ecrit par Android Studio).
+/android/local.properties
+/problems
+
+# --- Signature : jamais dans le depot ---------------------------------------
+# Les reglages passent par ~/.gradle/gradle.properties ou l'environnement
+# (voir android/app/mogichex.gradle). Le gabarit Capacitor laisse *.keystore
+# en commentaire : c'est cette regle-ci qui protege un keystore range sous
+# android/. keystore.properties n'est plus lu, mais un ancien fichier peut
+# trainer sur un poste avec les mots de passe en clair : il reste ignore.
 *.keystore
-*.patch
+*.jks
 keystore.properties
-/android/mogichex.keystore
-/android/keystore.properties
+*.patch

@@ -1,0 +1,180 @@
+# APK Android de mogichex, construit À LA DEMANDE : onglet Actions › « APK Android »
+# › Run workflow.
+#
+# Le projet natif (android/) est versionné : le CI construit exactement ce que
+# construit le poste, icône et manifeste compris. La signature est faite par
+# android/app/mogichex.gradle, qui lit ses réglages dans l'environnement.
+#
+# À configurer UNE FOIS dans l'environnement « android-release »
+# (Settings › Environments) — voir android/README.md, « Construire dans le CI » :
+#   secrets   ANDROID_KEYSTORE_BASE64    le .keystore encodé en base64
+#             ANDROID_KEYSTORE_PASSWORD  mot de passe du magasin
+#             ANDROID_KEY_ALIAS          alias de la clé (mogichex)
+#             ANDROID_KEY_PASSWORD       facultatif : défaut = mot de passe du magasin
+#   variable  ANDROID_CERT_SHA256        empreinte du certificat attendu ;
+#                                        le job échoue si l'APK n'est pas signé par lui.
+
+name: APK Android
+
+on:
+  workflow_dispatch:
+    inputs:
+      variant:
+        description: "light = sans 3D (publiée) · 3d = complète · offline = sans 3D ni jeu à distance"
+        type: choice
+        options: [light, 3d, offline]
+        default: light
+      site:
+        description: "Adresse publique (relai + liens d'invitation) ; ignorée en offline"
+        default: https://www.biscandine.fr/variantes/mogichex
+      jocly_ref:
+        description: "Branche, tag ou commit de fhoudebert/jocly2"
+        default: main
+      release_tag:
+        description: "Facultatif : joindre l'APK à cette release (elle doit exister)"
+        default: ""
+
+permissions:
+  contents: write   # uniquement pour « gh release upload »
+
+concurrency:
+  group: android-apk
+  cancel-in-progress: false
+
+jobs:
+  apk:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    # Les secrets de signature ne vivent QUE dans cet environnement. Le
+    # restreindre à la branche main (Deployment branches) empêche un workflow
+    # modifié sur une autre branche de les lire.
+    environment: android-release
+    env:
+      VARIANT: ${{ inputs.variant }}
+      SITE: ${{ inputs.site }}
+      RELEASE_TAG: ${{ inputs.release_tag }}
+      BUILD_TOOLS: "36.0.0"
+    steps:
+      # Même disposition que sur le poste : mogichex/ et jocly2/ côte à côte.
+      - uses: actions/checkout@v4
+        with:
+          path: mogichex
+      - uses: actions/checkout@v4
+        with:
+          repository: fhoudebert/jocly2
+          ref: ${{ inputs.jocly_ref }}
+          path: jocly2
+
+      - name: Projet natif complet ?
+        working-directory: mogichex
+        run: |
+          missing=0
+          for f in android/gradlew android/gradle/wrapper/gradle-wrapper.jar \
+                   android/gradle/wrapper/gradle-wrapper.properties \
+                   android/gradle.properties android/app/proguard-rules.pro \
+                   android/app/mogichex.gradle; do
+            [ -f "$f" ] || { echo "::error::$f absent du dépôt (voir android/README.md §2.1)"; missing=1; }
+          done
+          grep -q '^android.useAndroidX=true' android/gradle.properties 2>/dev/null \
+            || { echo "::error::android.useAndroidX=true absent de android/gradle.properties"; missing=1; }
+          bad=$(git ls-files android/local.properties android/app/src/main/assets/public | head -3)
+          [ -z "$bad" ] || { echo "::error::fichiers générés versionnés : $bad"; missing=1; }
+          exit $missing
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: android-actions/setup-android@v3
+      - name: SDK Android 36
+        run: sdkmanager "platforms;android-36" "build-tools;${BUILD_TOOLS}"
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Dépendances jocly2
+        working-directory: jocly2
+        run: npm install --no-audit --no-fund
+      - name: Dépendances mogichex
+        working-directory: mogichex
+        # package-lock.json est ignoré par le dépôt : « npm ci » n'est pas possible.
+        run: npm install --no-audit --no-fund
+
+      - name: Contenu web (www)
+        working-directory: mogichex
+        run: |
+          case "$VARIANT" in
+            3d)      set -- --3d    --site "$SITE" ;;
+            light)   set -- --no-3d --site "$SITE" ;;
+            offline) set -- --no-3d --offline ;;
+            *) echo "variante inconnue : $VARIANT"; exit 2 ;;
+          esac
+          node tools/build-android.mjs --jocly ../jocly2 "$@"
+
+      - name: Synchronisation Capacitor
+        working-directory: mogichex
+        run: npx cap sync android
+
+      - name: Keystore
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_B64" ]; then
+            echo "::error::secret ANDROID_KEYSTORE_BASE64 absent de l'environnement android-release"
+            exit 2
+          fi
+          printf '%s' "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+          echo "MOGICHEX_KEYSTORE_FILE=$RUNNER_TEMP/release.keystore" >> "$GITHUB_ENV"
+
+      - name: Assemblage et signature
+        working-directory: mogichex/android
+        env:
+          MOGICHEX_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          MOGICHEX_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          MOGICHEX_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: ./gradlew --no-daemon assembleRelease
+
+      - name: Vérification du certificat
+        working-directory: mogichex
+        env:
+          EXPECTED_SHA256: ${{ vars.ANDROID_CERT_SHA256 }}
+        run: |
+          set -euo pipefail
+          rm -f "$RUNNER_TEMP/release.keystore"
+          APK=android/app/build/outputs/apk/release/app-release.apk
+          [ -f "$APK" ] || { echo "::error::pas d'APK signé ($APK)"; exit 1; }
+          BT="$ANDROID_HOME/build-tools/$BUILD_TOOLS"
+          "$BT/apksigner" verify --print-certs "$APK" | tee "$RUNNER_TEMP/certs.txt"
+          got=$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' "$RUNNER_TEMP/certs.txt")
+          want=$(printf '%s' "$EXPECTED_SHA256" | tr -d ': ' | tr 'A-F' 'a-f')
+          if [ -z "$want" ]; then
+            echo "::error::variable ANDROID_CERT_SHA256 absente : l'APK porte $got"
+            exit 1
+          fi
+          if [ "$got" != "$want" ]; then
+            echo "::error::certificat inattendu $got (attendu $want) — mauvais keystore, mises à jour impossibles"
+            exit 1
+          fi
+          NAME=$(node -p "require('./package.json').version")
+          cp "$APK" "mogichex-$NAME-$VARIANT.apk"
+          echo "APK_NAME=mogichex-$NAME-$VARIANT.apk" >> "$GITHUB_ENV"
+          "$BT/aapt2" dump badging "$APK" | head -1
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APK_NAME }}
+          path: mogichex/${{ env.APK_NAME }}
+          retention-days: 30
+          if-no-files-found: error
+
+      - name: Joindre à la release
+        if: inputs.release_tag != ''
+        working-directory: mogichex
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$RELEASE_TAG" "$APK_NAME" --clobber
+
+      - name: Nettoyage du keystore
+        if: always()
+        run: rm -f "$RUNNER_TEMP/release.keystore"
