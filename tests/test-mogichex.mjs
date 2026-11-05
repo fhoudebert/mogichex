@@ -53,6 +53,10 @@ import {
     buildEnvelope,
     isUsableEnvelope,
     MATCH_ID_RE,
+    rememberInviteKey,
+    recallInviteKey,
+    addressWithoutKey,
+    CHAT_KEY_STORAGE,
 } from '../js/remote/invite.js';
 import {
     orderedCandidates,
@@ -2317,4 +2321,178 @@ test('discussion : ce qu on a lu reste a l ecran quand le relai fait de la place
     assert.ok(chan.conversation.some((m) => m.body === 'message 1'),
         'le tout premier est toujours la');
     assert.ok(chan.conversation.some((m) => m.body === 'message 4'));
+});
+
+test('android : --3d et --no-3d se contredisent au lieu d etre arbitres', () => {
+    // Les deux variantes multijoueur se distinguaient par `android` et
+    // `android:light`, deux noms dont aucun ne prononce le mot « 3D » : on
+    // pouvait construire l allegee en croyant faire la complete et ne s en
+    // apercevoir qu a la taille du paquet. `--3d` nomme l intention ; les deux
+    // ensemble sont une contradiction, pas un ordre de priorite a deviner.
+    const r = spawnSync(process.execPath,
+        [path.join(root, 'tools', 'build-android.mjs'), '--3d', '--no-3d'],
+        { encoding: 'utf8', timeout: 20000 });
+    assert.match((r.stdout || '') + (r.stderr || ''), /se contredisent/);
+    assert.equal(r.status, 2);
+});
+
+test('android : la 3D est conservee par defaut, et le script le dit', () => {
+    const src = readFileSync(path.join(root, 'tools', 'build-android.mjs'), 'utf8');
+    assert.ok(/const keep3d = !flag\('no-3d'\)/.test(src), 'defaut = conservee');
+    // La TAILLE du contenu produit est le seul indice qui distingue les deux
+    // variantes une fois l APK construit : le compte rendu doit la donner.
+    assert.ok(src.includes('contenu web'), 'le compte rendu donne la taille');
+    assert.ok(src.includes('function dirBytes('), 'et sait la calculer');
+});
+
+// ---- orientation de l'ecran (greffon @capacitor/screen-orientation) ----
+import { sanitizeOrientation, orientationBackend, applyOrientation, ORIENTATIONS } from '../js/orientation.js';
+
+test('orientation : sans greffon natif, aucun moyen — le reglage reste cache', () => {
+    assert.equal(orientationBackend({}), null);
+    assert.equal(orientationBackend({ Capacitor: {} }), null);
+    assert.equal(orientationBackend({ Capacitor: { Plugins: {} } }), null);
+    // Un mandataire incomplet ne compte pas : mieux vaut pas d'option qu'une
+    // option qui leve une exception au premier changement.
+    assert.equal(orientationBackend({ Capacitor: { Plugins: { ScreenOrientation: { lock() {} } } } }), null);
+});
+
+test('orientation : auto DEVERROUILLE, portrait/paysage verrouillent, valeur inconnue = auto', async () => {
+    const calls = [];
+    const win = {
+        Capacitor: {
+            Plugins: {
+                ScreenOrientation: {
+                    lock: async (o) => calls.push(['lock', o.orientation]),
+                    unlock: async () => calls.push(['unlock']),
+                },
+            },
+        },
+    };
+    const b = orientationBackend(win);
+    assert.ok(b);
+    assert.equal(await applyOrientation('portrait', b), true);
+    assert.equal(await applyOrientation('landscape', b), true);
+    assert.equal(await applyOrientation('auto', b), true);
+    // Une preference corrompue ne doit jamais figer l'ecran par accident.
+    assert.equal(await applyOrientation('sideways', b), true);
+    assert.deepEqual(calls, [['lock', 'portrait'], ['lock', 'landscape'], ['unlock'], ['unlock']]);
+    assert.equal(sanitizeOrientation(null), 'auto');
+    assert.deepEqual(ORIENTATIONS, ['auto', 'portrait', 'landscape']);
+});
+
+test('orientation : une erreur du greffon n\'interrompt pas l\'application', async () => {
+    const b = { lock: async () => { throw new Error('refuse'); }, unlock: async () => {} };
+    assert.equal(await applyOrientation('landscape', b), false);
+    assert.equal(await applyOrientation('auto', null), false);
+});
+
+test('orientation : chaque option du reglage est une valeur connue et traduite', () => {
+    const html = readFileSync(path.join(root, 'index.html'), 'utf8');
+    const sel = html.slice(html.indexOf('<select id="sel-orientation">'), html.indexOf('</select>', html.indexOf('<select id="sel-orientation">')));
+    const values = [...sel.matchAll(/value="([^"]+)"/g)].map((m) => m[1]);
+    assert.deepEqual(values, ORIENTATIONS);
+    const fr = JSON.parse(readFileSync(path.join(root, 'lang', 'fr.json'), 'utf8'));
+    for (const k of ['Screen orientation', 'Automatic', 'Portrait', 'Landscape']) {
+        assert.ok(fr[k], 'traduction fr manquante : ' + k);
+    }
+});
+
+// ── La clé hors de la barre d'adresse ───────────────────────────────────────
+
+function tabStorage() {
+    const m = new Map();
+    return { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, String(v)), map: m };
+}
+const KEY64 = '0123456789abcdef'.repeat(4);
+
+test('clé d’invitation : rangée dans l’onglet sous la partie, puis relue', () => {
+    const st = tabStorage();
+    assert.equal(rememberInviteKey(st, '1700000000000-AbCdEfGhIjKlMn', { chatKey: KEY64 }), true);
+    assert.ok(st.map.has(CHAT_KEY_STORAGE + '1700000000000-AbCdEfGhIjKlMn'));
+    assert.equal(recallInviteKey(st, '1700000000000-AbCdEfGhIjKlMn').chatKey, KEY64);
+    assert.equal(recallInviteKey(st, '1700000000000-Autre').chatKey, null, 'une autre partie n’en hérite pas');
+});
+
+test('clé d’invitation : l’empreinte Tabulon se range aussi, une valeur abîmée est ignorée', () => {
+    const st = tabStorage();
+    rememberInviteKey(st, 'partie-kid', { chatKeyId: 'aaaabbbbccccdddd' });
+    assert.equal(recallInviteKey(st, 'partie-kid').chatKeyId, 'aaaabbbbccccdddd');
+    assert.equal(rememberInviteKey(st, 'partie-x', { chatKey: 'pas une clé' }), false, 'rien de valide : rien rangé');
+    st.setItem(CHAT_KEY_STORAGE + 'abime', '{');
+    assert.deepEqual(recallInviteKey(st, 'abime'), { chatKey: null, chatKeyId: null });
+});
+
+test('clé d’invitation : stockage indisponible → on le dit, et l’adresse ne sera pas touchée', () => {
+    const plein = { getItem: () => null, setItem: () => { throw new Error('QuotaExceededError'); } };
+    assert.equal(rememberInviteKey(plein, 'partie-1', { chatKey: KEY64 }), false);
+    assert.equal(rememberInviteKey(null, 'partie-1', { chatKey: KEY64 }), false);
+});
+
+test('addressWithoutKey : retire k et kid du fragment, garde le reste', () => {
+    const base = 'https://h.fr/mogichex/index.html?game=chess&mid=1-AbCdEfGhIjKlMn&player=b';
+    assert.equal(addressWithoutKey(base + '#k=' + KEY64), base);
+    assert.equal(addressWithoutKey(base + '#kid=aaaabbbbccccdddd'), base);
+    assert.equal(addressWithoutKey(base + '#k=' + KEY64 + '&x=1'), base + '#x=1');
+    assert.equal(addressWithoutKey(base), base);
+    // L'adresse nettoyée se relit toujours comme une invitation : seule la clé manque.
+    const p = parseInviteLink(addressWithoutKey(base + '#k=' + KEY64));
+    assert.equal(p.matchId, '1-AbCdEfGhIjKlMn');
+    assert.equal(p.chatKey, null);
+});
+
+// ── Effacement d'une partie terminée ─────────────────────────────────────────
+
+import { FinishWatch, dropRequest, sendRelayDrop } from '../js/remote/relay-drop.js';
+
+test('FinishWatch : fin REÇUE d’une partie vue en cours → armé', () => {
+    const w = new FinishWatch();
+    assert.equal(w.noteRemoteState(false), false, 'partie en cours : rien');
+    assert.equal(w.noteRemoteState(true), true, 'puis le coup final arrive : armé');
+    assert.equal(w.take(), true);
+    assert.equal(w.take(), false, 'un seul envoi');
+});
+
+test('FinishWatch : partie rouverte DÉJÀ finie → jamais armé (le dernier coup est peut-être le nôtre)', () => {
+    const w = new FinishWatch();
+    assert.equal(w.noteRemoteState(true), false);
+    assert.equal(w.take(), false);
+});
+
+test('FinishWatch : notre coup local puis l’état final de l’adversaire → armé', () => {
+    const w = new FinishWatch();
+    w.noteLocalMove();
+    assert.equal(w.noteRemoteState(true), true);
+});
+
+test('FinishWatch : une reprise après la fin désarme', () => {
+    const w = new FinishWatch();
+    w.noteRemoteState(false);
+    w.noteRemoteState(true);
+    assert.equal(w.noteRemoteState(false), false, 'la partie revit');
+    assert.equal(w.take(), false);
+});
+
+test('dropRequest : par fileio.php (partie ET fil), sinon par match.php', () => {
+    const a = dropRequest('https://relai.fr/mogichex/', '1700000000000-AbCdEfGhIjKlMn');
+    assert.equal(a.url, 'https://relai.fr/mogichex/fileio.php');
+    assert.equal(a.body.toString(), 'gameioaction=drop&gameid=1700000000000-AbCdEfGhIjKlMn');
+    const b = dropRequest('https://relai.fr/mogichex', 'partie-1', { viaFileio: false });
+    assert.equal(b.url, 'https://relai.fr/mogichex/match.php');
+    assert.equal(b.body.toString(), 'action=drop&mid=partie-1');
+    assert.equal(dropRequest('', 'x'), null);
+    assert.equal(dropRequest('https://r.fr', ''), null);
+});
+
+test('sendRelayDrop : beacon d’abord, fetch keepalive en repli, rien sans requête', () => {
+    const req = dropRequest('https://r.fr', 'partie-1');
+    const sent = [];
+    assert.equal(sendRelayDrop(req, { beacon: (u, b) => { sent.push([u, String(b)]); return true; } }), 'beacon');
+    assert.deepEqual(sent, [['https://r.fr/fileio.php', 'gameioaction=drop&gameid=partie-1']]);
+    let init = null;
+    const how = sendRelayDrop(req, { beacon: () => false, fetchImpl: (u, i) => { init = i; return Promise.resolve(); } });
+    assert.equal(how, 'fetch');
+    assert.equal(init.keepalive, true, 'keepalive : la requête survit à la page');
+    assert.equal(init.method, 'POST');
+    assert.equal(sendRelayDrop(null, { beacon: () => true }), null);
 });

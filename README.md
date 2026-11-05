@@ -76,7 +76,8 @@ nothing arrives until you open it again — no push server involved, by design.
 **And you can just type.** Free text is sealed with XChaCha20-Poly1305 before it leaves the phone;
 the relay only ever holds opaque bytes. The key rides in the invitation link's *fragment*, which
 browsers never send to any server — so the link is the secret: share it the way you'd share a door
-code, and don't expect it to outlive the game. Same format as
+code, and don't expect it to outlive the game. Once read, the key leaves the address bar (it is kept
+for the tab only, so a reload still works). Same format as
 [Tabulon](https://github.com/fhoudebert/tabulon), so a message written here opens there.
 
 ---
@@ -94,7 +95,8 @@ available **offline**; ones you haven't will need a connection the first time.
 **Android APKs are published** on the [releases page](https://github.com/fhoudebert/mogichex/releases),
 in two variants: **multiplayer**, which plays over the internet against another player, and
 **offline**, with online play removed — no relay is looked up and the app makes no outgoing
-request at all.
+request at all. Both ship without the 3D piece sets, which is what keeps them under 40 MB; a
+full build with 3D is one command away.
 
 You can also build your own. [android/README.md](android/README.md) covers the whole thing: how to
 set up the Capacitor project and the signing keystore once, then the exact commands for each
@@ -118,7 +120,10 @@ your-site/
 ```
 
 **2.** Copy `deploy/signal.php`, `deploy/match.php`, `deploy/fileio.php`, `deploy/.htaccess` and
-`deploy/signalconf.php.example` (renamed to `signalconf.php`) into the mogichex folder.
+`deploy/signalconf.php.example` (renamed to `signalconf.php`) into the mogichex folder. That one
+file configures the whole relay — allowed origins, and how long games and chats are kept on the server
+(30 days without activity by default, `$matchTTL`; a finished game is deleted as soon as the player who
+received the last move leaves it).
 
 That's it. The app finds the game engine and the relay by itself, and remembers where they were.
 
@@ -155,6 +160,7 @@ already provides.
 ## Under the hood
 
 - No build step for the app itself — plain ES modules, no framework, no bundler.
+- Development and builds need **Node.js 26** (see `.nvmrc`); `npm install` refuses older versions. The deployed app itself needs no Node at all.
 - The game catalogue is precomputed at build time, so opening the list doesn't wake the engine.
 - One coherent Jocly build per deployment, shared with other apps if you like.
 
@@ -165,7 +171,7 @@ cd - && ln -s ../jocly2/dist/browser dist
 
 npm run build      # catalogue + service worker stamp + tests
 npm run serve      # http://localhost:8080
-npm test           # 180 assertions
+npm test           # 186 assertions
 npm run test:php   # 57 assertions (requires php-cli)
 ```
 

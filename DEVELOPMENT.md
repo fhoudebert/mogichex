@@ -80,6 +80,18 @@ points ne sont pas couverts par les tests, et les tests ne prétendent pas le co
 
 ## Mise en route (voir aussi README.md § Under the hood)
 
+**Node.js 26** est requis pour développer et construire (`.nvmrc` ; `package.json` le déclare
+dans `engines`, et `.npmrc` active `engine-strict` : `npm install` refuse une version plus
+ancienne au lieu d'avertir). Le même Node sert à construire jocly2. Deux différences avec
+Node 22, constatées au passage :
+
+- `npm test` affiche son résumé au format *spec* (`ℹ pass 186`) et non plus TAP
+  (`# pass 186`) : un script qui filtrait sur `# pass` ne trouve plus rien ;
+- npm 11.19+ bloque les scripts d'installation par défaut ; sur jocly2 cela touche le
+  `postinstall` d'esbuild, sans conséquence sur la construction. Pour faire taire
+  l'avertissement : `npm install-scripts approve esbuild` dans jocly2.
+
+
 mogichex a besoin d'un **dist Jocly** (non versionné : il pèse plusieurs dizaines de Mo, et
 un dist incohérent est la première cause de panne — voir *Pièges*). Il n'a pas à être *dans*
 mogichex : au démarrage, l'application le cherche successivement dans
@@ -605,7 +617,7 @@ fausse en silence.
 | | |
 |---|---|
 | `tools/` | fabrique le catalogue, l'APK, l'estampille du service worker. Ne tourne que chez vous |
-| `tests/` | 180 assertions Node et 57 PHP. `tests/*.php` sont des **exécutables** : les téléverser, c'est offrir des points d'entrée qui écrivent sur le disque |
+| `tests/` | 186 assertions Node et 57 PHP. `tests/*.php` sont des **exécutables** : les téléverser, c'est offrir des points d'entrée qui écrivent sur le disque |
 | `data/` | `phone-ineligible.json` est lu par le **build**, jamais par le navigateur — il est déjà cuit dans `catalog.json` |
 | `android/` | projet Capacitor, 1,8 Mo, sans objet sur le web |
 | `package.json`, `DEVELOPMENT.md`, `README.md`, `.gitignore` | rien ne les lit à l'exécution |
@@ -791,6 +803,26 @@ que les deux applications restent lisibles l'une par l'autre le jour où on le v
 Écriture **atomique** (fichier temporaire puis `rename()`) : sans elle, un `load()` concurrent lit
 un fichier vide ou tronqué. Mesuré : 4 lectures incomplètes sur ~1100 sans `rename()`, **0 avec**.
 Attente longue optionnelle bornée à 20 s, comme `signal.php`.
+
+**Une partie finie s'efface du relai** (`js/remote/relay-drop.js`). Quand un état
+**reçu** termine la partie, l'effacement est armé ; il part **en quittant la partie**
+(retour au catalogue, le cas courant sur téléphone) ou **à la fermeture de la page**
+(`pagehide`), par `navigator.sendBeacon` — une requête ordinaire lancée à la fermeture
+n'a aucune garantie de partir. Par `fileio.php` (`gameioaction=drop`), qui efface la
+partie **et** le fil ; par `match.php` (`action=drop`) quand `fileio.php` n'est pas
+déployé, puisqu'il n'y a alors pas de fil.
+
+- **Seul celui qui a reçu le dernier coup** efface : il sait que les deux côtés ont vu
+  la fin. Celui qui l'a joué ne le sait pas. Même règle que Tabulon et joclymatch.
+- **Et seulement si CETTE page a vu la partie en cours** : la première lecture d'une
+  partie rouverte passe par le même chemin qu'un coup reçu, et si elle y est déjà
+  finie, le dernier coup est peut-être le nôtre, joué lors d'une visite précédente.
+- Une reprise de coup après la fin **désarme**. Le joueur est prévenu (`#notice`).
+- Mesuré dans Chromium contre un vrai relai PHP : effacement à la fermeture et au
+  retour au catalogue ; rien d'effacé pour une partie rouverte déjà finie ni pour une
+  partie en cours fermée. Sous Capacitor, `pagehide` peut ne pas venir si le système
+  tue l'application : le retour au catalogue couvre le cas courant, la durée de vie du
+  relai (`$matchTTL`) le reste.
 
 ### CORS
 
@@ -1057,6 +1089,25 @@ Conséquence à connaître : le lien **est** le secret. Qui l'intercepte lit la
 conversation, et perdre le lien c'est perdre le fil. C'est le bon compromis pour
 une partie, pas pour un secret durable.
 
+### Une fois lue, la clé quitte la barre d'adresse
+
+Laissée dans le fragment, elle restait dans l'adresse affichée : visible en
+partage d'écran, recopiée avec l'adresse quand on la donne à quelqu'un d'autre,
+présente dans les entrées précédent/suivant de l'onglet. Au chargement,
+`app.js` la range donc en `sessionStorage` (propre à l'**onglet**, effacé à sa
+fermeture), sous l'identifiant de la partie (`mogichex.chat-key:<mid>`), puis
+retire `k` et `kid` du fragment par `history.replaceState`. Un rechargement la
+retrouve là ; un autre onglet ouvert sur l'adresse nettoyée ne l'a pas.
+
+- **Le stockage échoue** (réglage du navigateur) : le fragment est **laissé**.
+  Perdre la clé au premier rechargement serait pire que de la voir.
+- **Ce que cela ne fait pas** : effacer l'historique du navigateur. Constaté sous
+  Chromium, la base d'historique garde l'adresse visitée, clé comprise, à côté
+  de l'adresse nettoyée — exactement comme le message qui contenait le lien.
+- Fonctions pures dans `remote/invite.js` (`rememberInviteKey`,
+  `recallInviteKey`, `addressWithoutKey`), testées ; même mécanisme et même
+  format que joclymatch (`js/chat-seal.js`).
+
 ### Trois états, trois explications
 
 Le champ de saisie n'apparaît **que** si le texte peut être scellé : sans
@@ -1267,7 +1318,7 @@ tests/                       Node pur + PHP réel
 ## Tests
 
 ```sh
-npm test                      # 180 assertions, Node pur
+npm test                      # 186 assertions, Node pur
 ```
 
 Ce qui est testable l'est : construction du catalogue, champs localisés, filtrage,

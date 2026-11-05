@@ -134,6 +134,30 @@ request(array('action' => 'drop', 'mid' => $mid));
 $r = json_decode(request(array('action' => 'load', 'mid' => $mid)), true);
 check('partie effacee', is_array($r) && count($r) === 0);
 
+// --- menage avec PLUS de quarante parties
+// Le menage regardait toujours les quarante memes fichiers (ordre stable de
+// readdir) : une fois celles-la toutes recentes, plus rien n'etait efface.
+// 120 parties actives, 60 expirees et un temporaire abandonne, puis 80
+// enregistrements : il ne doit plus rester ni expiree ni temporaire. (Au
+// hasard, la probabilite d'en laisser une est inferieure a 1e-7.)
+for ($i = 0; $i < 120; $i++) {
+    file_put_contents($tmp . 'live-partie-' . $i . '.json', '{}');
+}
+for ($i = 0; $i < 60; $i++) {
+    file_put_contents($tmp . 'gone-partie-' . $i . '.json', '{}');
+    touch($tmp . 'gone-partie-' . $i . '.json', time() - 7200);
+}
+file_put_contents($tmp . 'live-partie-0.json.tmp123', '{');
+touch($tmp . 'live-partie-0.json.tmp123', time() - 7200);
+for ($i = 0; $i < 80; $i++) {
+    request(array('action' => 'save', 'mid' => 'live-partie-' . ($i % 120), 'data' => '{}'));
+}
+check('avec plus de 40 parties, toutes les expirees finissent effacees',
+    count(glob($tmp . 'gone-partie-*.json')) === 0);
+check('un temporaire d\'ecriture interrompue aussi',
+    !file_exists($tmp . 'live-partie-0.json.tmp123'));
+check('aucune partie active touchee', count(glob($tmp . 'live-partie-*.json')) === 120);
+
 // --- rien n'est ecrit hors du repertoire prevu
 // (le depot contient deja package.json a la racine : on regarde deploy/,
 // seul endroit ou match.php pourrait creer son stockage par defaut)

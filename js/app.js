@@ -15,6 +15,9 @@ import {
     buildEnvelope,
     makeId,
     inviteBaseFrom,
+    rememberInviteKey,
+    recallInviteKey,
+    addressWithoutKey,
 } from './remote/invite.js';
 import { RelayChannel } from './remote/relay-channel.js';
 import { locateRelay, RELAY_ROOTS } from './remote/relay-locator.js';
@@ -24,9 +27,11 @@ import { FAV_KEY, sanitizeFavorites, toggleFavorite } from './favorites.js';
 import { CLOCK_PRESETS, presetById, formatClock, Clock } from './clock.js';
 import { moveRows, canRollback, historyHint, barLayout } from './history.js';
 import { ChatChannel } from './remote/chat-channel.js';
+import { FinishWatch, dropRequest, sendRelayDrop } from './remote/relay-drop.js';
 import { generateChatKey, makeSealer } from './remote/chat-sealer.js';
 import { KIND, PRESENCE, countUnread, canNudge, NUDGE_MIN_INTERVAL_MS } from './remote/chat-protocol.js';
 import { shouldNotify, notificationFor, nudgeCooldown, formatCooldown } from './notify.js';
+import { ORIENTATION_KEY, sanitizeOrientation, orientationBackend, applyOrientation } from './orientation.js';
 
 const $ = (sel) => document.querySelector(sel);
 const state = {
@@ -650,6 +655,10 @@ async function openInvite(entry) {
  */
 function attachRelay(session, { matchId, side, chatKey = null, chatKeyId = null, allowTakeback = null }) {
     const selfKey = makeId(8);
+    // Effacement de la partie une fois finie (voir remote/relay-drop.js) :
+    // arme quand un etat RECU termine une partie que cette page a vue en cours.
+    state.finishWatch = new FinishWatch();
+    state.dropTarget = { relayUrl: CONFIG.relayUrl, matchId };
     /*
      * REPRISE DE COUP. Ce que le lien annoncait, ce que le fichier du relai
      * dit (il fait foi), et « interdit » quand personne ne dit rien — voir
@@ -670,6 +679,13 @@ function attachRelay(session, { matchId, side, chatKey = null, chatKeyId = null,
     const onRemote = async (env, reason) => {
         try {
             await session.applyRemoteState(env.matchdata);
+            const fin = await session.match.getFinished().catch(() => null);
+            if (state.finishWatch && state.finishWatch.noteRemoteState(!!(fin && fin.finished))) {
+                // Le dire : sinon la partie disparait du relai sans que personne l'ait annonce.
+                const el = $('#notice');
+                el.textContent = t('This game and its conversation will be deleted from the relay when you leave it.');
+                el.hidden = false;
+            }
             if (reason === 'takeback') {
                 const el = $('#notice');
                 el.textContent = t('Your opponent took back a move.');
@@ -731,6 +747,7 @@ function attachRelay(session, { matchId, side, chatKey = null, chatKeyId = null,
     attachChat(session, { matchId, side, peer, chatKey, chatKeyId });
 
     session.hooks.onLocalMove = async () => {
+        if (state.finishWatch) state.finishWatch.noteLocalMove();
         const { matchdata, nbTurns } = await session.exportState();
         const matchDetails = { matchId, gameName: session.entry.name, nbTurns, side };
         // Recopie a CHAQUE ecriture : joclymatch et Tabulon reecrivent
@@ -1124,7 +1141,24 @@ function wireChat() {
     }
 }
 
+/**
+ * Envoie l'effacement de la partie, s'il est arme. Appele en quittant la
+ * partie ET a la fermeture de la page : `take()` garantit un seul envoi.
+ */
+function flushRelayDrop() {
+    if (!state.finishWatch || !state.finishWatch.take() || !state.dropTarget) return;
+    // Sans fileio.php (relai incomplet), pas de fil : match.php suffit.
+    const viaFileio = !(state.chat && state.chat.unavailable);
+    sendRelayDrop(dropRequest(state.dropTarget.relayUrl, state.dropTarget.matchId, { viaFileio }), {
+        beacon: navigator.sendBeacon ? (u, b) => navigator.sendBeacon(u, b) : null,
+        fetchImpl: (u, i) => fetch(u, i),
+    });
+}
+
 async function leaveMatch() {
+    flushRelayDrop();
+    state.finishWatch = null;
+    state.dropTarget = null;
     $('#btn-take-back').hidden = true;
     stopClock();
     if (state.chat) {
@@ -1306,6 +1340,22 @@ async function main() {
         availableLocales().map((l) => ({ value: l.code, label: l.label })),
         getLocale()
     );
+    // Orientation : n'apparait que si le greffon natif est la. Appliquee des
+    // le demarrage, car le verrou pose par setRequestedOrientation() ne
+    // survit pas a la fermeture de l'application.
+    const orientation = orientationBackend(window);
+    if (orientation) {
+        const sel = $('#sel-orientation');
+        sel.value = sanitizeOrientation(pref(ORIENTATION_KEY, 'auto'));
+        $('#field-orientation').hidden = false;
+        applyOrientation(sel.value, orientation);
+        sel.addEventListener('change', (e) => {
+            const v = sanitizeOrientation(e.target.value);
+            setPref(ORIENTATION_KEY, v);
+            applyOrientation(v, orientation);
+        });
+    }
+
     $('#sel-lang').addEventListener('change', async (e) => {
         await setLocale(e.target.value);
         setPref('locale', e.target.value);
@@ -1328,6 +1378,20 @@ async function main() {
     // serait perdue. On lit les deux.
     const invite = parseInviteLink(location.search + location.hash);
     if (invite) {
+        // La cle quitte la barre d'adresse une fois lue (voir invite.js) :
+        // rangee dans l'onglet, puis retiree -- seulement si le rangement a
+        // marche. Sans fragment (rechargement), on la retrouve la.
+        let tabStore = null;
+        try { tabStore = window.sessionStorage; } catch { tabStore = null; }
+        if (invite.chatKey || invite.chatKeyId) {
+            if (rememberInviteKey(tabStore, invite.matchId, invite)) {
+                try {
+                    history.replaceState(history.state, '', addressWithoutKey(location.href));
+                } catch { /* adresse laissee telle quelle */ }
+            }
+        } else {
+            Object.assign(invite, recallInviteKey(tabStore, invite.matchId));
+        }
         const entry = state.catalog.games.find((g) => g.name === invite.game);
         if (entry) {
             openDetail(entry);
@@ -1356,6 +1420,9 @@ async function main() {
 
     const src = state.catalog.source || {};
     $('#about').textContent = `${state.catalog.counts.games} ${t('games')} · jocly ${(src.commit || '').slice(0, 7)}`;
+
+    // Fermer la page sans repasser par le catalogue : meme effacement.
+    window.addEventListener('pagehide', flushRelayDrop);
 
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('sw.js').catch((err) => console.warn('service worker', err));

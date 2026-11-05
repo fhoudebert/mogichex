@@ -45,6 +45,22 @@ const flag = (n) => argv.includes('--' + n);
 
 const joclyPath = path.resolve(arg('jocly', '../jocly2'));
 const outDir = path.resolve(root, arg('out', 'www'));
+/*
+ * LA 3D EST CONSERVEE PAR DEFAUT, et `--3d` le dit a voix haute.
+ *
+ * L'option n'ajoute rien au resultat : elle nomme l'intention. Les deux
+ * variantes multijoueur se distinguaient par `android` et `android:light`,
+ * deux noms dont aucun ne prononce le mot « 3D » — de quoi construire la
+ * variante allegee en croyant faire la complete, et ne s'en apercevoir qu'a la
+ * taille du paquet. Avec `--3d`, la commande dit ce qu'elle produit.
+ *
+ * Les deux ensemble sont une CONTRADICTION, pas un ordre de priorite a
+ * deviner : on s'arrete plutot que de trancher en silence.
+ */
+if (flag('3d') && flag('no-3d')) {
+    console.error('--3d et --no-3d se contredisent : choisir l\'un ou l\'autre.');
+    process.exit(2);
+}
 const keep3d = !flag('no-3d');
 // --offline : application qui ne sort jamais sur le reseau. Le jeu a distance
 // disparait de la liste des adversaires, et aucun relai n'est cherche.
@@ -254,6 +270,16 @@ if (!html.includes('config-android.js')) {
 // --- 6. compte rendu -------------------------------------------------------
 const s = summarize(entries);
 const mo = (b) => (b / 1048576).toFixed(1) + ' Mo';
+/** Taille totale d'un repertoire, pour donner celle du contenu produit. */
+function dirBytes(dir) {
+    let total = 0;
+    for (const e of readdirSync(dir, { withFileTypes: true })) {
+        const p = path.join(dir, e.name);
+        if (e.isDirectory()) total += dirBytes(p);
+        else if (e.isFile()) total += statSync(p).size;
+    }
+    return total;
+}
 console.log(`\n${outDir}`);
 console.log(`  dist embarque : ${s.keptFiles} fichiers, ${mo(s.keptBytes)}`);
 console.log(`  retire        : ${s.droppedFiles} fichiers, ${mo(s.droppedBytes)}`);
@@ -263,6 +289,11 @@ for (const [reason, v] of Object.entries(s.byReason)) {
 console.log(`  visuels conserves car cites par les regles : ${referencedVisuals.size}`);
 console.log(`  jeux au catalogue : ${games.length}`);
 console.log(`  3D : ${keep3d ? 'conservee' : 'retiree (--no-3d)'}`);
+// La TAILLE du dossier produit, parce que c'est elle qu'on regarde ensuite sur
+// l'APK et qu'elle distingue les variantes d'un coup d'oeil : ~75 Mo avec la
+// 3D, ~52 Mo sans. Un compte rendu qui ne la donne pas oblige a aller la
+// chercher, donc a ne pas la verifier.
+console.log(`  contenu web : ${mo(dirBytes(outDir))}`);
 console.log(`  jeu a distance : ${offline ? 'RETIRE (--offline)' : 'actif'}`);
 if (!offline) {
     // AFFICHE, parce que c'est le reglage qu'on oublie et qui ne se voit qu'au
