@@ -330,10 +330,41 @@ une copie ailleurs.
 
 # 3. Une fois démarré : les commandes
 
+## En local : `npm run android:…` ou Gradle ? Les deux, dans cet ordre
+
+Ce ne sont pas deux façons de faire la même chose : chaque outil fait **une** étape, et un APK
+demande les trois.
+
+| Étape | Commande | Ce qu'elle produit | Ce qu'elle ne fait pas |
+|---|---|---|---|
+| 1. contenu web | `npm run android:light` (ou `android`, `android:3d`, `android:offline`) | `www/` : dist Jocly filtré + application + `config-android.js` | **aucun APK** |
+| 2. copie | `npx cap sync android` | `www/` recopié dans `android/app/src/main/assets/public/` | rien de compilé |
+| 3. APK | `cd android && ./gradlew assembleRelease` | `app/build/outputs/apk/release/app-release.apk`, signé | ne régénère **pas** `www/` |
+
+- **`npm run android:light` seul ne fabrique pas d'APK** : il prépare le contenu web et s'arrête
+  en rappelant les deux commandes suivantes.
+- **`./gradlew` seul réassemble ce qui a été copié la dernière fois** : sans les étapes 1 et 2,
+  l'APK porte l'ancien contenu web, quelle que soit la variante voulue. C'est le contenu web qui
+  décide de la variante (3D ou non, jeu à distance ou non, `--site`), jamais Gradle.
+- Inutile de vider `www/` à la main : le script l'efface lui-même avant de le remplir.
+- La signature vient de `android/keystore.properties` sur le poste, ou des réglages `MOGICHEX_*`
+  (§2.4). Sans l'un ni l'autre, l'étape 3 produit `app-release-unsigned.apk`.
+- `./gradlew assembleDebug` à l'étape 3 donne un APK de debug, sans keystore, pour essayer.
+
+Le CI (§2.6) enchaîne **exactement** ces trois étapes ; ses variantes correspondent aux scripts :
+
+| Variante du workflow | Étape 1 équivalente en local |
+|---|---|
+| `light` (défaut, publiée) | `npm run android:light` |
+| `3d` | `npm run android:3d` |
+| `offline` | `npm run android:offline` |
+
+Le champ `site` du workflow vaut par défaut la même adresse que le script
+(`https://www.biscandine.fr/variantes/mogichex`) ; pour une autre, ajouter
+`-- --site <adresse>` en local.
+
 **Toujours les trois étapes, et toujours depuis la racine.** Le contenu web est figé dans le
 paquet : changer une option du script sans resynchroniser ni réassembler ne change rien à l'APK.
-
-Penser à **vider** le répertoire www
 
 ## Multijoueur — déploiement de référence
 
