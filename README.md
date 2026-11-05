@@ -120,7 +120,10 @@ your-site/
 ```
 
 **2.** Copy `deploy/signal.php`, `deploy/match.php`, `deploy/fileio.php`, `deploy/.htaccess` and
-`deploy/signalconf.php.example` (renamed to `signalconf.php`) into the mogichex folder.
+`deploy/signalconf.php.example` (renamed to `signalconf.php`) into the mogichex folder. That one
+file configures the whole relay — allowed origins, and how long games and chats are kept on the server
+(30 days without activity by default, `$matchTTL`; a finished game is deleted as soon as the player who
+received the last move leaves it).
 
 That's it. The app finds the game engine and the relay by itself, and remembers where they were.
 
