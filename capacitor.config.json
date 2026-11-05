@@ -1,0 +1,6 @@
+{
+  "appId": "fr.biscandine.mogichex",
+  "appName": "mogichex",
+  "webDir": "www",
+  "android": { "allowMixedContent": false }
+}

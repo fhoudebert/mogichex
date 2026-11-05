@@ -98,10 +98,11 @@ in two variants: **multiplayer**, which plays over the internet against another 
 request at all. Both ship without the 3D piece sets, which is what keeps them under 40 MB; a
 full build with 3D is one command away.
 
-You can also build your own. [android/README.md](android/README.md) covers the whole thing: how to
-set up the Capacitor project and the signing keystore once, then the exact commands for each
-variant — including `--site`, which points the build at **your** deployment so invitation links
-lead to your server rather than to the reference one.
+You can also build your own. [android/README.md](android/README.md) covers the whole thing: the Capacitor
+project is in the repository, so you only declare your signing key (outside the repository), then
+run the exact commands for each variant — including `--site`, which points the build at **your** deployment so invitation links
+lead to your server rather than to the reference one. A signed APK can also be built on demand
+by the *APK Android* GitHub Actions workflow.
 
 ---
 

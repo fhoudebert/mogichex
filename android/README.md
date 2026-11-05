@@ -1,10 +1,10 @@
 # mogichex pour Android (Capacitor)
 
-Ce dossier accueille le projet Capacitor. **Le contenu web est produit par un script** ; la
-génération et la signature de l'APK restent indépendantes, par Gradle ou Android Studio.
+Ce dossier **est** le projet Capacitor, versionné. **Le contenu web est produit par un script** ;
+l'APK est assemblé et signé par Gradle (ou Android Studio), sur le poste comme dans le CI.
 
 Trois sections : ce qu'il faut savoir, comment mettre en place l'environnement une fois pour
-toutes, puis les commandes prêtes à l'emploi.
+toutes (signature et CI compris), puis les commandes prêtes à l'emploi.
 
 ---
 
@@ -164,114 +164,170 @@ conflit connu avec ces licences, si un portage iOS devait suivre un jour.
 
 # 2. Comment démarrer
 
-À faire **une seule fois**, dans cet ordre. Toutes les commandes se lancent **depuis la racine du
-projet**, jamais depuis `android/`.
+Prérequis : **Node.js 26**, **JDK 21**, et le SDK Android 36. Le gabarit de Capacitor 8.5 fixe
+AGP 8.13 et Gradle 8.14 : ne pas les monter à la main en 9.x, c'est Capacitor 9 qui les
+accompagnera. Toutes les commandes se lancent **depuis la racine du projet**, jamais depuis
+`android/`.
 
-Prérequis : **Node.js 26** (`.nvmrc`), **JDK 21**, et le SDK Android 36. Le gabarit de
-Capacitor 8.5 fixe AGP 8.13 et Gradle 8.14 : ne pas les monter à la main en 9.x, c'est
-Capacitor 9 qui les accompagnera.
+## 2.1 Le projet natif est versionné
 
-## 2.1 Créer le projet Capacitor
+`android/` (projet Gradle, manifeste, icône) et `capacitor.config.json` font partie du dépôt :
+le poste et le CI construisent le même APK. Un clone neuf n'a donc **ni `npx cap init` ni
+`npx cap add android` à faire** — ce dernier refuserait d'ailleurs, puisque `android/` existe.
 
-La plateforme se crée **avant** la première génération du contenu web : Capacitor refuse
-d'ajouter la plateforme si `android/` contient déjà un projet, et propose de supprimer
-`./android` — ce qui détruirait tout.
+Ne sont **pas** versionnés, parce que générés ou propres à une machine : le contenu web
+(`www/`, et sa copie `android/app/src/main/assets/public/` faite par `cap sync`),
+`capacitor-cordova-android-plugins/`, les sorties `build/` et `.gradle/`, `.idea/`,
+`local.properties` (chemin du SDK de la machine), les APK, et tout ce qui touche à la signature.
 
-```sh
-npm install --save-dev @capacitor/cli @capacitor/core @capacitor/android @capacitor/screen-orientation
-npx cap init mogichex fr.biscandine.mogichex --web-dir www
-npx cap add android
+`app/build.gradle` est le gabarit de Capacitor, avec R8 activé en release (`minifyEnabled`,
+`shrinkResources`, d'où `proguard-rules.pro` qui doit être présent) et, en **dernière** ligne,
+`apply from: 'mogichex.gradle'`. Tout ce qui touche à la signature et à la version est dans
+**`app/mogichex.gradle`** : une mise à jour de Capacitor qui régénère `build.gradle` ne demande
+que de remettre R8 et cette ligne. `npx cap sync` ne touche ni à l'un ni à l'autre (vérifié) ; il
+réécrit seulement `capacitor.build.gradle` et `capacitor.settings.gradle`, qui sont versionnés
+et ne changent que si l'on ajoute ou retire un greffon — **lancer `npm install` avant**, sinon
+le greffon `screen-orientation` disparaît de ces deux fichiers, et le réglage d'orientation de
+l'APK avec lui.
+
+Fichiers indispensables à un clone neuf, et donc au CI : `gradlew`, `gradle/wrapper/*`,
+`gradle.properties` (porte `android.useAndroidX=true` : sans lui la construction échoue) et
+`app/proguard-rules.pro`.
+
+## 2.2 Version de l'APK
+
+`versionName` est **lu dans `package.json`** et `versionCode` en est déduit :
+`MAJEUR×10000 + MINEUR×100 + CORRECTIF`, soit `1.01.0` → `10100`. Changer la version, c'est
+changer `package.json`, et nulle part ailleurs.
+
+Android refuse une mise à jour dont le `versionCode` est **inférieur** à celui qui est
+installé. L'APK 1.0 publié porte `versionCode 1` (valeur du gabarit) : tout APK construit
+désormais le dépasse. `MOGICHEX_VERSION_CODE` (propriété Gradle ou variable d'environnement)
+force une valeur, pour un cas particulier.
+
+## 2.3 Le keystore
+
+Un APK de *debug* se signe tout seul et suffit pour essayer. Un APK **distribuable** demande
+votre propre clé — et **la même pour toutes les mises à jour** : Android refuse d'installer une
+mise à jour signée par une autre clé. Perdre ce fichier, c'est perdre la possibilité de mettre à
+jour l'application chez ceux qui l'ont installée.
+
+La clé de l'APK publié existe déjà ; son certificat a pour empreinte SHA-256
+
+```
+de787442e861debd11c519a6049ee4edaacfb20b4b9a8f6ca37d334b0777ecec
 ```
 
-`capacitor.config.json`, à la racine :
-
-```json
-{
-  "appId": "fr.biscandine.mogichex",
-  "appName": "mogichex",
-  "webDir": "www",
-  "android": { "allowMixedContent": false }
-}
-```
-
-`webDir` est `www`, **à la racine et non sous `android/`** : le script de construction efface son
-dossier de sortie avant de le remplir, et le pointer sur `android/` emporterait la configuration
-Gradle et la signature. Il s'y refuse, d'ailleurs.
-
-## 2.2 Créer le keystore
-
-Un APK de *debug* se signe tout seul et suffit pour essayer. Un APK **distribuable** demande votre
-propre clé — et **la même pour toutes les mises à jour** : Android refuse d'installer une mise à
-jour signée par une autre clé. Perdre ce fichier, c'est perdre la possibilité de mettre à jour
-l'application chez ceux qui l'ont installée.
+(CN=F. Houdebert). Pour vérifier qu'un keystore est le bon :
 
 ```sh
-cd android
-keytool -genkey -v -keystore mogichex.keystore -alias mogichex \
+keytool -list -v -keystore ~/secrets/mogichex.keystore -alias mogichex | grep SHA256
+```
+
+Pour en créer un (nouvelle application seulement) :
+
+```sh
+keytool -genkey -v -keystore ~/secrets/mogichex.keystore -alias mogichex \
         -keyalg RSA -keysize 2048 -validity 10000
-cd ..
 ```
 
-## 2.3 Déclarer le keystore à Gradle
+**Rangez-le hors du dépôt.** `.gitignore` ignore `*.keystore` et `*.jks` partout — le
+`.gitignore` du gabarit Capacitor, lui, laisse cette règle en commentaire — mais maintenant
+qu'`android/` est versionné, un keystore qui y dort n'est qu'à un `git add -f` du dépôt public.
 
-`android/keystore.properties` — **hors dépôt** : `.gitignore` couvre déjà `*.keystore`,
-`keystore.properties` et le contenu généré de `android/`.
+## 2.4 Déclarer la signature — sans `keystore.properties`
+
+`keystore.properties` n'est **plus lu**. `app/mogichex.gradle` prend quatre réglages, dans les
+**propriétés Gradle** (`-PNOM=…`, ou `~/.gradle/gradle.properties`), sinon dans les **variables
+d'environnement** du même nom :
+
+| Réglage | |
+|---|---|
+| `MOGICHEX_KEYSTORE_FILE` | chemin du keystore — absolu, ou relatif à `android/` |
+| `MOGICHEX_KEYSTORE_PASSWORD` | mot de passe du magasin |
+| `MOGICHEX_KEY_ALIAS` | alias de la clé — défaut `mogichex` |
+| `MOGICHEX_KEY_PASSWORD` | mot de passe de la clé — défaut : celui du magasin (règle du PKCS12) |
+
+Sur le poste, le plus simple est **`~/.gradle/gradle.properties`** — le fichier de
+l'utilisateur, dans son répertoire personnel, jamais dans le dépôt :
 
 ```properties
-storeFile=../mogichex.keystore
-storePassword=…
-keyAlias=mogichex
-keyPassword=…
+MOGICHEX_KEYSTORE_FILE=/home/vous/secrets/mogichex.keystore
+MOGICHEX_KEYSTORE_PASSWORD=…
 ```
 
-Le chemin est relatif à `android/app/`, d'où le `../` pour un keystore rangé dans `android/`.
+**Pas dans `android/gradle.properties`** : ce fichier-là est versionné. La construction s'arrête
+si elle y trouve un mot de passe de signature, plutôt que de le laisser partir au prochain
+commit.
 
-Puis, dans `android/app/build.gradle`, **avant** le bloc `android { … }` :
+Comportement, vérifié pour chaque cas :
 
-```gradle
-def keystorePropertiesFile = rootProject.file("keystore.properties")
-def keystoreProperties = new Properties()
-if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
-}
-```
+| Situation | Résultat |
+|---|---|
+| rien de défini | debug normal ; release **non signée** (`app-release-unsigned.apk`) avec un avertissement |
+| tout défini | `app-release.apk` signé, et une ligne `mogichex : release signée avec …, version …` |
+| chemin faux, ou mot de passe absent | arrêt immédiat, message qui nomme le réglage en cause |
+| mauvais mot de passe | `assembleRelease` échoue (« keystore password was incorrect ») ; `assembleDebug` passe |
 
-et **dans** le bloc `android { … }` :
+Android Studio (*Build → Generate Signed Bundle / APK*) reste possible et ne demande aucun de ces
+réglages.
 
-```gradle
-    signingConfigs {
-        release {
-            if (keystorePropertiesFile.exists()) {
-                storeFile file(keystoreProperties['storeFile'])
-                storePassword keystoreProperties['storePassword']
-                keyAlias keystoreProperties['keyAlias']
-                keyPassword keystoreProperties['keyPassword']
-            }
-        }
-    }
-    buildTypes {
-        release {
-            signingConfig signingConfigs.release
-        }
-    }
-```
+### Migrer depuis `keystore.properties`
 
-Le `if` n'est pas une précaution de style : sans lui, un clone du dépôt sans `keystore.properties`
-échoue à la **configuration** de Gradle, donc sur toutes les cibles — y compris `assembleDebug`,
-qui n'a pourtant besoin d'aucune signature.
+`app/build.gradle` ne lit plus `keystore.properties` (chargement du fichier, bloc
+`signingConfigs` et `signingConfig` du `release` retirés). Sur chaque poste :
 
-Android Studio fait la même chose par *Build → Generate Signed Bundle / APK*, sans toucher au
-`build.gradle`.
+1. recopier `storeFile` et `storePassword` (et `keyAlias`/`keyPassword` s'ils diffèrent des
+   défauts) de `android/keystore.properties` dans `~/.gradle/gradle.properties`, sous les noms
+   ci-dessus. Attention au chemin : il était relatif à `android/app/` (d'où
+   `../mogichex.keystore`) ; il est maintenant relatif à `android/`, ou mieux **absolu**, vers un
+   emplacement hors du dépôt ;
+2. supprimer `android/keystore.properties` (il contient les mots de passe en clair) ;
+3. vérifier avec le §2.5.
 
-## 2.4 Vérifier que tout est en place
+## 2.5 Vérifier que tout est en place
 
 ```sh
 npm run android:offline      # la variante la plus rapide
 npx cap sync android
-cd android && ./gradlew assembleDebug && cd ..
+cd android && ./gradlew assembleRelease && cd ..
 ```
 
-L'APK est dans `android/app/build/outputs/apk/debug/app-debug.apk`.
+La ligne `mogichex : release signée avec …` doit apparaître, et
+`apksigner verify --print-certs android/app/build/outputs/apk/release/app-release.apk` doit
+afficher l'empreinte du §2.3.
+
+## 2.6 Construire dans le CI (GitHub Actions)
+
+`.github/workflows/android.yml` construit un APK **à la demande** : onglet *Actions* ›
+*APK Android* › *Run workflow*, avec la variante (`light` par défaut, celle qui est publiée),
+`--site`, la branche ou le commit de jocly2, et facultativement une release à laquelle joindre
+l'APK. Il est aussi téléchargeable 30 jours depuis la page de l'exécution.
+
+Il reprend exactement les commandes du §3, puis vérifie l'empreinte du certificat : un APK signé
+par une autre clé **fait échouer le job** au lieu d'être publié.
+
+**L'environnement `android-release`**, à créer une fois (*Settings › Environments › New
+environment*) :
+
+- *Deployment branches* : **`main` seulement** — un workflow modifié sur une autre branche ne
+  pourra pas lire les secrets ;
+- facultatif : *Required reviewers*, pour approuver chaque construction ;
+- ses secrets et sa variable :
+
+```sh
+base64 -w0 ~/secrets/mogichex.keystore | gh secret set ANDROID_KEYSTORE_BASE64 --env android-release
+gh secret set ANDROID_KEYSTORE_PASSWORD --env android-release
+gh secret set ANDROID_KEY_ALIAS        --env android-release --body mogichex
+# ANDROID_KEY_PASSWORD seulement s'il diffère de celui du magasin
+gh variable set ANDROID_CERT_SHA256 --env android-release \
+   --body de787442e861debd11c519a6049ee4edaacfb20b4b9a8f6ca37d334b0777ecec
+```
+
+Le keystore est décodé dans le répertoire temporaire du runner et effacé à la fin, même en cas
+d'échec ; les mots de passe n'arrivent à Gradle que par l'environnement de l'étape qui en a
+besoin. **Un secret GitHub ne se relit pas** : ce n'est pas une sauvegarde du keystore, gardez-en
+une copie ailleurs.
 
 ---
 
@@ -351,8 +407,8 @@ Le cas typique : la ligne `cd android && ./gradlew assembleRelease` laisse le te
 projet. D'où le `cd ..` à la fin de chaque recette ci-dessus.
 
 **`npx cap add android` répond « android platform already exists ».**
-La plateforme est déjà là : passez à l'étape suivante. Ne pas accepter la suppression de
-`./android` qui serait proposée — elle emporterait la configuration Gradle et la signature.
+Normal : le projet natif est versionné, il n'y a pas à l'ajouter. Ne pas accepter la suppression
+de `./android` qui serait proposée — elle emporterait l'icône, le manifeste et `mogichex.gradle`.
 
 **Le script refuse d'écrire dans un projet natif.** `tools/build-android.mjs` efface son dossier
 de sortie avant de le remplir. Si on le pointe sur `android/`, il s'arrête au lieu d'emporter la
