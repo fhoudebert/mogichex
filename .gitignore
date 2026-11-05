@@ -6,7 +6,7 @@
 # Parties deposees par match.php quand le relai tourne depuis la racine du
 # depot (serveur PHP local). Meme raison que /signals.
 /matches
-
+/bak
 /deploy/signalconf.php
 .DS_Store
 package-lock.json
@@ -15,19 +15,15 @@ package-lock.json
 # android/README.md, lui, est versionne.
 # Le contenu web genere par tools/build-android.mjs (webDir de Capacitor).
 /www
-/android/www
-/android/app
-/android/build.gradle
-/android/gradle*
-/android/.gitignore
-/android/.idea
+
+android/app/build
+android/build
+android/gradle*
+android/.gitignore
+
 /android/build/
 /problems
-/android/capacitor-cordova-android-plugins
-/android/*.properties
-/android/.gradle
-/android/*.gradle
-/capacitor.config.json
+
 # Signature : jamais dans le depot.
 *.keystore
 *.patch
