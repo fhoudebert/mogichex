@@ -6,8 +6,8 @@ A small, installable web app that puts the whole [Jocly](https://github.com/fhou
 library on a phone: chess and its eighty-odd variants, shogi, xiangqi, draughts, go-like games,
 tafl, mills, and more.
 
-**▶ [Play now](https://biscandine.fr/variantes/mogichex/)** — nothing to install, but you can.
-
+**▶ [Play now](https://biscandine.fr/variantes/mogichex/)** — nothing to install, but you can install it on own website.
+**▶ [Install it on your android phone](https://github.com/fhoudebert/mogichex/releases/latest/)** — to play against a human or against the phone
 ---
 
 ## What you get
