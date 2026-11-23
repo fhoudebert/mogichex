@@ -2,7 +2,8 @@
 
 Ce document rassemble les décisions techniques, les mesures et les pièges rencontrés en
 construisant mogichex. Pour l'application elle-même — à quoi elle sert, comment l'installer,
-comment l'héberger — voir [README.md](README.md).
+comment l'héberger — voir [README.md](README.md) ou sa version française
+[LisezMoi.md](LisezMoi.md).
 
 Dérivée de [joclymatch](https://github.com/fhoudebert/joclymatch) pour le patron d'interface
 mono-fenêtre, et de [Tabulon](https://github.com/fhoudebert/tabulon) pour les acquis techniques.
@@ -78,7 +79,7 @@ points ne sont pas couverts par les tests, et les tests ne prétendent pas le co
 
 ---
 
-## Mise en route (voir aussi README.md § Under the hood)
+## Mise en route
 
 **Node.js 26** est requis pour développer et construire (`.nvmrc` ; `package.json` le déclare
 dans `engines`, et `.npmrc` active `engine-strict` : `npm install` refuse une version plus
@@ -142,6 +143,72 @@ npm run serve      # http://localhost:8080
 `SHELL_VERSION` dans `sw.js`, et les tests. L'estampillage n'est pas laissé à la discipline
 de qui livre : un service worker dont l'octet ne change pas n'est jamais réinstallé, et les
 visiteurs déjà venus restent sur l'ancienne coquille indéfiniment.
+
+```sh
+npm test           # 186 assertions
+npm run test:php   # 57 assertions (php-cli requis)
+```
+
+L'application elle-même n'a **aucune étape de construction** : modules ES simples, ni framework
+ni bundler. Le catalogue est précalculé, si bien qu'ouvrir la liste ne réveille pas le moteur.
+Node n'est nécessaire que pour développer et construire, jamais sur le serveur.
+
+---
+
+## L'essentiel du déploiement (repris du README)
+
+Le README ne garde que les deux étapes d'installation. Le détail est ici ; chaque point est
+développé plus bas dans la section indiquée.
+
+**Fichiers à poser.** Ceux de `deploy/` — `match.php`, `fileio.php`, `.htaccess` et
+`signalconf.php.example` renommé en `signalconf.php` — à plat dans le dossier mogichex (liste
+complète : *Ce qu'il faut téléverser*). `signalconf.php` règle tout le relai : origines
+autorisées, et durée de conservation des parties et discussions (`$matchTTL`, 30 jours sans
+activité par défaut ; une partie terminée est supprimée dès que le joueur qui a reçu le dernier
+coup la quitte). Il n'a d'importance que si l'application est servie depuis une **autre origine**
+que le relai — miroir GitHub Pages ou coquille native.
+
+**Ce que fait le `.htaccess`, et pourquoi il compte :**
+
+- il envoie `Cross-Origin-Opener-Policy` et `Cross-Origin-Embedder-Policy` ; sans eux le
+  navigateur refuse `SharedArrayBuffer`, Fairy-Stockfish ne démarre pas et le niveau **Expert**
+  répond instantanément sans réfléchir — l'application le signale (*Le niveau « Expert » et
+  l'isolation cross-origin*) ;
+- il renvoie `index.html` pour toute URL inconnue, ce qui fait fonctionner les liens d'invitation.
+
+**Catalogue à la carte.** Le dist jocly est construit à part : un déploiement peut livrer toute
+la bibliothèque, une seule famille, les seules variantes d'échecs ou un jeu unique. L'application
+lit ce que le dist déclare (*Le catalogue*).
+
+**Jeu à distance.** Les coups des deux joueurs passent par `match.php`, quelques centaines
+d'octets chacun. Les navigateurs qui peuvent se joindre ouvrent en plus une connexion
+**pair-à-pair** qui prend le relai ; sinon le relai HTTP continue seul, sans que personne s'en
+aperçoive. **Pas de serveur TURN**, délibérément (*Hébergement*, *Le canal pair-à-pair*).
+
+**Le relai sert aussi Tabulon.** `fileio.php` parle le dialecte de
+[Tabulon](https://github.com/fhoudebert/tabulon) et joclymatch sur les mêmes fichiers de partie :
+un joueur Tabulon rejoint une partie hébergée ici sans rien changer chez lui, discussion comprise.
+C'est un traducteur, pas un second stockage : les actions sont confiées à `match.php`, seul à
+toucher un fichier de partie. Un *serveur* joclymatch garde ses propres fichiers : une partie se
+joue sur l'un ou l'autre relai (*`deploy/fileio.php` — le relai vu par Tabulon*).
+
+**Texte libre.** Scellé en XChaCha20-Poly1305 avant de quitter le téléphone ; le relai ne voit
+que des octets opaques. La clé voyage dans le *fragment* du lien d'invitation, que les navigateurs
+n'envoient jamais au serveur : le lien est le secret. Une fois lue, la clé quitte la barre
+d'adresse (gardée pour l'onglet, un rechargement fonctionne). Format identique à Tabulon
+(*Le texte libre et son scellement*).
+
+**Relance.** Notifie l'adversaire même application en arrière-plan, avec un délai de cinq minutes
+inscrit dans le protocole. Permission demandée à l'activation, jamais au premier lancement. La
+notification dit *qu'un message est arrivé*, jamais ce qu'il dit. Limite : cela ne marche que
+tant que l'application vit en arrière-plan ; aucun serveur de push, par choix (*Relance et
+notifications*).
+
+**Android.** Variantes **multiplayer-2d** et **offline-2d** publiées (sans pièces 3D, moins de
+40 Mo), **multiplayer-3d** à une commande. `--site` pointe la construction vers **votre**
+déploiement, pour que les liens d'invitation mènent à votre serveur ; un APK signé peut aussi être
+produit à la demande par le workflow GitHub *APK Android*. Tout est dans
+[`android/README.md`](android/README.md).
 
 ---
 
@@ -623,7 +690,7 @@ fausse en silence.
 | `tests/` | 186 assertions Node et 57 PHP. `tests/*.php` sont des **exécutables** : les téléverser, c'est offrir des points d'entrée qui écrivent sur le disque |
 | `data/` | `phone-ineligible.json` est lu par le **build**, jamais par le navigateur — il est déjà cuit dans `catalog.json` |
 | `android/` | projet Capacitor, 1,8 Mo, sans objet sur le web |
-| `package.json`, `DEVELOPMENT.md`, `README.md`, `.gitignore` | rien ne les lit à l'exécution |
+| `package.json`, `DEVELOPMENT.md`, `README.md`, `LisezMoi.md`, `.gitignore` | rien ne les lit à l'exécution |
 
 Ce n'est pas qu'une question de place : `tests/match-runner.php` et `tests/signal-runner.php`
 sont faits pour écrire des fichiers de partie. Servis par un serveur web, ils deviennent des
