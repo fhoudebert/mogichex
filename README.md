@@ -2,203 +2,96 @@
 
 **mo**bile · shō**gi** · **chex** — **over 120 board games, playable with a thumb.**
 
-A small, installable web app that puts the whole [Jocly](https://github.com/fhoudebert/jocly2) game
-library on a phone: chess and its eighty-odd variants, shogi, xiangqi, draughts, go-like games,
-tafl, mills, and more.
+🇫🇷 [Version française](LisezMoi.md)
 
-**▶ [Play now](https://biscandine.fr/variantes/mogichex/)** — nothing to install, but you can install it on own website.
+**mogichex is [joclymatch](https://github.com/fhoudebert/joclymatch), rebuilt for phones.** Same
+[Jocly](https://github.com/fhoudebert/jocly2) game library — chess and its eighty-odd variants,
+shogi, xiangqi, draughts, go-like games, tafl, mills and more — in an interface designed for a
+small screen and a thumb.
 
-**▶ [Install it on your android phone](https://github.com/fhoudebert/mogichex/releases/latest/)** — to play against a human or against the phone.
+- **📱 Mobile first, and runs on shared hosting.** Static files plus three small PHP scripts: no
+  Node, no database, no daemon on the server. Any cheap web host will do.
+- **👥 Play and chat with real people.** Send an invitation link, your opponent taps it, the game
+  starts. Talk with one-tap messages shown in each player's language, or free text encrypted end to
+  end. You can also play the computer, or pass the phone around.
+- **🤖 Also an Android app.** Ready-made APKs, including an offline build that never touches the
+  network. Or simply install the web app from the browser (Android and iOS).
+
+**▶ [Play now](https://biscandine.fr/variantes/mogichex/)** ·
+**▶ [Android APK](https://github.com/fhoudebert/mogichex/releases/latest/)** ·
+**▶ [Host your own](#host-it-yourself)**
 
 ---
 
 ## What you get
 
-**Over 120 games, in a dozen families** — several of them with many sub-variants. Everything from
-`classic-chess` to Tafl, Margo, Go and Yohoho. Families are collapsed by default so the list stays
-readable; open one with a tap, or search — accents and languages don't matter, typing `echecs`
-finds *Chess*.
-
-How many exactly is up to you: the jocly dist is built alongside the app, so a deployment can ship
-the whole library, a single family, chess variants only, or one game. Nothing in the app assumes a
-particular catalogue — it reads whatever the dist declares.
-
-**Built for a phone, not shrunk to fit one.** Games are shown in 2D by default: it reads better on a
-small screen, and there is no 3D artwork to download. The handful of games that genuinely need a big
-board (16×16, 19×19, 3D geometries) are hidden on phones — and one switch brings them back, because
-a filter you can't turn off feels like a bug.
-
-**Rules for every game**, illustrated, in the app — before you play and during the game.
-
-**Three opponents.** The computer, another player on the same device, or **another player over the
-internet** — the last one can be switched off entirely, for a build that never touches the network.
-
-**Play by invitation.** Pick *another player, over the internet*, send the link, and you're in.
-Links use the [joclymatch](https://github.com/fhoudebert/joclymatch) format, and a
-[Tabulon](https://github.com/fhoudebert/tabulon) player can join your game from the desktop
-without changing anything on their side. You choose, when inviting, whether taking back moves is
-allowed.
-
-**Three to six strength levels** depending on the game, up to **Expert** — the
-[Fairy-Stockfish](https://github.com/fairy-stockfish/Fairy-Stockfish) engine, wherever jocly
-declares one. If your server isn't configured for it, the app *tells you* instead of quietly
-playing weaker.
-
-**English and French.** Adding a language means dropping one file in `lang/` — no code to touch.
-
-**Take back, restart, sounds, notation, move hints, board style, view from either side.** In online
-games, restart is hidden, and take back is only offered if the invitation allowed it — then, on
-your turn, it undoes your last move and your opponent's reply, and their board follows.
-
-**Favourites.** Star a game and it gets its own section, pinned at the top of the list and open by
-default — the twelve families stay exactly where they were.
-
-**A clock, if you want one.** Three time controls with Fischer increment, or none at all. Local
-games only: two devices don't see the same instant, and two pendulums showing two truths is worse
-than no pendulum.
-
-**The move list, and a way back.** Tap any move to return to that position. Reading the list works
-in online games; jumping back to an arbitrary position doesn't — your opponent has already moved on
-from it.
-
-**A word to your opponent.** In online games, a handful of one-tap messages and presence states —
-*well played*, *your turn*, *stepping away*. They travel as identifiers and are shown in each
-player's own language, so two people with no language in common still understand each other, and
-nothing personal ever reaches the relay. The thread uses the shared joclymatch format, so a
-[Tabulon](https://github.com/fhoudebert/tabulon) player in the same game reads you and you read
-them.
-
-**Nudged, not nagged.** A single "your turn" tap that can notify your opponent even when the app
-isn't on screen — with a five-minute cooldown built into the protocol, not bolted on. Permission is
-asked when you turn it on, never on first launch. Notifications say *a message arrived*, never what
-it says: the text was encrypted so the relay couldn't read it, and a lock screen is no different.
-Fine print: this works while the app is still alive in the background. Once the system kills it,
-nothing arrives until you open it again — no push server involved, by design.
-
-**And you can just type.** Free text is sealed with XChaCha20-Poly1305 before it leaves the phone;
-the relay only ever holds opaque bytes. The key rides in the invitation link's *fragment*, which
-browsers never send to any server — so the link is the secret: share it the way you'd share a door
-code, and don't expect it to outlive the game. Once read, the key leaves the address bar (it is kept
-for the tab only, so a reload still works). Same format as
-[Tabulon](https://github.com/fhoudebert/tabulon), so a message written here opens there.
-
----
+- **120+ games in a dozen families**, with search that ignores accents and language (`echecs`
+  finds *Chess*), and favourites pinned at the top.
+- **Made for a phone**: 2D boards by default, light download; the few games that need a huge board
+  are hidden on phones — one switch brings them back.
+- **Illustrated rules** for every game, before and during play.
+- **Three opponents**: the computer (up to **Expert**, powered by
+  [Fairy-Stockfish](https://github.com/fairy-stockfish/Fairy-Stockfish)), a friend on the same
+  device, or a player over the internet.
+- **Online play that works with the family**: invitations use the joclymatch format, so a
+  [Tabulon](https://github.com/fhoudebert/tabulon) or joclymatch player can join your game — chat
+  included.
+- **Chat without a common language**: *well played*, *your turn*, *stepping away*… each player
+  reads them in their own language. Free text is encrypted on the phone; the server only stores
+  unreadable bytes.
+- **A gentle nudge**: notify your opponent it's their turn, with a built-in five-minute cooldown.
+- **The usual comforts**: take back, move list, clock with increment (local games), sounds,
+  notation, board styles, either side's view.
+- **English and French**; adding a language is one file in `lang/`.
 
 ## Install it
 
-It's a Progressive Web App, so there's no store to go through.
-
-- **Android / Chrome** — open the link, then *Add to Home screen*.
-- **iOS / Safari** — open the link, *Share* → *Add to Home Screen*.
-
-It then behaves like any other app: full screen, its own icon. Games you've already played stay
-available **offline**; ones you haven't will need a connection the first time.
-
-**Android APKs are published** on the [releases page](https://github.com/fhoudebert/mogichex/releases),
-in two variants, named after what they contain: **multiplayer-2d**, which plays over the
-internet against another player, and **offline-2d**, with online play removed — no relay is looked
-up and the app makes no outgoing request at all. Both ship without the 3D piece sets (hence
-`2d`), which is what keeps them under 40 MB; **multiplayer-3d**, with the 3D pieces, is one
-command away.
-
-You can also build your own. [android/README.md](android/README.md) covers the whole thing: the Capacitor
-project is in the repository, so you only declare your signing key (outside the repository), then
-run the exact commands for each variant — including `--site`, which points the build at **your** deployment so invitation links
-lead to your server rather than to the reference one. A signed APK can also be built on demand
-by the *APK Android* GitHub Actions workflow.
-
----
+- **Web app** — open the [link](https://biscandine.fr/variantes/mogichex/), then *Add to Home
+  screen* (Android/Chrome) or *Share → Add to Home Screen* (iOS/Safari). Games you've played stay
+  available offline.
+- **Android APK** — on the [releases page](https://github.com/fhoudebert/mogichex/releases):
+  **multiplayer-2d** (play over the internet) or **offline-2d** (no network at all). To build your
+  own, pointing at your own server: [android/README.md](android/README.md).
 
 ## Host it yourself
 
-mogichex is static files plus three small PHP scripts. Shared hosting is enough; no Node, no
-database, no daemon.
+1. Copy this repository next to a [Jocly](https://github.com/fhoudebert/jocly2) build:
 
-**1.** Copy the app somewhere, and a [Jocly](https://github.com/fhoudebert/jocly2) build next to
-it. This layout works with no configuration at all:
+   ```
+   your-site/
+   ├── mogichex/          ← this repository
+   └── jocly/dist/        ← jocly2 built with: npx gulp build
+   ```
 
-```
-your-site/
-├── mogichex/          ← this repository, plus the files from deploy/
-└── jocly/dist/        ← jocly2 built with: npx gulp build
-```
+2. Copy the files from `deploy/` (including `.htaccess`) into the mogichex folder, and rename
+   `signalconf.php.example` to `signalconf.php`.
 
-**2.** Copy `deploy/signal.php`, `deploy/match.php`, `deploy/fileio.php`, `deploy/.htaccess` and
-`deploy/signalconf.php.example` (renamed to `signalconf.php`) into the mogichex folder. That one
-file configures the whole relay — allowed origins, and how long games and chats are kept on the server
-(30 days without activity by default, `$matchTTL`; a finished game is deleted as soon as the player who
-received the last move leaves it).
+That's it: the app finds the game engine and the relay on its own. Your server can also host
+games for Tabulon players.
 
-That's it. The app finds the game engine and the relay by itself, and remembers where they were.
+`.htaccess` is a hidden file: make sure your upload tool copies it, otherwise the Expert level
+and invitation links won't work.
 
-**Your relay also serves Tabulon.** `fileio.php` speaks the dialect that
-[Tabulon](https://github.com/fhoudebert/tabulon) and
-[joclymatch](https://github.com/fhoudebert/joclymatch) use, over the very same match files — a
-Tabulon player joins a match hosted here without changing anything on their side, chat included.
-(A joclymatch *server* keeps its own match files: a game is played on one relay or the other.)
-It is a translator, not a second store: the game actions are handed to `match.php`, which stays the
-only thing that touches a match file.
+## Documentation
 
-**Two things the `.htaccess` does that matter:**
-
-- it sends `Cross-Origin-Opener-Policy` and `Cross-Origin-Embedder-Policy`. Without them the
-  browser withholds `SharedArrayBuffer`, the Fairy-Stockfish engine can't start, and the **Expert**
-  level answers instantly without thinking. The app will say so if that happens;
-- it makes unknown URLs fall back to `index.html`, so invitation links work.
-
-Nothing else needs configuring. `signalconf.php` only matters if the app is served from a
-*different* origin than the relay — a GitHub Pages mirror, or a native shell.
-
-### Online games
-
-Both players' moves go through `match.php`, a few hundred bytes each. Browsers that can reach each
-other also open a **direct peer-to-peer connection**, which then takes over and lets the server
-rest. When they can't — different networks behind unhelpful routers — the relay just keeps doing
-the job, and nobody notices.
-
-There is deliberately **no TURN server**: it would cost bandwidth to provide a service the relay
-already provides.
-
----
-
-## Under the hood
-
-- No build step for the app itself — plain ES modules, no framework, no bundler.
-- Development and builds need **Node.js 26** (see `.nvmrc`); `npm install` refuses older versions. The deployed app itself needs no Node at all.
-- The game catalogue is precomputed at build time, so opening the list doesn't wake the engine.
-- One coherent Jocly build per deployment, shared with other apps if you like.
-
-```sh
-git clone https://github.com/fhoudebert/jocly2 ../jocly2
-cd ../jocly2 && npm install && npx gulp build
-cd - && ln -s ../jocly2/dist/browser dist
-
-npm run build      # catalogue + service worker stamp + tests
-npm run serve      # http://localhost:8080
-npm test           # 186 assertions
-npm run test:php   # 57 assertions (requires php-cli)
-```
-
-[DEVELOPMENT.md](DEVELOPMENT.md) has the technical detail: how the catalogue is built, how the
-relay works, what was measured, and the traps worth knowing before changing anything.
+| | |
+|---|---|
+| [LisezMoi.md](LisezMoi.md) | this page, in French |
+| [android/README.md](android/README.md) | building and signing your own APK *(French)* |
+| [DEVELOPMENT.md](DEVELOPMENT.md) | technical notes: relay, peer-to-peer, encryption, build, tests, known traps *(French)* |
 
 ---
 
 ## Credits
 
-Mogichex is based on **Jocly**, created by M. Gutierrez / J. Choain. 
-The original project is no longer maintained; it lives on as **[jocly2](https://github.com/fhoudebert/jocly2)**.
-
-The Expert level uses [Fairy-Stockfish](https://github.com/fairy-stockfish/Fairy-Stockfish) by
-Fabian Fichter, derived from Stockfish. The single-window interface follows
-[joclymatch](https://github.com/fhoudebert/joclymatch).
-
+mogichex is based on **Jocly**, created by M. Gutierrez / J. Choain, now maintained as
+**[jocly2](https://github.com/fhoudebert/jocly2)**. The Expert level uses
+[Fairy-Stockfish](https://github.com/fairy-stockfish/Fairy-Stockfish) by Fabian Fichter, derived
+from Stockfish. The interface follows [joclymatch](https://github.com/fhoudebert/joclymatch).
 Game artwork under `chessbase/res` is **CC BY-SA 3.0**.
 
 ## License
 
 **mogichex is free software under the [GNU Affero General Public License v3](LICENSE) or later.**
-
-It loads the Jocly library into its own page and ships it alongside — or inside, for the Android build. The two form a single work, so the whole is
-AGPL-3.0. Fairy-Stockfish is GPL-3.0, which combines with AGPL-3.0 under both licenses' terms.
-
+It ships the Jocly library alongside (or inside, for Android); together they form a single
+AGPL-3.0 work. Fairy-Stockfish is GPL-3.0, compatible with AGPL-3.0.

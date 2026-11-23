@@ -2,10 +2,21 @@
 
 Ce document rassemble les décisions techniques, les mesures et les pièges rencontrés en
 construisant mogichex. Pour l'application elle-même — à quoi elle sert, comment l'installer,
-comment l'héberger — voir [README.md](README.md).
+comment l'héberger — voir [README.md](README.md) ou sa version française
+[LisezMoi.md](LisezMoi.md).
 
 Dérivée de [joclymatch](https://github.com/fhoudebert/joclymatch) pour le patron d'interface
 mono-fenêtre, et de [Tabulon](https://github.com/fhoudebert/tabulon) pour les acquis techniques.
+
+---
+
+## Sommaire
+
+- **Où en est le projet** — [État](#état) · [Mise en route](#mise-en-route) · [Tests](#tests) · [Structure](#structure)
+- **L'application** — [Le catalogue](#le-catalogue) · [2D par défaut](#2d-par-défaut) · [Langues](#langues) · [La liste des jeux](#la-liste-des-jeux) · [Options de la partie](#options-de-la-partie) · [Reprendre un coup](#reprendre-un-coup) · [Règles](#règles) · [Niveau « Expert »](#le-niveau--expert--et-lisolation-cross-origin)
+- **Jouer à distance** — [Invitations](#invitations) · [L'adresse du lien d'invitation](#ladresse-qui-part-dans-le-lien-dinvitation) · [Jouer à distance](#jouer-à-distance) · [Fonctions reprises de Tabulon](#premier-tour--ce-que-tabulon-a-donné-et-à-quel-prix) · [Texte libre scellé](#le-texte-libre-et-son-scellement) · [Relance et notifications](#relance-et-notifications)
+- **Livrer** — [Android](#android-capacitor) · [Héberger : l'essentiel](#héberger--lessentiel) · [Déploiement de référence](#déploiement-de-référence) · [Hébergement et relai](#hébergement) · [Rester embarquable](#règles-pour-rester-embarquable)
+- **Avant de toucher au code** — [Pièges (déjà payés une fois)](#pièges-déjà-payés-une-fois)
 
 ---
 
@@ -26,6 +37,9 @@ mono-fenêtre, et de [Tabulon](https://github.com/fhoudebert/tabulon) pour les a
 | 7 | Favoris + horloge (1er tour) | **fait** — mesuré à la sonde, non vérifié au doigt |
 | 8 | Historique et retour à une position (1er tour) | **fait** — mesuré à la sonde, non vérifié au doigt |
 | 9 | Messages rapides + présence (1er tour) | **fait** — protocole et transport testés, jamais joué à deux |
+| 10 | Texte libre scellé (format Tabulon) | **fait** — mesuré entre deux navigateurs sur un relai PHP |
+| 11 | Relance et notifications | **fait** — mesuré avec une page en arrière-plan ; limite assumée : rien une fois l'application tuée |
+| 12 | Application Android (Capacitor), variantes 2D/3D/hors ligne | **fait** — APK publiés, signés par le CI |
 
 ### Ce qui a été mesuré au navigateur
 
@@ -78,15 +92,15 @@ points ne sont pas couverts par les tests, et les tests ne prétendent pas le co
 
 ---
 
-## Mise en route (voir aussi README.md § Under the hood)
+## Mise en route
 
 **Node.js 26** est requis pour développer et construire (`.nvmrc` ; `package.json` le déclare
 dans `engines`, et `.npmrc` active `engine-strict` : `npm install` refuse une version plus
 ancienne au lieu d'avertir). Le même Node sert à construire jocly2. Deux différences avec
 Node 22, constatées au passage :
 
-- `npm test` affiche son résumé au format *spec* (`ℹ pass 186`) et non plus TAP
-  (`# pass 186`) : un script qui filtrait sur `# pass` ne trouve plus rien ;
+- `npm test` affiche son résumé au format *spec* (`ℹ pass 198`) et non plus TAP
+  (`# pass 198`) : un script qui filtrait sur `# pass` ne trouve plus rien ;
 - npm 11.19+ bloque les scripts d'installation par défaut ; sur jocly2 cela touche le
   `postinstall` d'esbuild, sans conséquence sur la construction. Pour faire taire
   l'avertissement : `npm install-scripts approve esbuild` dans jocly2.
@@ -142,6 +156,15 @@ npm run serve      # http://localhost:8080
 `SHELL_VERSION` dans `sw.js`, et les tests. L'estampillage n'est pas laissé à la discipline
 de qui livre : un service worker dont l'octet ne change pas n'est jamais réinstallé, et les
 visiteurs déjà venus restent sur l'ancienne coquille indéfiniment.
+
+```sh
+npm test           # 198 tests Node
+npm run test:php   # 60 vérifications PHP (php-cli requis)
+```
+
+L'application elle-même n'a **aucune étape de construction** : modules ES simples, ni framework
+ni bundler. Le catalogue est précalculé, si bien qu'ouvrir la liste ne réveille pas le moteur.
+Node n'est nécessaire que pour développer et construire, jamais sur le serveur.
 
 ---
 
@@ -548,21 +571,64 @@ pendant la partie. Les fichiers de règles de Jocly référencent leurs images p
 ## Android (Capacitor)
 
 `npm run android:multiplayer-2d` (ou `android:multiplayer-3d`, `android:offline-2d`) produit le
-contenu web d'une application Android : dist Jocly **limité à
-chessbase** en production, application, catalogue restreint à ce module. La génération et la
-signature de l'APK restent indépendantes — **voir [`android/README.md`](android/README.md)**.
+contenu web d'une application Android : dist Jocly **limité à chessbase** en production,
+application, catalogue restreint à ce module. La génération et la signature de l'APK restent
+indépendantes — **voir [`android/README.md`](android/README.md)**, qui donne aussi les tailles
+courantes de chaque variante.
 
-| Variante | `www` |
-|---|---|
-| `npm run android:multiplayer-3d` (anciennement `android`) | 85 Mo |
-| `npm run android:multiplayer-2d` (anciennement `android:light`, sans 3D) | 67 Mo |
+| Variante | Jeu à distance | Pièces 3D | Publiée |
+|---|---|---|---|
+| `multiplayer-2d` | oui | non | oui |
+| `offline-2d` | **non** — aucun relai cherché, aucune requête sortante | non | oui |
+| `multiplayer-3d` | oui | oui | non, à une commande |
 
-(Mesures de l'époque ; les tailles courantes sont dans `android/README.md`.)
+`--site` pointe la construction vers **votre** déploiement, pour que les liens d'invitation
+mènent à votre serveur (*L'adresse qui part dans le lien d'invitation*). Un APK signé peut aussi
+être produit à la demande par le workflow GitHub *APK Android*.
 
 Sur 113 Mo de dist chessbase, le script retire les captures promotionnelles non citées par les
 règles (11,8 Mo), le moteur de dames que chessbase n'utilise pas (10,3 Mo) et les ressources VR
 (5,6 Mo) ; `--no-3d` retire en plus les modèles 3D (18,4 Mo) **et les skins 3D du catalogue**,
 pour ne pas proposer d'option qui échouerait.
+
+---
+
+## Héberger : l'essentiel
+
+Le README ne donne que les deux étapes d'installation. Voici ce qu'il faut savoir de plus ;
+chaque point est développé dans la section indiquée.
+
+**Fichiers à poser.** Ceux de `deploy/` — `signal.php`, `match.php`, `fileio.php`, `.htaccess`
+et `signalconf.php.example` renommé en `signalconf.php` — à plat dans le dossier mogichex (liste
+complète : *Ce qu'il faut téléverser*). `signalconf.php` règle tout le relai : origines
+autorisées, et durée de conservation des parties et discussions (`$matchTTL`, 30 jours sans
+activité par défaut ; une partie terminée est supprimée dès que le joueur qui a reçu le dernier
+coup la quitte). Il n'a d'importance que si l'application est servie depuis une **autre origine**
+que le relai — miroir GitHub Pages ou coquille native.
+
+**Ce que fait le `.htaccess`, et pourquoi il compte :**
+
+- il envoie `Cross-Origin-Opener-Policy` et `Cross-Origin-Embedder-Policy` ; sans eux le
+  navigateur refuse `SharedArrayBuffer`, Fairy-Stockfish ne démarre pas et le niveau **Expert**
+  répond instantanément sans réfléchir — l'application le signale (*Le niveau « Expert » et
+  l'isolation cross-origin*) ;
+- il renvoie `index.html` pour toute URL inconnue, ce qui fait fonctionner les liens d'invitation.
+
+**Catalogue à la carte.** Le dist jocly est construit à part : un déploiement peut livrer toute
+la bibliothèque, une seule famille, les seules variantes d'échecs ou un jeu unique. L'application
+lit ce que le dist déclare (*Le catalogue*).
+
+**Jeu à distance.** Les coups des deux joueurs passent par `match.php`, quelques centaines
+d'octets chacun. Les navigateurs qui peuvent se joindre ouvrent en plus une connexion
+**pair-à-pair** qui prend le relai ; sinon le relai HTTP continue seul, sans que personne s'en
+aperçoive. **Pas de serveur TURN**, délibérément (*Hébergement*, *Le canal pair-à-pair*).
+
+**Le relai sert aussi Tabulon.** `fileio.php` parle le dialecte de
+[Tabulon](https://github.com/fhoudebert/tabulon) et joclymatch sur les mêmes fichiers de partie :
+un joueur Tabulon rejoint une partie hébergée ici sans rien changer chez lui, discussion comprise.
+C'est un traducteur, pas un second stockage : les actions sont confiées à `match.php`, seul à
+toucher un fichier de partie. Un *serveur* joclymatch garde ses propres fichiers : une partie se
+joue sur l'un ou l'autre relai (*`deploy/fileio.php` — le relai vu par Tabulon*).
 
 ## Déploiement de référence
 
@@ -620,10 +686,10 @@ fausse en silence.
 | | |
 |---|---|
 | `tools/` | fabrique le catalogue, l'APK, l'estampille du service worker. Ne tourne que chez vous |
-| `tests/` | 186 assertions Node et 57 PHP. `tests/*.php` sont des **exécutables** : les téléverser, c'est offrir des points d'entrée qui écrivent sur le disque |
+| `tests/` | 198 tests Node et 60 vérifications PHP. `tests/*.php` sont des **exécutables** : les téléverser, c'est offrir des points d'entrée qui écrivent sur le disque |
 | `data/` | `phone-ineligible.json` est lu par le **build**, jamais par le navigateur — il est déjà cuit dans `catalog.json` |
 | `android/` | projet Capacitor, 1,8 Mo, sans objet sur le web |
-| `package.json`, `DEVELOPMENT.md`, `README.md`, `.gitignore` | rien ne les lit à l'exécution |
+| `package.json`, `DEVELOPMENT.md`, `README.md`, `LisezMoi.md`, `.gitignore` | rien ne les lit à l'exécution |
 
 Ce n'est pas qu'une question de place : `tests/match-runner.php` et `tests/signal-runner.php`
 sont faits pour écrire des fichiers de partie. Servis par un serveur web, ils deviennent des
@@ -834,10 +900,10 @@ Nécessaire seulement si l'application n'est pas servie depuis le même domaine 
 
 ---
 
-## Embarquement natif à venir
+## Règles pour rester embarquable
 
-L'application est écrite pour pouvoir être empaquetée telle quelle dans une coquille native
-(Capacitor, TWA). Deux règles en découlent, **à tenir dans tout le code ajouté** :
+L'application est empaquetée telle quelle dans une coquille native (Capacitor aujourd'hui, TWA
+envisageable). Deux règles en découlent, **à tenir dans tout le code ajouté** :
 
 1. **tout ce qui est local est référencé en relatif** (`dist/…`, `lang/…`). Une seule URL
    absolue en dur et l'application casse sous `capacitor://` ou `https://localhost` ;
@@ -1212,8 +1278,10 @@ js/remote/relay-channel.js  transport sur match.php
 js/remote/relay-locator.js  recherche du relai (pur, testé)
 js/remote/signalling.js     décisions de la négociation WebRTC (pur, testé)
 js/remote/peer-channel.js   canal pair-à-pair sur signal.php
+js/remote/relay-drop.js     effacement d'une partie terminée sur le relai
 js/i18n.js              t(), pickLocalized(), chargement des langues
 js/device.js            classe d'appareil par capacité
+js/orientation.js       réglage d'orientation (Automatique / Portrait / Paysage)
 js/catalog.js           filtrage, groupement (pur, testé)
 js/catalog-view.js      rendu de la liste
 js/favorites.js         liste des favoris, section épinglée (pur, testé)
@@ -1233,8 +1301,11 @@ tools/scan-geometry.mjs      aide à la maintenance de la liste
 tools/stamp-sw.mjs           estampille SHELL_VERSION
 tools/serve.mjs              serveur de développement (--no-coi)
 tools/build-android.mjs      contenu web de l'application Android
+tools/lib/catalog.mjs        construction du catalogue à partir des entrées jocly2 (pur)
 tools/lib/dist-trim.mjs      quoi embarquer dans l'APK (pur, testé)
-deploy/                      signal.php, match.php, .htaccess, signalconf.php.example
+tools/lib/native-guard.mjs   empêche le build d'effacer le projet android/
+deploy/                      signal.php, match.php, fileio.php, .htaccess, signalconf.php.example
+android/                     projet Capacitor versionné — voir android/README.md
 tests/                       Node pur + PHP réel
 ```
 
@@ -1321,9 +1392,16 @@ tests/                       Node pur + PHP réel
 ## Tests
 
 ```sh
-npm test                      # 186 assertions, Node pur
+npm test           # 198 tests, Node pur (tests/*.mjs)
+npm run test:php   # 60 vérifications : signal.php (14), match.php (17), fileio.php (29)
+npm run build      # catalogue + estampille du service worker, puis npm test
 ```
 
 Ce qui est testable l'est : construction du catalogue, champs localisés, filtrage,
-groupement, détection d'appareil, cohérence des langues et de la coquille pré-cachée, et le
-relai de signalisation de bout en bout. Le reste demande un appareil, et c'est dit.
+groupement, détection d'appareil, cohérence des langues et de la coquille pré-cachée, codecs
+d'invitation et de discussion, scellement, reprise de coup, et les trois scripts du relai
+exécutés par un vrai PHP. Le reste demande un appareil — voir *Ce qui reste à vérifier sur
+appareil* —, et c'est dit.
+
+Les nombres ci-dessus datent de la dernière révision de ce document ; c'est la sortie de la
+commande qui fait foi.
