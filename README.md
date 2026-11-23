@@ -69,8 +69,16 @@ small screen and a thumb.
 That's it: the app finds the game engine and the relay on its own. Your server can also host
 games for Tabulon players.
 
-Details — what the `.htaccess` does, how the relay and peer-to-peer connection work, encryption,
-building and testing — are in [DEVELOPMENT.md](DEVELOPMENT.md).
+`.htaccess` is a hidden file: make sure your upload tool copies it, otherwise the Expert level
+and invitation links won't work.
+
+## Documentation
+
+| | |
+|---|---|
+| [LisezMoi.md](LisezMoi.md) | this page, in French |
+| [android/README.md](android/README.md) | building and signing your own APK *(French)* |
+| [DEVELOPMENT.md](DEVELOPMENT.md) | technical notes: relay, peer-to-peer, encryption, build, tests, known traps *(French)* |
 
 ---
 

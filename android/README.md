@@ -77,8 +77,7 @@ gulp — et **affichée à la fin** :
 ```
 
 Si vous hébergez votre propre sélection de jeux, c'est **votre** adresse qu'il faut donner ici, et
-les fichiers de `deploy/` doivent être en place chez vous (voir le README principal, *Host it
-yourself*).
+les fichiers de `deploy/` doivent être en place chez vous (voir [LisezMoi.md](../LisezMoi.md), *L'héberger soi-même*).
 
 **Pour vérifier un APK déjà installé :** Réglages › À propos affiche le relai et la base des liens
 réellement employés. Et corriger l'outil ne suffit pas — le contenu web est figé dans le paquet :

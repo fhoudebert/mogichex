@@ -73,8 +73,16 @@ tafl, la marelle et bien d'autres — dans une interface conçue pour un petit �
 C'est tout : l'application trouve seule le moteur de jeu et le relai. Votre serveur peut aussi
 héberger les parties des joueurs Tabulon.
 
-Les détails — rôle du `.htaccess`, fonctionnement du relai et de la connexion pair-à-pair,
-chiffrement, construction et tests — sont dans [DEVELOPMENT.md](DEVELOPMENT.md).
+`.htaccess` est un fichier caché : vérifiez que votre outil de transfert le copie bien, sinon le
+niveau Expert et les liens d'invitation ne fonctionneront pas.
+
+## Documentation
+
+| | |
+|---|---|
+| [README.md](README.md) | cette page, en anglais |
+| [android/README.md](android/README.md) | construire et signer son propre APK |
+| [DEVELOPMENT.md](DEVELOPMENT.md) | notes techniques : relai, pair-à-pair, chiffrement, construction, tests, pièges connus |
 
 ---
 
